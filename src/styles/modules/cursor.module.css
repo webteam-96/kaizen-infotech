@@ -1,0 +1,82 @@
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: var(--z-cursor, 500);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-text-inverse, #fff);
+  mix-blend-mode: difference;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: var(--z-cursor, 500);
+  transform: translate(-50%, -50%);
+}
+
+.follower {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-accent-primary, #2196F3);
+  background: transparent;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: calc(var(--z-cursor, 500) - 1);
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+    height 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+    border-radius 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.follower--hover {
+  width: 80px;
+  height: 80px;
+  border-color: var(--color-accent-primary, #2196F3);
+  opacity: 0.5;
+}
+
+.follower--text {
+  width: auto;
+  height: auto;
+  min-width: 80px;
+  border-radius: 100px;
+  background-color: var(--color-accent-primary, #2196F3);
+  border-color: var(--color-accent-primary, #2196F3);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.follower--hidden {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+}
+
+.followerText {
+  color: var(--color-text-inverse, #fff);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dotHidden {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+}

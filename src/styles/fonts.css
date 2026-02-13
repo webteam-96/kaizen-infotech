@@ -1,0 +1,10 @@
+/* ===== FONT CONFIGURATION ===== */
+/*
+   Fonts are loaded via next/font/google in layout.tsx for optimal performance:
+   - Jost → --font-display (closest to Futura Medium per brand guidelines)
+   - Lato → --font-body (brand secondary font)
+   - JetBrains Mono → --font-mono
+
+   --font-heading uses the same Jost family as --font-display.
+   The font-family CSS variables are defined in globals.css.
+*/
