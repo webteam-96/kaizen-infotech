@@ -17,7 +17,7 @@ export const projects: Project[] = [
       'We developed a centralized web and mobile platform with club and district management tools, member directories and engagement modules, event and communication management capabilities, and over 1000 club and district websites. The platform supports expansion-ready architecture for membership dues and event management.',
     result:
       'The platform achieved widespread adoption across India with improved operational efficiency and centralized governance and reporting. Rotary Zones 4-7 became recognized as the world\'s largest provider of Rotary club websites.',
-    image: '/images/projects/rotary-zones.jpg',
+    image: '/images/projects/rotary-zones.png',
     gallery: [],
     technologies: ['ASP.NET', 'SQL Server', 'Android', 'iOS', 'APIs'],
     featured: true,
@@ -37,7 +37,7 @@ export const projects: Project[] = [
       'We built a unified digital platform combining an online grievance redressal system, pension management for 28000 employees, real-time vessel movement tracking, integrated service modules, and centralized dashboards with reporting.',
     result:
       'The platform delivered faster grievance resolution, improved transparency and accountability, streamlined employee service management, and enhanced port operational efficiency.',
-    image: '/images/projects/mbpt-eseva.jpg',
+    image: '/images/projects/mbpt-eseva.png',
     gallery: [],
     technologies: ['ASP.NET', 'SQL Server', 'APIs', 'Real-time Tracking'],
     featured: true,
@@ -57,7 +57,7 @@ export const projects: Project[] = [
       'We developed a secure enterprise platform with QR code payments for insurance, mediclaim, and fuel allowances, centralized employee communication, role-based module access, and a detailed employee directory.',
     result:
       'The platform eliminated reimbursement delays, improved internal coordination, secured access to employee data, and delivered better operational efficiency across the organization.',
-    image: '/images/projects/mrpl-connect.jpg',
+    image: '/images/projects/mrpl-connect.png',
     gallery: [],
     technologies: ['ASP.NET', 'QR Systems', 'SQL Server', 'APIs'],
     featured: false,
@@ -77,7 +77,7 @@ export const projects: Project[] = [
       'We delivered a fully digitized administrative handbook with advanced officer search functionality, contact management for 2000+ staff members, and an expansion-ready architecture for future growth.',
     result:
       'The platform enabled faster access to information, improved administrative efficiency, and reduced dependency on physical documents across the Income Tax Department.',
-    image: '/images/projects/aaykar-kutumb.jpg',
+    image: '/images/projects/aaykar-kutumb.png',
     gallery: [],
     technologies: ['ASP.NET', 'SQL Server', 'Search Systems'],
     featured: false,
@@ -97,7 +97,7 @@ export const projects: Project[] = [
       'We built a unified web and mobile platform with global member connectivity, event and news management, centralized information sharing, and automated workflows to improve member participation.',
     result:
       'The platform improved member engagement, streamlined operations across geographies, and strengthened global connectivity for the business community.',
-    image: '/images/projects/jito-world.jpg',
+    image: '/images/projects/jito-world.png',
     gallery: [],
     technologies: ['ASP.NET', 'Android', 'iOS', 'SQL Server', 'APIs'],
     featured: false,
@@ -117,7 +117,7 @@ export const projects: Project[] = [
       'We developed a secure marketplace platform with search, sort, and filter capabilities for donor profiles, verified donor information, user profile management, and a secure browsing experience.',
     result:
       'The platform simplified the donor selection process, improved accessibility for clients, and increased trust and transparency in the donor matching process.',
-    image: '/images/projects/orion-gametes.jpg',
+    image: '/images/projects/orion-gametes.png',
     gallery: [],
     technologies: ['ASP.NET', 'JavaScript', 'SQL Server', 'Secure Hosting'],
     featured: false,
@@ -137,7 +137,7 @@ export const projects: Project[] = [
       'We built a commission-free ride platform with meter-based fare calculation, direct payments to drivers without surcharges, and a driver and commuter friendly interface design.',
     result:
       'The platform improved trust and transparency in ride pricing, delivered better earnings for drivers, and provided fair pricing for commuters across the city.',
-    image: '/images/projects/yatri-mitra.jpg',
+    image: '/images/projects/yatri-mitra.png',
     gallery: [],
     technologies: ['Android', 'iOS', 'GPS', 'Payment Gateways', 'APIs'],
     featured: false,
@@ -157,7 +157,7 @@ export const projects: Project[] = [
       'We developed a clinic management system with online appointment scheduling, digital patient records and prescriptions, secure billing with encrypted payments, role-based access for doctors and staff, WhatsApp appointment reminders, and multi-device accessibility.',
     result:
       'The platform improved the patient experience significantly, reduced administrative workload for clinic staff, and delivered better overall clinic efficiency across all locations.',
-    image: '/images/projects/arovia.jpg',
+    image: '/images/projects/arovia.png',
     gallery: [],
     technologies: ['ASP.NET', 'WhatsApp API', 'Payment Gateways', 'SQL Server'],
     featured: false,
@@ -177,7 +177,7 @@ export const projects: Project[] = [
       'We built a centralized portal with NGO and organization listings, access to schemes, grants, loans, and donations, and easy navigation with powerful search functionality.',
     result:
       'The platform improved access to social support for beneficiaries and provided better visibility for NGOs and their programs.',
-    image: '/images/projects/zfunds.jpg',
+    image: '/images/projects/zfunds.png',
     gallery: [],
     technologies: ['ASP.NET', 'SQL Server', 'Search Systems'],
     featured: false,
@@ -197,7 +197,7 @@ export const projects: Project[] = [
       'We delivered a mobile app and website with a global member directory, community updates and announcements, role-based reports and analytics, events calendar and engagement tools, and admin dashboards with automated workflows.',
     result:
       'The platform improved member connectivity across the globe, delivered better visibility into participation and growth metrics, and streamlined administrative processes significantly.',
-    image: '/images/projects/agni-foundation.jpg',
+    image: '/images/projects/agni-foundation.png',
     gallery: [],
     technologies: ['ASP.NET', 'Android', 'iOS', 'SQL Server', 'APIs'],
     featured: false,
