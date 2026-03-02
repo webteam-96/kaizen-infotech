@@ -65,7 +65,7 @@ function CharCounter({ count, max }: { count: number; max: number }) {
   return (
     <span
       className={cn(
-        'text-[var(--text-xs)] tabular-nums transition-colors duration-200',
+        'text-[length:var(--text-xs)] tabular-nums transition-colors duration-200',
         isNearLimit
           ? 'text-[var(--color-accent-warm)]'
           : 'text-[var(--color-text-tertiary)]'
@@ -207,7 +207,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={textareaId}
           className={cn(
             'w-full resize-none overflow-hidden bg-transparent pb-2 pt-4',
-            'text-[var(--text-base)] text-[var(--color-text-primary)]',
+            'text-[length:var(--text-base)] text-[var(--color-text-primary)]',
             'font-[family-name:var(--font-body)]',
             'border-b-2 border-transparent outline-none',
             'placeholder-transparent',
@@ -245,7 +245,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
               <motion.p
                 id={errorId}
                 role="alert"
-                className="text-[var(--text-xs)] text-[var(--color-accent-warm)]"
+                className="text-[length:var(--text-xs)] text-[var(--color-accent-warm)]"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}

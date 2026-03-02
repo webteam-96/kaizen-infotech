@@ -129,10 +129,12 @@ export function Hero() {
           stagger={0.03}
           duration={0.8}
           className={cn(
-            'mx-auto max-w-4xl',
+            'mx-auto w-full max-w-4xl',
             'font-[family-name:var(--font-display)]',
-            'text-[clamp(2.5rem,6vw,5rem)] leading-[1.1] tracking-tight',
-            'text-[var(--color-text-primary)]'
+            'text-[length:var(--text-hero)]',
+            'leading-[1.08] tracking-tight',
+            'text-[var(--color-text-primary)]',
+            'text-balance hyphens-none break-normal whitespace-normal'
           )}
         >
           Custom Software and Digital Solutions That Drive Business Efficiency
@@ -142,10 +144,11 @@ export function Hero() {
         <FadeIn direction="up" delay={0.6} distance={20}>
           <p
             className={cn(
-              'mx-auto mt-6 max-w-2xl',
-              'text-[length:var(--text-lg)] leading-relaxed',
+              'mx-auto mt-4 max-w-2xl sm:mt-6',
+              'text-[length:var(--text-base)] leading-relaxed sm:text-[length:var(--text-lg)]',
               'text-[var(--color-text-secondary)]',
-              'font-[family-name:var(--font-body)]'
+              'font-[family-name:var(--font-body)]',
+              'text-pretty'
             )}
           >
             We deliver custom software development, mobile app development,
@@ -156,7 +159,7 @@ export function Hero() {
 
         {/* CTAs */}
         <FadeIn direction="up" delay={0.9} distance={30}>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 md:mt-10">
             <Button variant="primary" size="lg" href="/services">
               Explore Our Services
             </Button>
@@ -169,7 +172,7 @@ export function Hero() {
         {/* Accent line below CTAs */}
         <div
           ref={accentLineRef}
-          className="mx-auto mt-6 h-px w-32 origin-center bg-[var(--color-accent-primary)]"
+          className="mx-auto mt-4 h-px w-32 origin-center bg-[var(--color-accent-primary)] sm:mt-6"
         />
       </div>
 

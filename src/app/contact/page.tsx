@@ -174,7 +174,7 @@ export default function ContactPage() {
 
       {/* Contact Form + Info */}
       <section className="px-6 pb-24 md:px-12 lg:px-24">
-        <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[1fr_auto_400px]">
+        <div className="mx-auto grid max-w-7xl gap-16 md:grid-cols-2 lg:grid-cols-[1fr_auto_400px]">
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-10">
             <div ref={formFieldsRef} className="space-y-10">

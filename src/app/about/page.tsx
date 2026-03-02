@@ -257,7 +257,7 @@ export default function AboutPage() {
             </ScrollFadeIn>
 
             {/* Quick stats */}
-            <div ref={statsGridRef} className="grid grid-cols-3 gap-8 border-t border-[var(--color-border)] pt-8">
+            <div ref={statsGridRef} className="grid grid-cols-1 gap-8 border-t border-[var(--color-border)] pt-8 sm:grid-cols-3">
               <div>
                 <CountUp
                   end={10}

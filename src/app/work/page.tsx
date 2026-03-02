@@ -110,11 +110,11 @@ export default function WorkPage() {
             >
               <div
                 ref={projectGridRef}
-                className="col-span-1 grid grid-cols-1 gap-6 md:col-span-2 md:grid-cols-2"
+                className="col-span-1 grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2 md:grid-cols-2"
               >
                 {/* Featured project — full width */}
                 {featuredProject && (
-                  <div className="col-span-1 md:col-span-2">
+                  <div className="col-span-1 sm:col-span-2 md:col-span-2">
                     <ProjectCard
                       title={featuredProject.title}
                       client={featuredProject.client}

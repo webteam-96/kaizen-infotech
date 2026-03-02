@@ -382,7 +382,7 @@ export default function ServicesPage() {
             </TextReveal>
           </div>
 
-          <div ref={whyChooseGridRef} className="grid gap-8 md:grid-cols-3">
+          <div ref={whyChooseGridRef} className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
             {whyChooseUs.map((item) => (
               <div key={item.title} className="text-center">
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">

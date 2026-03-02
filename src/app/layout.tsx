@@ -76,9 +76,15 @@ export default function RootLayout({
         style={{ fontFamily: 'var(--font-body)' }}
       >
         <Providers>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-md focus:bg-[var(--color-accent-primary)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[var(--color-text-inverse)]"
+          >
+            Skip to main content
+          </a>
           <ScrollProgress />
           <Navbar />
-          {children}
+          <div id="main-content">{children}</div>
           <Footer />
         </Providers>
       </body>

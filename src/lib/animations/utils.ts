@@ -33,7 +33,41 @@ export function splitTextIntoSpans(
   const text = element.textContent || '';
   element.innerHTML = '';
 
-  const units = type === 'chars' ? text.split('') : text.split(/(\s+)/);
+  // For chars mode, group characters inside word wrappers so the browser
+  // only breaks between words, never mid-word.
+  if (type === 'chars') {
+    const parts = text.split(/(\s+)/);
+    const elements: HTMLElement[] = [];
+
+    parts.forEach((part) => {
+      if (part === '') return;
+
+      if (/^\s+$/.test(part)) {
+        element.appendChild(document.createTextNode(part));
+        return;
+      }
+
+      // Word wrapper: keeps all characters in this word on the same line
+      const wordWrap = document.createElement('span');
+      wordWrap.style.display = 'inline-block';
+      wordWrap.style.whiteSpace = 'nowrap';
+
+      part.split('').forEach((char) => {
+        const charSpan = document.createElement('span');
+        charSpan.style.display = 'inline-block';
+        charSpan.textContent = char;
+        wordWrap.appendChild(charSpan);
+        elements.push(charSpan);
+      });
+
+      element.appendChild(wordWrap);
+    });
+
+    return { elements, revert };
+  }
+
+  // Words mode
+  const units = text.split(/(\s+)/);
   const elements: HTMLElement[] = [];
 
   units.forEach((unit) => {
@@ -41,11 +75,6 @@ export function splitTextIntoSpans(
 
     if (/^\s+$/.test(unit)) {
       element.appendChild(document.createTextNode(unit));
-      return;
-    }
-
-    if (type === 'chars' && unit === ' ') {
-      element.appendChild(document.createTextNode(' '));
       return;
     }
 

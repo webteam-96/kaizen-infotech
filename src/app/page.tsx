@@ -1,4 +1,5 @@
-import { Hero } from '@/components/sections/Hero';
+import { CountdownLoader } from '@/components/sections/CountdownLoader';
+import { RubiksCubeExperience } from '@/components/sections/RubiksCubeExperience';
 import { BrandPromise } from '@/components/sections/BrandPromise';
 import { ServicesScroll } from '@/components/sections/ServicesScroll';
 import { StatsGrid } from '@/components/sections/StatsGrid';
@@ -12,7 +13,8 @@ import { CTASection } from '@/components/sections/CTASection';
 export default function HomePage() {
   return (
     <main>
-      <Hero />
+      <CountdownLoader />
+      <RubiksCubeExperience />
       <BrandPromise />
       <ServicesScroll />
       <StatsGrid />

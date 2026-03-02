@@ -129,7 +129,7 @@ export default function CareersPage() {
             </h2>
           </FadeIn>
 
-          <StaggerChildren className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map((benefit) => (
               <Card key={benefit.title} tilt glow className="p-8">
                 <div className="relative z-10">

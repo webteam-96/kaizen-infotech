@@ -26,9 +26,9 @@ export interface ButtonProps
 // ---------------------------------------------------------------------------
 
 const sizeClasses = {
-  sm: 'px-4 py-1.5 text-[var(--text-xs)] gap-1.5',
-  md: 'px-6 py-2.5 text-[var(--text-sm)] gap-2',
-  lg: 'px-8 py-3.5 text-[var(--text-base)] gap-2.5',
+  sm: 'min-h-8 px-3.5 py-1.5 text-[13px] gap-1.5',
+  md: 'min-h-10 px-5 py-2.5 text-sm gap-2',
+  lg: 'min-h-12 px-7 py-3 text-[15px] gap-2.5',
 } as const;
 
 const iconSizeClasses = {
@@ -44,9 +44,9 @@ const spinnerSizeClasses = {
 } as const;
 
 const pillSizeClasses = {
-  sm: 'px-3 py-1 text-[var(--text-xs)] gap-1',
-  md: 'px-4 py-1.5 text-[var(--text-xs)] gap-1.5',
-  lg: 'px-6 py-2.5 text-[var(--text-sm)] gap-2',
+  sm: 'px-3 py-1 text-xs gap-1',
+  md: 'px-4 py-1.5 text-xs gap-1.5',
+  lg: 'px-6 py-2.5 text-sm gap-2',
 } as const;
 
 // Framer Motion spring matching design system's --transition-spring
@@ -113,6 +113,37 @@ function Spinner({ size }: { size: 'sm' | 'md' | 'lg' }) {
         fill="currentColor"
       />
     </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AnimatedText — character-stagger hover wave for primary/secondary
+// ---------------------------------------------------------------------------
+
+function AnimatedText({ children }: { children: React.ReactNode }) {
+  if (typeof children !== 'string') return <>{children}</>;
+
+  const words = children.split(' ');
+
+  return (
+    <span className="inline-flex flex-wrap items-center justify-center gap-[0.25em]">
+      {words.map((word, wi) => (
+        <span key={wi} className="inline-flex">
+          {word.split('').map((char, ci) => {
+            const globalIndex = words.slice(0, wi).reduce((sum, w) => sum + w.length + 1, 0) + ci;
+            return (
+              <span
+                key={ci}
+                className="inline-block transition-transform duration-200 group-hover:-translate-y-0.5"
+                style={{ transitionDelay: `${globalIndex * 25}ms` }}
+              >
+                {char}
+              </span>
+            );
+          })}
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -189,7 +220,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const baseClasses = cn(
       'group relative inline-flex items-center justify-center',
-      'font-medium font-[family-name:var(--font-heading)]',
+      'font-medium font-[family-name:var(--font-body)] tracking-[-0.01em]',
       'select-none overflow-hidden outline-none cursor-pointer',
       'focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)]',
       'focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-primary)]',
@@ -275,7 +306,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               transition={{ duration: 0.2 }}
             >
               {leftIcon && <span className="shrink-0">{leftIcon}</span>}
-              {children}
+              {variant === 'primary' || variant === 'secondary' ? (
+                <AnimatedText>{children}</AnimatedText>
+              ) : (
+                children
+              )}
               {rightIcon && <span className="shrink-0">{rightIcon}</span>}
             </motion.span>
           )}

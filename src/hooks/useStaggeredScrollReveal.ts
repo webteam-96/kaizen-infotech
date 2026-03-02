@@ -41,7 +41,10 @@ export function useStaggeredScrollReveal(
     () => {
       if (!ref.current) return;
 
-      const children = ref.current.querySelectorAll(childSelector);
+      // Use .children for default '> *' to avoid scope-related querySelectorAll issues
+      const children = childSelector === '> *'
+        ? ref.current.children
+        : ref.current.querySelectorAll(childSelector);
       if (children.length === 0) return;
 
       if (prefersReducedMotion) {

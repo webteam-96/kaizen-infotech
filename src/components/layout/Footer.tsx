@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
@@ -109,14 +110,17 @@ export function Footer() {
         className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)] py-16 lg:py-24"
       >
         {/* Top Section */}
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           {/* Brand Column */}
           <div className="lg:col-span-4">
-            <Link
-              href="/"
-              className="inline-block font-[family-name:var(--font-heading)] text-2xl font-bold tracking-tight text-[var(--color-text-primary)]"
-            >
-              Kaizen<span className="text-[var(--color-accent-primary)]">.</span>
+            <Link href="/" className="inline-block">
+              <Image
+                src="/images/logos/kaizen-logo.png"
+                alt="Kaizen Infotech Solutions"
+                width={160}
+                height={40}
+                className="h-10 w-auto"
+              />
             </Link>
             <p className="mt-4 max-w-sm text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               Kaizen Infotech Solutions Pvt. Ltd. delivers custom software, mobile apps, event
@@ -179,7 +183,7 @@ export function Footer() {
                 ref={inputRef}
                 type="email"
                 placeholder="your@email.com"
-                className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] transition-all duration-300 focus:border-[var(--color-accent-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent-primary)]/30"
+                className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-base text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] transition-all duration-300 focus:border-[var(--color-accent-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent-primary)]/30"
                 aria-label="Email for newsletter"
               />
               <button

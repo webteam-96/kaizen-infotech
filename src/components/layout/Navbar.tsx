@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 import { NAV_LINKS } from '@/lib/utils/constants';
+import { useLoaderStore } from '@/store/loaderStore';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -13,6 +15,8 @@ export function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const lastScrollY = useRef(0);
+  const loaderComplete = useLoaderStore((s) => s.isComplete);
+  const isHomepage = pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,9 +50,12 @@ export function Navbar() {
   return (
     <>
       <motion.header
-        initial={{ y: 0 }}
-        animate={{ y: isVisible ? 0 : -100 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        initial={{ y: isHomepage ? -100 : 0, opacity: isHomepage ? 0 : 1 }}
+        animate={{
+          y: isHomepage && !loaderComplete ? -100 : isVisible ? 0 : -100,
+          opacity: isHomepage && !loaderComplete ? 0 : 1,
+        }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
           'fixed top-0 left-0 right-0 z-[var(--z-sticky)] transition-all duration-300',
           isScrolled
@@ -58,22 +65,25 @@ export function Navbar() {
       >
         <nav className="mx-auto flex max-w-[var(--container-max)] items-center justify-between px-[var(--container-padding)]">
           {/* Logo */}
-          <Link
-            href="/"
-            className="relative z-10 font-[family-name:var(--font-heading)] text-xl font-bold tracking-tight text-[var(--color-text-primary)]"
-          >
-            <motion.span
+          <Link href="/" className="relative z-10">
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
-              Kaizen
-              <span className="text-[var(--color-accent-primary)]">.</span>
-            </motion.span>
+              <Image
+                src="/images/logos/kaizen-logo.png"
+                alt="Kaizen Infotech Solutions"
+                width={120}
+                height={36}
+                className="h-7 w-auto sm:h-9"
+                priority
+              />
+            </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden items-center gap-8 md:flex">
+          <div className="hidden items-center gap-8 lg:flex">
             {NAV_LINKS.map((link, i) => (
               <NavLink
                 key={link.href}
@@ -83,24 +93,12 @@ export function Navbar() {
                 index={i}
               />
             ))}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <Link
-                href="/contact"
-                className="rounded-full bg-[var(--color-accent-primary)] px-6 py-2.5 font-[family-name:var(--font-body)] text-sm font-medium text-[var(--color-text-inverse)] transition-all duration-300 hover:scale-105 hover:shadow-[var(--shadow-glow)]"
-              >
-                Get in Touch
-              </Link>
-            </motion.div>
           </div>
 
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="relative z-10 flex h-10 w-10 flex-col items-center justify-center gap-1.5 md:hidden"
+            className="relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 lg:hidden"
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMenuOpen}
           >

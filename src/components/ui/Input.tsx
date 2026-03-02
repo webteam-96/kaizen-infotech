@@ -129,7 +129,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         id={inputId}
         className={cn(
           'w-full bg-transparent pb-2 pt-4',
-          'text-[var(--text-base)] text-[var(--color-text-primary)]',
+          'text-[length:var(--text-base)] text-[var(--color-text-primary)]',
           'font-[family-name:var(--font-body)]',
           'border-b-2 border-transparent outline-none',
           'transition-colors duration-300',
@@ -191,7 +191,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           <motion.p
             id={errorId}
             role="alert"
-            className="mt-1.5 text-[var(--text-xs)] text-[var(--color-accent-warm)]"
+            className="mt-1.5 text-[length:var(--text-xs)] text-[var(--color-accent-warm)]"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}

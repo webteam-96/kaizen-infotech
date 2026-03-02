@@ -217,7 +217,7 @@ export function Select({
         aria-describedby={error ? errorId : undefined}
         className={cn(
           'flex w-full cursor-pointer items-center justify-between bg-transparent pb-2 pt-4',
-          'text-[var(--text-base)] text-left outline-none',
+          'text-[length:var(--text-base)] text-left outline-none',
           'font-[family-name:var(--font-body)]',
           'border-b-2 border-transparent',
           'focus-visible:ring-0'
@@ -297,7 +297,7 @@ export function Select({
                   aria-selected={isSelected}
                   className={cn(
                     'flex cursor-pointer items-center justify-between px-4 py-2.5',
-                    'text-[var(--text-sm)] font-[family-name:var(--font-body)]',
+                    'text-[length:var(--text-sm)] font-[family-name:var(--font-body)]',
                     'transition-colors duration-150',
                     isHighlighted
                       ? 'bg-[var(--color-surface-glass)] text-[var(--color-text-primary)]'
@@ -344,7 +344,7 @@ export function Select({
           <motion.p
             id={errorId}
             role="alert"
-            className="mt-1.5 text-[var(--text-xs)] text-[var(--color-accent-warm)]"
+            className="mt-1.5 text-[length:var(--text-xs)] text-[var(--color-accent-warm)]"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
