@@ -67,7 +67,7 @@ export function ProjectCard({
       >
         {/* Background image */}
         <motion.div
-          className="absolute inset-0"
+          className="absolute inset-0 bg-[var(--color-bg-secondary)]"
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
@@ -76,7 +76,7 @@ export function ProjectCard({
             alt={title}
             fill
             sizes={featured ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 33vw'}
-            className="object-cover"
+            className="object-contain p-4"
           />
         </motion.div>
 

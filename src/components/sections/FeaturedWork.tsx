@@ -180,14 +180,14 @@ export function FeaturedWork() {
                   )}
                 >
                   {/* Image side */}
-                  <div className="relative h-[200px] w-full flex-shrink-0 overflow-hidden md:h-full md:w-1/2">
+                  <div className="relative h-[200px] w-full flex-shrink-0 overflow-hidden bg-[var(--color-bg-secondary)] md:h-full md:w-1/2">
                     <Image
                       src={project.image}
                       alt={project.title}
                       fill
                       sizes="(max-width: 768px) 100vw, 430px"
                       className={cn(
-                        'object-cover transition-transform duration-[1.6s]',
+                        'object-contain p-4 transition-transform duration-[1.6s]',
                         i === activeIdx ? 'scale-[1.04]' : 'scale-100'
                       )}
                       style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
