@@ -674,7 +674,7 @@ export function RubiksCubeExperience() {
         <div
           ref={sideRef}
           className="fixed right-6 top-1/2 z-10 -translate-y-1/2 rotate-90 whitespace-nowrap"
-          style={{ fontSize: '0.48rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.15)' }}
+          style={{ fontSize: '0.75rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.15)' }}
         >
           01 &mdash; The Scramble
         </div>
@@ -693,7 +693,7 @@ export function RubiksCubeExperience() {
           </div>
 
           <div data-card="card-s1b" className="rc-glass-card rc-side-right rc-card-hero" style={{ opacity: 0 }}>
-            <p className="rc-body rc-stagger" data-stg="s1b-0" style={{ margin: 0, fontSize: '1.02rem', color: '#1a1a1a' }}>Many organizations feel exactly the same.</p>
+            <p className="rc-body rc-stagger" data-stg="s1b-0" style={{ margin: 0, fontSize: '1.0625rem', color: '#1a1a1a' }}>Many organizations feel exactly the same.</p>
             <p className="rc-body rc-stagger" data-stg="s1b-1" style={{ marginTop: '0.6rem' }}>Disconnected systems. Manual processes. Scattered data. Limited visibility. Growing complexity.</p>
           </div>
 

@@ -170,7 +170,7 @@ export default function AboutPage() {
           <TextReveal
             as="h1"
             splitBy="words"
-            className="text-[clamp(2.5rem,6vw,5rem)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
+            className="text-[clamp(3rem,6vw,5.5rem)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
             stagger={0.06}
           >
             A Technology Partner Focused on Solving Real Business Problems
@@ -223,7 +223,7 @@ export default function AboutPage() {
 
             <ScrollFadeIn delay={0.1}>
               <h2
-                className="mb-8 text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+                className="mb-8 text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Built on the philosophy of{' '}
@@ -262,7 +262,7 @@ export default function AboutPage() {
                 <CountUp
                   end={10}
                   suffix="+"
-                  className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-[var(--color-text-primary)]"
+                  className="text-[clamp(1.75rem,3vw,3rem)] font-bold text-[var(--color-text-primary)]"
                 />
                 <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
                   Years of Experience
@@ -272,7 +272,7 @@ export default function AboutPage() {
                 <CountUp
                   end={100}
                   suffix="+"
-                  className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-[var(--color-text-primary)]"
+                  className="text-[clamp(1.75rem,3vw,3rem)] font-bold text-[var(--color-text-primary)]"
                 />
                 <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
                   Projects Delivered
@@ -282,7 +282,7 @@ export default function AboutPage() {
                 <CountUp
                   end={8}
                   suffix="+"
-                  className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-[var(--color-text-primary)]"
+                  className="text-[clamp(1.75rem,3vw,3rem)] font-bold text-[var(--color-text-primary)]"
                 />
                 <p className="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
                   Industries Served
@@ -371,7 +371,7 @@ export default function AboutPage() {
                   Our Mission
                 </span>
                 <h2
-                  className="text-[clamp(1.75rem,4vw,3.5rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+                  className="text-[clamp(2rem,4vw,3.75rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   To make technology work for people, processes, and progress —
@@ -394,7 +394,7 @@ export default function AboutPage() {
                   Our Vision
                 </span>
                 <h2
-                  className="text-[clamp(1.75rem,4vw,3.5rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+                  className="text-[clamp(2rem,4vw,3.75rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   To be the trusted technology partner that organizations choose
@@ -444,7 +444,7 @@ export default function AboutPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               The Kaizen Way
             </TextReveal>
@@ -516,7 +516,7 @@ export default function AboutPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               End-to-End Digital Solutions
             </TextReveal>
@@ -589,7 +589,7 @@ export default function AboutPage() {
                           </>
                         ) : (
                           <span
-                            className="hidden text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text-tertiary)] md:block"
+                            className="hidden text-[clamp(1.75rem,3vw,2.5rem)] font-bold text-[var(--color-text-tertiary)] md:block"
                             style={{ fontFamily: 'var(--font-heading)' }}
                           >
                             {milestone.year}
@@ -620,7 +620,7 @@ export default function AboutPage() {
                       <div className={cn(!isLeft && 'md:order-1 md:text-right')}>
                         {isLeft ? (
                           <span
-                            className="hidden text-[clamp(1.5rem,3vw,2rem)] font-bold text-[var(--color-text-tertiary)] md:block"
+                            className="hidden text-[clamp(1.75rem,3vw,2.5rem)] font-bold text-[var(--color-text-tertiary)] md:block"
                             style={{ fontFamily: 'var(--font-heading)' }}
                           >
                             {milestone.year}
@@ -676,7 +676,7 @@ export default function AboutPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               Our Delivery Process
             </TextReveal>
@@ -705,7 +705,7 @@ export default function AboutPage() {
                 )}
               >
                 <span
-                  className="mb-4 inline-block text-[clamp(2rem,3vw,3rem)] font-bold text-[var(--color-accent-primary)] opacity-30"
+                  className="mb-4 inline-block text-[clamp(2.25rem,3vw,3.5rem)] font-bold text-[var(--color-accent-primary)] opacity-30"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {step.number}
@@ -735,7 +735,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
-              className="text-[clamp(2rem,4vw,3.5rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,4rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Let&apos;s Build Technology That Works

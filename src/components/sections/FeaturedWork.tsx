@@ -161,7 +161,7 @@ export function FeaturedWork() {
           <div
             ref={stackRef}
             className="relative mx-auto w-full max-w-[860px] px-4"
-            style={{ height: 'min(520px, 70vh)' }}
+            style={{ height: 'min(640px, 80vh)' }}
           >
             {featured.map((project, i) => (
               <div
@@ -204,7 +204,7 @@ export function FeaturedWork() {
                     </span>
 
                     <h3
-                      className="mb-4 text-[clamp(1.5rem,3vw,2.25rem)] font-medium leading-[1.15] tracking-tight text-[var(--color-text-primary)]"
+                      className="mb-4 text-[clamp(2rem,3vw,2.75rem)] font-medium leading-[1.15] tracking-tight text-[var(--color-text-primary)]"
                       style={{
                         fontFamily: 'var(--font-display)',
                         letterSpacing: '-0.02em',

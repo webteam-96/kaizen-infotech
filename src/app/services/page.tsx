@@ -197,7 +197,7 @@ export default function ServicesPage() {
             <TextReveal
               as="h1"
               splitBy="words"
-              className="text-[clamp(2.5rem,6vw,5rem)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
+              className="text-[clamp(3rem,6vw,5.5rem)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
               stagger={0.06}
             >
               What We Do Best
@@ -261,7 +261,7 @@ export default function ServicesPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               End-to-End Technology Services
             </TextReveal>
@@ -376,7 +376,7 @@ export default function ServicesPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               Why Choose Us
             </TextReveal>
@@ -423,7 +423,7 @@ export default function ServicesPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               Frequently Asked Questions
             </TextReveal>
@@ -442,7 +442,7 @@ export default function ServicesPage() {
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
-              className="text-[clamp(2rem,4vw,3.5rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[clamp(2.25rem,4vw,4rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Let&apos;s Discuss Your Project
