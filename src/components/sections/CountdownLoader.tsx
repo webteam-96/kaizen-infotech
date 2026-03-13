@@ -8,6 +8,7 @@ import { useLoaderStore } from '@/store/loaderStore';
 const NUMS = [5, 4, 3, 2, 1];
 const SHOW_TIME = 850;
 const EXIT_TIME = 400;
+const SESSION_KEY = 'kaizen-intro-seen';
 
 export function CountdownLoader() {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -32,6 +33,31 @@ export function CountdownLoader() {
 
   useEffect(() => {
     registerGSAPPlugins();
+
+    // ── Session guard: only show on the very first visit per browser session ──
+    // sessionStorage persists through page refreshes but clears when the tab is closed.
+    // This means: first ever visit → show intro; refresh → skip; navigate home → skip.
+    let firstVisit = true;
+    try {
+      if (sessionStorage.getItem(SESSION_KEY)) {
+        firstVisit = false;
+      } else {
+        // Mark immediately so a hard refresh won't re-trigger the intro
+        sessionStorage.setItem(SESSION_KEY, '1');
+      }
+    } catch {
+      // sessionStorage blocked (e.g. private browsing policy) — just show intro
+    }
+
+    if (!firstVisit) {
+      // Skip immediately: keep overlay hidden and unblock the page
+      setComplete();
+      return;
+    }
+
+    // ── First visit: show overlay and run countdown ──
+    const overlay = overlayRef.current;
+    if (overlay) overlay.style.display = 'flex';
     document.body.classList.add('loader-active');
 
     let idx = 0;
@@ -62,7 +88,6 @@ export function CountdownLoader() {
       }, SHOW_TIME);
     }
 
-    // Start countdown after small delay
     const startTimer = setTimeout(showNext, 400);
 
     return () => {
@@ -90,8 +115,9 @@ export function CountdownLoader() {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-800"
-      style={{ background: '#f5f5f5' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      /* Start hidden — shown only on first visit via useEffect */
+      style={{ background: '#f5f5f5', display: 'none' }}
     >
       {NUMS.map(n => (
         <div key={n} id={`cd-${n}`} className="cd-number">
@@ -101,13 +127,13 @@ export function CountdownLoader() {
         </div>
       ))}
 
-      {/* Brand text */}
+      {/* Brand name */}
       <div
-        className="absolute left-1/2 -translate-x-1/2"
+        className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap"
         style={{
           bottom: '15vh',
           fontFamily: 'var(--font-body)',
-          fontSize: '0.6rem',
+          fontSize: '0.75rem',
           letterSpacing: '0.4em',
           textTransform: 'uppercase',
           color: 'rgba(0,0,0,0.2)',
@@ -119,27 +145,23 @@ export function CountdownLoader() {
       </div>
 
       {/* Skip button */}
-      <div
+      <button
         onClick={handleSkip}
         className="absolute bottom-[3%] left-1/2 -translate-x-1/2 cursor-pointer uppercase transition-colors duration-300"
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 9,
-          letterSpacing: 3,
+          fontSize: '0.75rem',
+          letterSpacing: '3px',
           color: 'rgba(0,0,0,0.2)',
+          background: 'none',
+          border: 'none',
+          padding: '8px 20px',
         }}
         onMouseEnter={e => (e.currentTarget.style.color = 'rgba(0,0,0,0.5)')}
         onMouseLeave={e => (e.currentTarget.style.color = 'rgba(0,0,0,0.2)')}
       >
         skip
-      </div>
-
-      <style jsx>{`
-        .rc-cd-fade-out {
-          opacity: 0;
-          pointer-events: none;
-        }
-      `}</style>
+      </button>
     </div>
   );
 }

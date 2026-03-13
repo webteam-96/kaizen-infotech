@@ -403,6 +403,17 @@ body.loader-active {
 }
 @keyframes rc-cdBrandIn { to { opacity: 1; } }
 
+/* Overlay exit — slides the entire screen up like a rising curtain */
+@keyframes rc-cdOverlayExit {
+  0%   { transform: translateY(0);    opacity: 1; }
+  60%  { transform: translateY(-4%);  opacity: 1; }
+  100% { transform: translateY(-8%);  opacity: 0; }
+}
+.rc-cd-fade-out {
+  animation: rc-cdOverlayExit 0.9s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+  pointer-events: none !important;
+}
+
 .cd-number {
   position: absolute;
   display: flex; flex-direction: column; align-items: center;
