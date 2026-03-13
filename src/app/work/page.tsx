@@ -1,57 +1,36 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
-import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
-import { ProjectCard } from '@/components/ui/ProjectCard';
+import { StickyProjectCard } from '@/components/ui/StickyProjectCard';
 import { Button } from '@/components/ui/Button';
 import { projects, projectCategories, type ProjectCategory } from '@/content/projects';
 
 export default function WorkPage() {
   const [activeCategory, setActiveCategory] = useState<ProjectCategory>('All');
-  const projectGridRef = useRef<HTMLDivElement>(null);
 
   const filteredProjects =
     activeCategory === 'All'
       ? projects
       : projects.filter((p) => p.category === activeCategory);
 
-  const featuredProject = filteredProjects.find((p) => p.featured);
-  const otherProjects = filteredProjects.filter((p) => !p.featured);
-
-  useStaggeredScrollReveal(projectGridRef, {
-    from: { opacity: 0, clipPath: 'inset(8% 8% 8% 8%)' },
-    to: { opacity: 1, clipPath: 'inset(0% 0% 0% 0%)' },
-    stagger: 0.12,
-  });
-
-  // Re-trigger GSAP when category changes by resetting children visibility
-  useEffect(() => {
-    if (!projectGridRef.current) return;
-    const children = projectGridRef.current.querySelectorAll(':scope > *');
-    children.forEach((child) => {
-      (child as HTMLElement).style.opacity = '';
-      (child as HTMLElement).style.clipPath = '';
-    });
-  }, [activeCategory]);
-
   return (
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
-      {/* Hero Section */}
-      <section className="px-6 pb-16 pt-32 md:px-12 lg:px-24">
+      {/* ── Hero ── */}
+      <section className="px-6 pb-12 pt-32 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl">
           <TextReveal
             as="h1"
             splitBy="words"
-            className="mb-6 text-[length:var(--text-6xl)] font-bold leading-[1.05] text-[var(--color-text-primary)] md:text-[length:var(--text-7xl)]"
+            className="mb-6 text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.05] text-[var(--color-text-primary)]"
           >
             Real-World Digital Solutions Built for Impact
           </TextReveal>
           <ScrollFadeIn delay={0.3}>
             <p
-              className="max-w-2xl text-[length:var(--text-xl)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="max-w-2xl text-[length:var(--text-lg)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Explore our portfolio of digital platforms built for government,
@@ -61,8 +40,8 @@ export default function WorkPage() {
         </div>
       </section>
 
-      {/* Category Filter */}
-      <section className="px-6 pb-12 md:px-12 lg:px-24">
+      {/* ── Category Filter ── */}
+      <section className="px-6 pb-10 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl">
           <ScrollFadeIn delay={0.4}>
             <div className="flex flex-wrap gap-3">
@@ -96,62 +75,42 @@ export default function WorkPage() {
         </div>
       </section>
 
-      {/* Project Grid */}
-      <section className="px-6 pb-24 md:px-12 lg:px-24">
-        <div className="mx-auto max-w-7xl">
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              key={activeCategory}
-              className="grid grid-cols-1 gap-6 md:grid-cols-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-            >
-              <div
-                ref={projectGridRef}
-                className="col-span-1 grid grid-cols-1 gap-6 sm:grid-cols-2 md:col-span-2 md:grid-cols-2"
-              >
-                {/* Featured project — full width */}
-                {featuredProject && (
-                  <div className="col-span-1 sm:col-span-2 md:col-span-2">
-                    <ProjectCard
-                      title={featuredProject.title}
-                      client={featuredProject.client}
-                      category={featuredProject.category}
-                      year={featuredProject.year}
-                      image={featuredProject.image}
-                      slug={featuredProject.slug}
-                      featured
-                    />
-                  </div>
-                )}
+      {/* ── Sticky Scroll Project Stack ── */}
+      {/*
+        Each card uses `position: sticky` and a scroll-driven scale + tilt effect
+        (adapted from Skiper UI StickyCard_003). Cards shrink + tilt away as you
+        scroll past them, revealing the next card beneath.
+      */}
+      <AnimatePresence mode="wait">
+        <motion.section
+          key={activeCategory}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center gap-[8vh] px-4 pb-[30vh] pt-[4vh] md:px-8"
+        >
+          {filteredProjects.map((project, idx) => (
+            <StickyProjectCard
+              key={`${activeCategory}-${project.slug}`}
+              title={project.title}
+              client={project.client}
+              category={project.category}
+              year={project.year}
+              image={project.image}
+              slug={project.slug}
+              index={idx}
+            />
+          ))}
+        </motion.section>
+      </AnimatePresence>
 
-                {/* Other projects — 2-column grid */}
-                {otherProjects.map((project) => (
-                  <div key={project.slug}>
-                    <ProjectCard
-                      title={project.title}
-                      client={project.client}
-                      category={project.category}
-                      year={project.year}
-                      image={project.image}
-                      slug={project.slug}
-                    />
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </section>
-
-      {/* CTA Section */}
+      {/* ── CTA Section ── */}
       <section className="border-t border-[var(--color-border)] px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl text-center">
           <ScrollFadeIn>
             <h2
-              className="mb-6 text-[length:var(--text-4xl)] font-bold text-[var(--color-text-primary)] md:text-[length:var(--text-5xl)]"
+              className="mb-6 text-[clamp(2rem,4vw,3.5rem)] font-bold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Let&apos;s Build the Next Success Story
