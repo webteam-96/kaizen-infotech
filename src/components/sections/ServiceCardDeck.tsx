@@ -77,15 +77,18 @@ export function ServiceCardDeck() {
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
     if (cards.length === 0) return;
 
-    // ── Initial state: cards stacked, small, semi-transparent ────────────────
+    // ── Initial state: all cards hidden below stack, flat, scaled down ───────
+    // z-index set here so card 4 (top of pile) renders above cards 0-3.
+    // opacity: 0 for all — no ghosting from stacked semi-transparent cards.
     cards.forEach((card, i) => {
       const s = STACK[i];
       gsap.set(card, {
         x: s.x,
-        y: s.y + 40,   // start 40px below stack position, then rise up
-        rotation: s.r,
-        scale: 0.55,
-        opacity: 0.2,
+        y: s.y + 70,   // start 70px below, will rise into stack in Phase 1
+        rotation: 0,   // start flat; Phase 1 tilts each card to its stack angle
+        scale: 0.6,
+        opacity: 0,
+        zIndex: i + 1, // card 4 = z:5 (top of pile), card 0 = z:1 (bottom)
         transformOrigin: 'center center',
       });
     });
@@ -95,7 +98,7 @@ export function ServiceCardDeck() {
         trigger: containerRef.current,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 1.2,
+        scrub: 1,
         onUpdate(self) {
           if (hintRef.current) {
             hintRef.current.style.opacity = self.progress > 0.02 ? '0' : '1';
@@ -104,32 +107,39 @@ export function ServiceCardDeck() {
       },
     });
 
-    // ── Phase 1 (tl 0–1): stack pops up ─────────────────────────────────────
-    // All cards animate together: scale 0.55→1, opacity 0.2→0.7, y settles
+    // ── Phase 1 (tl 0–1.2): deck rises from below ────────────────────────────
+    // Cards stagger in bottom-first so the deck assembles visually.
+    // Graduated opacity: back cards barely visible (0.2), top card solid (0.9).
+    // With z-index, the top card covers the lower ones — only their small
+    // peeking edges show through at low opacity. No ghosting.
     cards.forEach((card, i) => {
       const s = STACK[i];
+      const stackOpacity = 0.2 + (i / (cards.length - 1)) * 0.7; // 0.2 → 0.9
       tl.to(card, {
         x: s.x, y: s.y,
         rotation: s.r,
         scale: 1,
-        opacity: 0.7,
-        ease: 'power2.inOut',
+        opacity: stackOpacity,
+        ease: 'power3.out',
         duration: 1,
-      }, 0); // all start at the same tl position
+      }, i * 0.06); // card 0 at t=0, card 4 at t=0.24 — assembles bottom→top
     });
 
-    // ── Phase 2 (tl 1–2.7): cards fly to grid positions ─────────────────────
-    // Slight stagger per card (0.05s) for a natural "deal" feel
+    // ── Phase 2 (tl ~1.5–3.2): deal from top of pile outward ────────────────
+    // Top card (card 4, highest z-index, most visible) deals FIRST.
+    // As each card leaves, the one below it is revealed and deals next.
+    // This mirrors how you'd physically deal from a real card deck.
     cards.forEach((card, i) => {
       const g = GRID[i];
+      const startAt = 1.5 + (cards.length - 1 - i) * 0.15; // card 4 at 1.5, card 0 at 2.1
       tl.to(card, {
         x: g.x, y: g.y,
         rotation: 0,
-        scale: 0.95,   // very slight scale-down in the grid
+        scale: 0.95,
         opacity: 1,
         ease: 'power3.inOut',
         duration: 1.5,
-      }, 1 + i * 0.05);
+      }, startAt);
     });
   }, { scope: containerRef, dependencies: [] });
 
@@ -166,12 +176,14 @@ export function ServiceCardDeck() {
                   height: H,
                   borderRadius: 'var(--radius-xl)',
                   willChange: 'transform, opacity',
+                  zIndex: i + 1,
+                  opacity: 0,           // hidden until GSAP Phase 1 runs
                 }}
                 className={cn(
                   'flex flex-col p-5',
                   'border border-[var(--color-border)]',
                   'bg-[var(--color-bg-secondary)]',
-                  'shadow-[0_8px_32px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.04)]',
+                  'shadow-[0_12px_40px_rgba(0,0,0,0.10),0_4px_12px_rgba(0,0,0,0.06)]',
                 )}
               >
                 {/* Icon */}
