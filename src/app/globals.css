@@ -409,6 +409,12 @@ body.loader-active {
   60%  { transform: translateY(-4%);  opacity: 1; }
   100% { transform: translateY(-8%);  opacity: 0; }
 }
+/* Card-deck scroll hint pulse */
+@keyframes deckHintPulse {
+  0%, 100% { opacity: 1; transform: translateY(0); }
+  50% { opacity: 0.4; transform: translateY(6px); }
+}
+
 .rc-cd-fade-out {
   animation: rc-cdOverlayExit 0.9s cubic-bezier(0.76, 0, 0.24, 1) forwards;
   pointer-events: none !important;
