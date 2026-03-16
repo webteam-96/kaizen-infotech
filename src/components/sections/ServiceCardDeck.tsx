@@ -62,9 +62,6 @@ function ServiceIcon({ name }: { name: string }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export function ServiceCardDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const hintRef = useRef<HTMLDivElement>(null);
-  const phaseLabelRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -101,15 +98,6 @@ export function ServiceCardDeck() {
         start: 'top top',
         end: 'bottom bottom',
         scrub: 1.2,
-        onUpdate(self) {
-          const p = self.progress;
-          if (hintRef.current) hintRef.current.style.opacity = p > 0.02 ? '0' : '1';
-          if (phaseLabelRef.current) {
-            phaseLabelRef.current.textContent =
-              p <= 0.42 ? 'Stacked' : p <= 0.75 ? 'Revealing' : 'Revealed';
-          }
-          if (progressRef.current) progressRef.current.style.height = `${p * 100}%`;
-        },
       },
     });
 
@@ -170,36 +158,6 @@ export function ServiceCardDeck() {
         style={{ height: '500vh' }}
       >
         <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
-
-          {/* Phase label */}
-          <div
-            ref={phaseLabelRef}
-            className="absolute top-12 text-[length:var(--text-xs)] font-semibold uppercase tracking-[3px] text-[var(--color-text-tertiary)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Stacked
-          </div>
-
-          {/* Progress track (right side) */}
-          <div
-            className="absolute right-8 top-1/2 -translate-y-1/2 overflow-hidden"
-            style={{
-              width: 3,
-              height: 120,
-              background: 'var(--color-border)',
-              borderRadius: 3,
-            }}
-          >
-            <div
-              ref={progressRef}
-              style={{
-                width: '100%',
-                height: '0%',
-                background: 'linear-gradient(to bottom, var(--color-accent-primary), var(--color-accent-secondary))',
-                borderRadius: 3,
-              }}
-            />
-          </div>
 
           {/* Ambient glow — brand accent */}
           <div
@@ -295,27 +253,6 @@ export function ServiceCardDeck() {
             ))}
           </div>
 
-          {/* Scroll hint */}
-          <div
-            ref={hintRef}
-            className="absolute bottom-10 flex flex-col items-center gap-2"
-            style={{ pointerEvents: 'none', animation: 'deckHintPulse 2s ease-in-out infinite' }}
-          >
-            <span
-              className="text-[length:var(--text-xs)] uppercase tracking-[2px] text-[var(--color-text-tertiary)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Scroll to animate
-            </span>
-            <svg
-              width="20" height="20" viewBox="0 0 24 24"
-              fill="none" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round"
-              style={{ stroke: 'var(--color-text-tertiary)', opacity: 0.5 }}
-            >
-              <path d="M12 5v14M5 12l7 7 7-7" />
-            </svg>
-          </div>
         </div>
       </div>
 
