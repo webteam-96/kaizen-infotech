@@ -14,7 +14,7 @@ const W = 280;   // card width  (px)
 const H = 380;   // card height (px)
 const G = 24;    // grid gap    (px)
 
-// Stack offsets — matches reference HTML exactly
+// Stack offsets — matches reference animation
 const STACK: { x: number; y: number; r: number }[] = [
   { x: 0,  y: 0,   r: -3   },
   { x: 2,  y: -3,  r: -1.5 },
@@ -30,15 +30,6 @@ const GRID: { x: number; y: number }[] = [
   { x:  (W + G),          y: -(H / 2 + G / 2) }, // top-right
   { x: -(W / 2 + G / 2),  y:  (H / 2 + G / 2) }, // bottom-left
   { x:  (W / 2 + G / 2),  y:  (H / 2 + G / 2) }, // bottom-right
-];
-
-// Per-card dark gradient backgrounds (matching reference aesthetics)
-const CARD_BG = [
-  { gradient: 'linear-gradient(145deg, #1a1a2e, #16213e)', border: 'rgba(59,130,246,0.2)' },
-  { gradient: 'linear-gradient(145deg, #1a1a2e, #0f3460)', border: 'rgba(56,189,248,0.2)' },
-  { gradient: 'linear-gradient(145deg, #1a1a2e, #1e1e3a)', border: 'rgba(167,139,250,0.2)' },
-  { gradient: 'linear-gradient(145deg, #1a1a2e, #2d1b4e)', border: 'rgba(236,72,153,0.2)' },
-  { gradient: 'linear-gradient(145deg, #1a1a2e, #1b3a2d)', border: 'rgba(52,211,153,0.2)' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,9 +79,9 @@ export function ServiceCardDeck() {
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
     if (cards.length === 0) return;
 
-    // ── Initial state — matches reference HTML exactly ──────────────────────
-    // opacity: 0.2, scale: 0.55, translateY: +40px from stack position
-    // Dark bg makes 0.2 opacity safe (no ghosting on dark backgrounds)
+    // ── Initial state ─────────────────────────────────────────────────────────
+    // Cards start invisible (opacity 0), scaled down, below their stack position.
+    // z-index ensures proper layering on light backgrounds (top card covers lower).
     cards.forEach((card, i) => {
       const s = STACK[i];
       gsap.set(card, {
@@ -98,7 +89,7 @@ export function ServiceCardDeck() {
         y: s.y + 40,
         rotation: s.r,
         scale: 0.55,
-        opacity: 0.2,
+        opacity: 0,
         zIndex: i + 1,
         transformOrigin: 'center center',
       });
@@ -112,26 +103,18 @@ export function ServiceCardDeck() {
         scrub: 1.2,
         onUpdate(self) {
           const p = self.progress;
-          // Hint fade
-          if (hintRef.current) {
-            hintRef.current.style.opacity = p > 0.02 ? '0' : '1';
-          }
-          // Phase label
+          if (hintRef.current) hintRef.current.style.opacity = p > 0.02 ? '0' : '1';
           if (phaseLabelRef.current) {
             phaseLabelRef.current.textContent =
               p <= 0.42 ? 'Stacked' : p <= 0.75 ? 'Revealing' : 'Revealed';
           }
-          // Progress fill
-          if (progressRef.current) {
-            progressRef.current.style.height = `${p * 100}%`;
-          }
+          if (progressRef.current) progressRef.current.style.height = `${p * 100}%`;
         },
       },
     });
 
     // ── Phase 1 (tl 0–1): stack pops up ─────────────────────────────────────
-    // ALL cards animate TOGETHER at tl position 0 (no stagger).
-    // scale 0.55→1, opacity 0.2→0.6, y settles to stack offset.
+    // All cards animate together. scale→1, opacity→0.7, y settles.
     cards.forEach((card, i) => {
       const s = STACK[i];
       tl.to(card, {
@@ -139,24 +122,22 @@ export function ServiceCardDeck() {
         y: s.y,
         rotation: s.r,
         scale: 1,
-        opacity: 0.6,
+        opacity: 0.7,
         ease: 'power2.inOut',
         duration: 1,
-      }, 0); // all at position 0 — together
+      }, 0);
     });
 
     // Glow phase 1
     if (glowRef.current) {
       tl.fromTo(glowRef.current,
-        { opacity: 0.3 },
-        { opacity: 1, duration: 1, ease: 'power2.inOut' },
+        { opacity: 0.2 },
+        { opacity: 0.8, duration: 1, ease: 'power2.inOut' },
         0,
       );
     }
 
     // ── Phase 2 (tl 1–2.7): cards spread to grid ───────────────────────────
-    // Forward stagger: i * 0.04 — slight offset per card for natural "deal" feel.
-    // scale→0.88, opacity→1. Matches reference exactly.
     cards.forEach((card, i) => {
       const g = GRID[i];
       tl.to(card, {
@@ -173,7 +154,7 @@ export function ServiceCardDeck() {
     // Glow phase 2
     if (glowRef.current) {
       tl.to(glowRef.current,
-        { opacity: 0.4, scale: 1.3, duration: 1.5, ease: 'power2.inOut' },
+        { opacity: 0.3, scale: 1.3, duration: 1.5, ease: 'power2.inOut' },
         1,
       );
     }
@@ -188,32 +169,24 @@ export function ServiceCardDeck() {
         className="relative hidden lg:block"
         style={{ height: '500vh' }}
       >
-        <div
-          className="sticky top-0 flex h-screen items-center justify-center overflow-hidden"
-          style={{ background: '#0a0a0f' }}
-        >
+        <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
+
           {/* Phase label */}
           <div
             ref={phaseLabelRef}
-            className="absolute top-12"
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: 3,
-              textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.35)',
-            }}
+            className="absolute top-12 text-[length:var(--text-xs)] font-semibold uppercase tracking-[3px] text-[var(--color-text-tertiary)]"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Stacked
           </div>
 
           {/* Progress track (right side) */}
           <div
-            className="absolute right-8 top-1/2 -translate-y-1/2"
+            className="absolute right-8 top-1/2 -translate-y-1/2 overflow-hidden"
             style={{
               width: 3,
               height: 120,
-              background: 'rgba(255,255,255,0.08)',
+              background: 'var(--color-border)',
               borderRadius: 3,
             }}
           >
@@ -222,13 +195,13 @@ export function ServiceCardDeck() {
               style={{
                 width: '100%',
                 height: '0%',
-                background: 'linear-gradient(to bottom, var(--color-accent-primary), #a78bfa)',
+                background: 'linear-gradient(to bottom, var(--color-accent-primary), var(--color-accent-secondary))',
                 borderRadius: 3,
               }}
             />
           </div>
 
-          {/* Ambient glow */}
+          {/* Ambient glow — brand accent */}
           <div
             ref={glowRef}
             aria-hidden
@@ -236,8 +209,9 @@ export function ServiceCardDeck() {
             style={{
               width: 500,
               height: 500,
-              background: 'radial-gradient(circle, rgba(99,102,241,0.1), transparent 70%)',
-              opacity: 0.5,
+              background: 'radial-gradient(circle, var(--color-glow), transparent 70%)',
+              opacity: 0.2,
+              filter: 'blur(40px)',
             }}
           />
 
@@ -251,37 +225,34 @@ export function ServiceCardDeck() {
                   position: 'absolute',
                   width: W,
                   height: H,
-                  borderRadius: 18,
                   willChange: 'transform, opacity',
                   zIndex: i + 1,
-                  background: CARD_BG[i]?.gradient ?? CARD_BG[0].gradient,
-                  borderWidth: 1,
-                  borderStyle: 'solid',
-                  borderColor: CARD_BG[i]?.border ?? CARD_BG[0].border,
-                  boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+                  opacity: 0,
                 }}
-                className="flex flex-col p-5"
+                className={cn(
+                  'flex flex-col rounded-[var(--radius-xl)] p-5',
+                  'border border-[var(--color-border)]',
+                  'bg-[var(--color-bg-secondary)]',
+                  'shadow-[0_8px_32px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.04)]',
+                )}
               >
                 {/* Icon */}
-                <div
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)]"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--color-accent-primary)' }}
-                >
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
                   <ServiceIcon name={service.icon} />
                 </div>
 
                 {/* Title */}
                 <h3
-                  className="mb-2.5 line-clamp-2 text-[length:var(--text-base)] font-semibold leading-snug"
-                  style={{ fontFamily: 'var(--font-heading)', color: '#fff' }}
+                  className="mb-2.5 line-clamp-2 text-[length:var(--text-base)] font-semibold leading-snug text-[var(--color-text-primary)]"
+                  style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {service.title}
                 </h3>
 
                 {/* Description */}
                 <p
-                  className="mb-4 line-clamp-3 flex-1 text-[length:var(--text-sm)] leading-relaxed"
-                  style={{ fontFamily: 'var(--font-body)', color: 'rgba(255,255,255,0.6)' }}
+                  className="mb-4 line-clamp-3 flex-1 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]"
+                  style={{ fontFamily: 'var(--font-body)' }}
                 >
                   {service.description}
                 </p>
@@ -291,13 +262,12 @@ export function ServiceCardDeck() {
                   {service.technologies.slice(0, 3).map((tech) => (
                     <span
                       key={tech}
-                      className="inline-block rounded-[var(--radius-full)] px-2.5 py-0.5 text-[length:var(--text-xs)]"
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.04)',
-                        color: 'rgba(255,255,255,0.5)',
-                      }}
+                      className={cn(
+                        'inline-block rounded-[var(--radius-full)] px-2.5 py-0.5',
+                        'border border-[var(--color-border)] bg-[var(--color-surface-glass)]',
+                        'text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]',
+                      )}
+                      style={{ fontFamily: 'var(--font-mono)' }}
                     >
                       {tech}
                     </span>
@@ -307,12 +277,14 @@ export function ServiceCardDeck() {
                 {/* Learn more */}
                 <Link
                   href={`/services/${service.slug}`}
-                  className="flex items-center justify-between pt-3 text-[length:var(--text-xs)] font-medium uppercase tracking-wider transition-colors duration-200 hover:text-[var(--color-accent-primary)]"
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    borderTop: '1px solid rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.4)',
-                  }}
+                  className={cn(
+                    'flex items-center justify-between',
+                    'border-t border-[var(--color-border)] pt-3',
+                    'text-[length:var(--text-xs)] font-medium uppercase tracking-wider',
+                    'text-[var(--color-text-tertiary)] transition-colors duration-200',
+                    'hover:text-[var(--color-accent-primary)]',
+                  )}
+                  style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   Learn more
                   <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -330,12 +302,8 @@ export function ServiceCardDeck() {
             style={{ pointerEvents: 'none', animation: 'deckHintPulse 2s ease-in-out infinite' }}
           >
             <span
-              style={{
-                fontSize: 12,
-                letterSpacing: 2,
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.25)',
-              }}
+              className="text-[length:var(--text-xs)] uppercase tracking-[2px] text-[var(--color-text-tertiary)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               Scroll to animate
             </span>
@@ -343,7 +311,7 @@ export function ServiceCardDeck() {
               width="20" height="20" viewBox="0 0 24 24"
               fill="none" strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round"
-              style={{ stroke: 'rgba(255,255,255,0.25)' }}
+              style={{ stroke: 'var(--color-text-tertiary)', opacity: 0.5 }}
             >
               <path d="M12 5v14M5 12l7 7 7-7" />
             </svg>
