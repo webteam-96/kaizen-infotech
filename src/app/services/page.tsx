@@ -103,7 +103,7 @@ export default function ServicesPage() {
   }, []);
 
   return (
-    <main className="relative overflow-hidden bg-[var(--color-bg-primary)]">
+    <main className="relative overflow-x-clip bg-[var(--color-bg-primary)]">
       {/* ================================================================= */}
       {/* HERO SECTION */}
       {/* ================================================================= */}
