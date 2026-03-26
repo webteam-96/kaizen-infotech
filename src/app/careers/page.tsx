@@ -176,29 +176,13 @@ export default function CareersPage() {
           <FadeIn delay={0.2}>
             <Accordion items={accordionItems} />
           </FadeIn>
-        </div>
-      </section>
 
-      {/* CTA — General Application */}
-      <section className="border-t border-[var(--color-border)] px-6 py-24 md:px-12 lg:px-24">
-        <div className="mx-auto max-w-7xl text-center">
-          <FadeIn>
-            <h2
-              className="mb-6 text-[length:var(--text-4xl)] font-bold text-[var(--color-text-primary)] md:text-[length:var(--text-5xl)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Don&apos;t See Your Role?
-            </h2>
-            <p
-              className="mx-auto mb-10 max-w-xl text-[length:var(--text-lg)] text-[var(--color-text-secondary)]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              We&apos;re always interested in hearing from talented people. Send us
-              your resume and tell us how you&apos;d contribute to Kaizen.
-            </p>
-            <Button href="/contact" size="lg">
-              Send a General Application
-            </Button>
+          <FadeIn delay={0.3}>
+            <div className="mt-12 text-center">
+              <Button href="/careers/apply" size="lg">
+                Submit Application
+              </Button>
+            </div>
           </FadeIn>
         </div>
       </section>
