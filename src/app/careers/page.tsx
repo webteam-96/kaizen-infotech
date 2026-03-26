@@ -75,7 +75,7 @@ const positions = [
   {
     title: 'DevOps Engineer',
     department: 'Engineering',
-    location: 'Hybrid (San Francisco)',
+    location: 'Remote',
     type: 'Full-time',
     description:
       'We need a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines. You will work with AWS, Kubernetes, Terraform, and GitHub Actions to ensure our deployments are fast, reliable, and secure. The role involves designing monitoring and alerting systems, optimizing build times, managing database operations, and working with engineering teams to define infrastructure best practices. 4+ years of DevOps or SRE experience required, with strong scripting skills in Python or Go.',
