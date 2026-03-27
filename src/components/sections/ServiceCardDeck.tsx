@@ -102,7 +102,7 @@ export function ServiceCardDeck() {
     });
 
     // ── Phase 1 (tl 0–1): stack pops up ─────────────────────────────────────
-    // All cards animate together. scale→1, opacity→0.7, y settles.
+    // All cards animate together. scale→1, opacity→1, y settles.
     cards.forEach((card, i) => {
       const s = STACK[i];
       tl.to(card, {
@@ -110,7 +110,7 @@ export function ServiceCardDeck() {
         y: s.y,
         rotation: s.r,
         scale: 1,
-        opacity: 0.7,
+        opacity: 1,
         ease: 'power2.inOut',
         duration: 1,
       }, 0);
