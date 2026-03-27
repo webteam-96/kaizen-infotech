@@ -169,7 +169,7 @@ export function ServicesScroll() {
               y: off.y + (1 - t) * 80,
               rotation: off.r,
               scale: 0.5 + t * 0.5,
-              opacity: 0.15 + t * 0.65,
+              opacity: t,
               duration: 0.4,
               ease: 'power3.out',
               overwrite: true,
@@ -198,7 +198,7 @@ export function ServicesScroll() {
               y: off.y * (1 - t),
               rotation: off.r * (1 - t),
               scale: 1 - t * 0.15,
-              opacity: 0.8 - t * 0.3,
+              opacity: 1 - t * 0.15,
               duration: 0.4,
               ease: 'power3.out',
               overwrite: true,
@@ -229,7 +229,7 @@ export function ServicesScroll() {
 
             // Active: full scale + opacity + lift. Inactive: smaller, dimmed
             const sc = 0.75 + proxSmooth * 0.25;
-            const op = 0.3 + proxSmooth * 0.7;
+            const op = 0.5 + proxSmooth * 0.5;
             const yLift = -proxSmooth * 20;
 
             // Shadow intensifies with proximity
@@ -360,7 +360,7 @@ export function ServicesScroll() {
               key={service.id}
               className="deck-card absolute inset-0 will-change-transform"
               style={{
-                opacity: 0.15,
+                opacity: 0,
                 transform: 'scale(0.5) translateY(60px)',
                 transformOrigin: 'center center',
               }}
