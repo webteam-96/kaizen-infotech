@@ -744,7 +744,6 @@ export function RubiksCubeExperience() {
 
           {/* S5: REAL TRANSFORMATION */}
           <div data-card="card-s5" className="rc-glass-card rc-side-right rc-card-s5" style={{ opacity: 0 }}>
-            <div className="rc-section-num">05 &mdash; Real Transformation</div>
             <div className="rc-stagger rc-solved-word" data-stg="s5-0">No temporary fixes.</div>
             <div className="rc-stagger rc-solved-word" data-stg="s5-1">Solutions that evolve with you.</div>
             <div className="rc-stagger rc-solved-word" data-stg="s5-2" style={{ color: 'var(--color-accent-primary)', fontStyle: 'italic' }}>Consistent, intelligent progress.</div>
