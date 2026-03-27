@@ -196,13 +196,6 @@ export function FeaturedWork() {
 
                   {/* Content side */}
                   <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
-                    <span
-                      className="mb-5 block text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]"
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-
                     <h3
                       className="mb-4 text-[clamp(2rem,3vw,2.75rem)] font-medium leading-[1.15] tracking-tight text-[var(--color-text-primary)]"
                       style={{

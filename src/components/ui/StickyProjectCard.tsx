@@ -123,14 +123,6 @@ export function StickyProjectCard({
           </span>
         </div>
 
-        {/* Index number — top right */}
-        <span
-          className="absolute right-6 top-6 text-[length:var(--text-xs)] font-semibold text-[var(--color-text-inverse)]/30 md:right-10 md:top-8"
-          style={{ fontFamily: 'var(--font-mono)' }}
-        >
-          {String(index + 1).padStart(2, '0')}
-        </span>
-
         {/* Title + client + CTA — bottom */}
         <div className="absolute inset-x-0 bottom-0 p-6 md:p-10">
           <h3
