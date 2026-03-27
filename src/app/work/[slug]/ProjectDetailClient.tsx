@@ -103,20 +103,6 @@ export default function ProjectDetailClient({
                 className="mb-1 text-[length:var(--text-xs)] uppercase tracking-wider text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Year
-              </p>
-              <p
-                className="text-[length:var(--text-base)] font-medium text-[var(--color-text-primary)]"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {project.year}
-              </p>
-            </div>
-            <div>
-              <p
-                className="mb-1 text-[length:var(--text-xs)] uppercase tracking-wider text-[var(--color-text-tertiary)]"
-                style={{ fontFamily: 'var(--font-mono)' }}
-              >
                 Category
               </p>
               <p

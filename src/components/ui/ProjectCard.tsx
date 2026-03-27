@@ -111,12 +111,6 @@ export function ProjectCard({
             >
               {category}
             </span>
-            <span
-              className="text-[length:var(--text-xs)] text-[var(--color-text-inverse)]/70"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            >
-              {year}
-            </span>
           </motion.div>
 
           {/* Title */}

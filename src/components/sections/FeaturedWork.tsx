@@ -213,8 +213,8 @@ export function FeaturedWork() {
                       {project.title}
                     </h3>
 
-                    {/* Category + Year pills */}
-                    <div className="mb-4 flex items-center gap-3">
+                    {/* Category pill */}
+                    <div className="mb-4">
                       <span
                         className={cn(
                           'inline-block rounded-[var(--radius-full)] px-3 py-1',
@@ -224,12 +224,6 @@ export function FeaturedWork() {
                         style={{ fontFamily: 'var(--font-heading)' }}
                       >
                         {project.category}
-                      </span>
-                      <span
-                        className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]"
-                        style={{ fontFamily: 'var(--font-mono)' }}
-                      >
-                        {project.year}
                       </span>
                     </div>
 
