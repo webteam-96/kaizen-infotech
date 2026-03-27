@@ -266,18 +266,6 @@ export function FeaturedWork() {
             ))}
           </div>
 
-          {/* Counter */}
-          <div
-            className="absolute bottom-[max(100px,14vh)] left-1/2 -translate-x-1/2 text-[length:var(--text-xs)] font-medium tracking-[0.15em] text-[var(--color-text-tertiary)]"
-            style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}
-          >
-            <span className="text-[length:var(--text-sm)] font-bold text-[var(--color-text-primary)]">
-              {String(activeIdx + 1).padStart(2, '0')}
-            </span>
-            {' / '}
-            {String(N).padStart(2, '0')}
-          </div>
-
           {/* View All CTA */}
           <div
             className={cn(
