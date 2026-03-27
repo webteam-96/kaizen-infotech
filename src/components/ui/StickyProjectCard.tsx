@@ -109,8 +109,8 @@ export function StickyProjectCard({
           className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-inverse)]/75 via-[var(--color-bg-inverse)]/15 to-transparent"
         />
 
-        {/* Category pill + year — top left */}
-        <div className="absolute left-6 top-6 flex items-center gap-3 md:left-10 md:top-8">
+        {/* Category pill — top left */}
+        <div className="absolute left-6 top-6 md:left-10 md:top-8">
           <span
             className={cn(
               'inline-block rounded-[var(--radius-full)] px-3 py-1',
@@ -120,12 +120,6 @@ export function StickyProjectCard({
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             {category}
-          </span>
-          <span
-            className="text-[length:var(--text-xs)] text-[var(--color-text-inverse)]/60"
-            style={{ fontFamily: 'var(--font-mono)' }}
-          >
-            {year}
           </span>
         </div>
 
