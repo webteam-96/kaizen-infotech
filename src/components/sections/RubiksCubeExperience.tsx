@@ -699,7 +699,6 @@ export function RubiksCubeExperience() {
 
           {/* S2: THE FIRST MOVE */}
           <div data-card="card-s2" className="rc-glass-card rc-side-left rc-card-s2" style={{ opacity: 0 }}>
-            <div className="rc-section-num">02 &mdash; The First Move</div>
             <h2 className="rc-headline rc-headline-s2">
               <span className="rc-stagger" data-stg="s2-0">Trying to fix everything at once only makes it <em>worse.</em></span>
             </h2>
@@ -715,7 +714,6 @@ export function RubiksCubeExperience() {
 
           {/* S3: HOW WE APPLY KAIZEN */}
           <div data-card="card-s3" className="rc-glass-card rc-side-right rc-card-s3" style={{ opacity: 0 }}>
-            <div className="rc-section-num">03 &mdash; How We Apply Kaizen</div>
             <h2 className="rc-headline rc-headline-s3">
               <span className="rc-stagger" data-stg="s3-0">We don&apos;t force technology</span>
               <span className="rc-stagger" data-stg="s3-1">onto your <em>operations.</em></span>
@@ -724,7 +722,7 @@ export function RubiksCubeExperience() {
           </div>
 
           <div data-card="card-s3b" className="rc-glass-card rc-side-right rc-card-s3b" style={{ opacity: 0 }}>
-            <div className="rc-section-num rc-stagger" data-stg="s3b-0" style={{ marginBottom: '0.6rem' }}>Then we start improving &mdash; step by step.</div>
+            <div className="rc-solved-word rc-stagger" data-stg="s3b-0" style={{ marginBottom: '0.6rem' }}>Then we start improving &mdash; step by step.</div>
             <div className="rc-stagger rc-method" data-stg="s3b-1">&#10004; Automating manual processes</div>
             <div className="rc-stagger rc-method" data-stg="s3b-2">&#10004; Integrating disconnected systems</div>
             <div className="rc-stagger rc-method" data-stg="s3b-3">&#10004; Creating meaningful dashboards</div>
@@ -734,7 +732,6 @@ export function RubiksCubeExperience() {
 
           {/* S4: FROM CHAOS TO CLARITY */}
           <div data-card="card-s4" className="rc-glass-card rc-side-left rc-card-s4" style={{ opacity: 0 }}>
-            <div className="rc-section-num">04 &mdash; From Chaos to Clarity</div>
             <h2 className="rc-headline rc-headline-s4">
               <span className="rc-stagger" data-stg="s4-0">What looks complex becomes <em>structured.</em></span>
             </h2>
