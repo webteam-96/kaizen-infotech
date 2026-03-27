@@ -125,7 +125,7 @@ export function FeaturedWork() {
   return (
     <section data-section-index={4}>
       {/* Section header — outside the pinned area */}
-      <div className="bg-[var(--color-bg-primary)] pb-8 pt-[var(--space-section)]">
+      <div className="bg-[var(--color-bg-primary)] pb-4 pt-16 md:pt-20">
         <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
           <FadeIn direction="up">
             <span
