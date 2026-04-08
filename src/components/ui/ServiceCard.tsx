@@ -48,7 +48,10 @@ export function ServiceCard({
     >
       <Card
         className={cn(
-          'flex w-[280px] min-h-[340px] cursor-pointer flex-col p-6 sm:w-[320px] sm:min-h-[380px] sm:p-7 md:w-[350px] md:min-h-[400px] md:p-8',
+          // Fixed size — no responsive breakpoints. Same dimensions on
+          // every viewport so the carousel maths in ServicesScroll stays
+          // in lockstep with the visual layout.
+          'flex w-[460px] h-[540px] cursor-pointer flex-col p-10',
           'transition-shadow duration-300',
           isActive && 'shadow-[0_0_40px_var(--color-glow)]'
         )}
@@ -61,25 +64,25 @@ export function ServiceCard({
           {/* Icon */}
           <div
             className={cn(
-              'mb-5 flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)]',
+              'mb-6 flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)]',
               'bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]',
-              'text-xl'
+              'text-2xl'
             )}
           >
             {icon}
           </div>
 
-          {/* Title */}
+          {/* Title — single fixed size */}
           <h3
-            className="mb-2.5 text-lg font-semibold leading-snug text-[var(--color-text-primary)]"
+            className="mb-3 text-2xl font-semibold leading-snug text-[var(--color-text-primary)]"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             {title}
           </h3>
 
-          {/* Description */}
+          {/* Description — single fixed size */}
           <p
-            className="flex-1 text-sm leading-relaxed text-[var(--color-text-secondary)]"
+            className="flex-1 text-base leading-relaxed text-[var(--color-text-secondary)]"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {description}
@@ -87,7 +90,7 @@ export function ServiceCard({
         </div>
 
         {/* CTA link */}
-        <div className="mt-5 pt-4 border-t border-[var(--color-border)]">
+        <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
           <span
             className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-accent-primary)] transition-colors duration-200 group-hover:text-[var(--color-text-primary)]"
             style={{ fontFamily: 'var(--font-body)' }}

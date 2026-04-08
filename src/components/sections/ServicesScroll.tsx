@@ -75,7 +75,12 @@ const P2 = 0.25; // spread ends
 const P3 = 0.80; // carousel ends
 const P4 = 0.95; // fade-out ends
 
-const CARD_GAP = 380;
+// All cards share one fixed size (no responsive breakpoints) so the
+// carousel maths and the visual deck stay perfectly aligned across
+// viewports. CARD_GAP ≈ card width + breathing room.
+const CARD_WIDTH = 460;
+const CARD_HEIGHT = 540;
+const CARD_GAP = 520;
 
 // ---------------------------------------------------------------------------
 // ServicesScroll
@@ -235,10 +240,11 @@ export function ServicesScroll() {
             const prox = Math.max(0, 1 - dist);
             const proxSmooth = smoothstep(prox);
 
-            // Active: full scale + opacity + lift. Inactive: smaller, dimmed
-            const sc = 0.75 + proxSmooth * 0.25;
-            const op = 0.5 + proxSmooth * 0.5;
-            const yLift = -proxSmooth * 20;
+            // Active: slight upscale for emphasis. Inactive cards stay
+            // at a comfortable 90% so the neighbour copy is still legible.
+            const sc = 0.9 + proxSmooth * 0.15;
+            const op = 0.55 + proxSmooth * 0.45;
+            const yLift = -proxSmooth * 24;
 
             // Shadow intensifies with proximity
             const shadowBlur = 12 + proxSmooth * 28;
@@ -351,10 +357,11 @@ export function ServicesScroll() {
           </span>
         </div>
 
-        {/* Deck — sized to match one card, centered in viewport */}
+        {/* Deck — fixed size matching one card, centered in viewport */}
         <div
           ref={deckRef}
-          className="relative w-[280px] h-[340px] sm:w-[320px] sm:h-[380px] md:w-[350px] md:h-[400px]"
+          className="relative"
+          style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
         >
           {services.map((service, i) => (
             <div
