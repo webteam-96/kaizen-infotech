@@ -1,7 +1,6 @@
 'use client';
 
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { gsap, ScrollTrigger } from './gsap-setup';
 import { ANIMATION_CONFIG } from './config';
 import type { AnimationPreset } from './presets';
 

@@ -1,8 +1,7 @@
 'use client';
 
 import { useRef, useCallback, useState } from 'react';
-import gsap from 'gsap';
-import { ANIMATION_CONFIG } from '@/lib/animations/config';
+import { gsap, EASE, DURATION } from '@/lib/animations/gsap-setup';
 
 export type TransitionState = 'idle' | 'entering' | 'exiting';
 
@@ -25,8 +24,8 @@ export function usePageTransition() {
         {
           opacity: 1,
           y: 0,
-          duration: ANIMATION_CONFIG.duration.normal,
-          ease: ANIMATION_CONFIG.ease.smooth,
+          duration: DURATION.normal,
+          ease: EASE.entrance,
           onComplete: () => {
             setState('idle');
             onComplete?.();
@@ -49,8 +48,9 @@ export function usePageTransition() {
       gsap.to(containerRef.current, {
         opacity: 0,
         y: -20,
-        duration: ANIMATION_CONFIG.duration.fast,
-        ease: ANIMATION_CONFIG.ease.smooth,
+        duration: DURATION.fast,
+        // power2.in for exit — accelerates as it leaves the screen.
+        ease: EASE.exit,
         onComplete: () => {
           setState('idle');
           onComplete?.();

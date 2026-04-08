@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useGSAP } from '@gsap/react';
 import { gsap, ScrollTrigger, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import Image from 'next/image';
@@ -27,6 +27,11 @@ export function FeaturedWork() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [showCta, setShowCta] = useState(false);
   const [inSection, setInSection] = useState(false);
+  // Track last-committed React state via refs so the per-frame onUpdate
+  // can avoid scheduling re-renders unless something actually changed.
+  const activeIdxRef = useRef(0);
+  const showCtaRef = useRef(false);
+  const inSectionRef = useRef(false);
 
   registerGSAPPlugins();
 
@@ -41,6 +46,15 @@ export function FeaturedWork() {
       const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
       if (cards.length === 0) return;
 
+      // Pre-build per-card quickSetters so the per-frame render does
+      // direct DOM writes rather than going through gsap.set's plugin
+      // pipeline N times per scroll tick.
+      const setters = cards.map((card) => ({
+        y: gsap.quickSetter(card, 'y', 'px') as (v: number) => void,
+        scale: gsap.quickSetter(card, 'scale') as (v: number) => void,
+        opacity: gsap.quickSetter(card, 'opacity') as (v: number) => void,
+      }));
+
       // Initialize all cards hidden below
       cards.forEach((card, i) => {
         gsap.set(card, { opacity: 0, y: 140, scale: 0.94, zIndex: N - i });
@@ -50,12 +64,17 @@ export function FeaturedWork() {
         trigger: sectionRef.current,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 1.5,
+        // 0.8s scrub gives enough lag-smoothing to feel cinematic without
+        // the noticeable "drag" the previous 1.5 introduced.
+        scrub: 0.8,
         onUpdate: (self) => {
           const p = self.progress;
 
           const isIn = p > 0.005 && p < 0.995;
-          setInSection(isIn);
+          if (isIn !== inSectionRef.current) {
+            inSectionRef.current = isIn;
+            setInSection(isIn);
+          }
 
           const segSize = 1 / N;
           const halfWidth = segSize * 0.65;
@@ -110,12 +129,26 @@ export function FeaturedWork() {
               bestIdx = i;
             }
 
-            gsap.set(card, { opacity, y, scale, zIndex: zIdx });
+            const s = setters[i];
+            s.opacity(opacity);
+            s.y(y);
+            s.scale(scale);
+            // zIndex isn't a transform — set it directly, only when changed.
+            if (card.style.zIndex !== String(zIdx)) {
+              card.style.zIndex = String(zIdx);
+            }
           }
 
           bestIdx = Math.max(0, Math.min(N - 1, bestIdx));
-          setActiveIdx(bestIdx);
-          setShowCta(bestIdx === N - 1 && bestOpacity > 0.8);
+          if (bestIdx !== activeIdxRef.current) {
+            activeIdxRef.current = bestIdx;
+            setActiveIdx(bestIdx);
+          }
+          const nextShowCta = bestIdx === N - 1 && bestOpacity > 0.8;
+          if (nextShowCta !== showCtaRef.current) {
+            showCtaRef.current = nextShowCta;
+            setShowCta(nextShowCta);
+          }
         },
       });
     },

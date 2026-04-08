@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 
 export interface UseMagneticConfig {
   strength?: number;
@@ -9,62 +9,64 @@ export interface UseMagneticConfig {
   ease?: number;
 }
 
+/**
+ * Magnetic-attraction effect: pulls the element toward the cursor when
+ * the cursor is within `distance` pixels. Uses gsap.quickTo() so the
+ * mousemove handler does cheap interpolated writes instead of spawning
+ * a new tween (with overwrite checks) on every pixel of movement.
+ */
 export function useMagnetic(
   ref: React.RefObject<HTMLElement | null>,
   config: UseMagneticConfig = {}
 ) {
   const { strength = 0.3, distance = 100, ease = 0.2 } = config;
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const element = ref.current;
-    if (!element) return;
+  registerGSAPPlugins();
 
-    let animationFrame: number | undefined;
+  useGSAP(
+    (_context, contextSafe) => {
+      const element = ref.current;
+      if (!element || !contextSafe) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = element.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const deltaX = e.clientX - centerX;
-      const deltaY = e.clientY - centerY;
-      const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      // Pre-built smooth interpolators. quickTo keeps state between calls
+      // and lerps toward the target — ideal for cursor-driven motion.
+      const xTo = gsap.quickTo(element, 'x', { duration: ease, ease: 'power3.out' });
+      const yTo = gsap.quickTo(element, 'y', { duration: ease, ease: 'power3.out' });
 
-      if (dist < distance) {
-        const factor = (1 - dist / distance) * strength;
-        gsap.to(element, {
-          x: deltaX * factor,
-          y: deltaY * factor,
-          duration: ease,
-          overwrite: true,
-        });
-      } else {
-        gsap.to(element, {
-          x: 0,
-          y: 0,
-          duration: ease,
-          overwrite: true,
-        });
-      }
-    };
+      const handleMouseMove = contextSafe((e: MouseEvent) => {
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const deltaX = e.clientX - centerX;
+        const deltaY = e.clientY - centerY;
+        // gsap.utils.clamp avoids manual Math.min/max ladders.
+        const dist = Math.hypot(deltaX, deltaY);
 
-    const handleMouseLeave = () => {
-      gsap.to(element, {
-        x: 0,
-        y: 0,
-        duration: ease * 2,
-        overwrite: true,
+        if (dist < distance) {
+          const factor = (1 - dist / distance) * strength;
+          xTo(deltaX * factor);
+          yTo(deltaY * factor);
+        } else {
+          xTo(0);
+          yTo(0);
+        }
       });
-    };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    element.addEventListener('mouseleave', handleMouseLeave);
+      const handleMouseLeave = contextSafe(() => {
+        xTo(0);
+        yTo(0);
+      });
 
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      element.removeEventListener('mouseleave', handleMouseLeave);
-      if (animationFrame) cancelAnimationFrame(animationFrame);
-      gsap.killTweensOf(element);
-    };
-  }, [ref, strength, distance, ease]);
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+      element.addEventListener('mouseleave', handleMouseLeave);
+
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        element.removeEventListener('mouseleave', handleMouseLeave);
+        // useGSAP context auto-reverts the quickTo tweens; the explicit
+        // listener cleanup above is the only thing needed here.
+      };
+    },
+    { dependencies: [ref, strength, distance, ease] }
+  );
 }

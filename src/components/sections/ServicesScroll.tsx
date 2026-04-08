@@ -59,9 +59,8 @@ const serviceIcons = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function clamp01(v: number) {
-  return Math.max(0, Math.min(1, v));
-}
+// gsap.utils.clamp returns a *function*; we bind it once for [0..1] and reuse.
+const clamp01 = gsap.utils.clamp(0, 1);
 
 function smoothstep(t: number) {
   return t * t * (3 - 2 * t);
@@ -113,6 +112,19 @@ export function ServicesScroll() {
         r: -2 + i * 1,
       }));
 
+      // Pre-build per-card quickSetters. These bypass the tween system
+      // and write directly to the element on each call — perfect for
+      // scroll-driven render loops where tweening would just add lag
+      // and create overlapping tween conflicts.
+      const setters = cards.map((card) => ({
+        x: gsap.quickSetter(card, 'x', 'px') as (v: number) => void,
+        y: gsap.quickSetter(card, 'y', 'px') as (v: number) => void,
+        rotation: gsap.quickSetter(card, 'rotation', 'deg') as (v: number) => void,
+        scale: gsap.quickSetter(card, 'scale') as (v: number) => void,
+        opacity: gsap.quickSetter(card, 'opacity') as (v: number) => void,
+        boxShadow: gsap.quickSetter(card, 'boxShadow') as (v: string) => void,
+      }));
+
       // ---- DOM helpers (bypass React state for 60fps perf) ----
 
       function updateCounter(idx: number) {
@@ -144,11 +156,16 @@ export function ServicesScroll() {
 
       // ---- Render function driven by scroll progress ----
 
+      // Pre-build a quickSetter for the progress bar so we never touch
+      // layout-triggering CSS properties (was animating `height`, which
+      // forces a reflow on every scroll tick — now scaleY, GPU-only).
+      const setProgress = progressRef.current
+        ? (gsap.quickSetter(progressRef.current, 'scaleY') as (v: number) => void)
+        : null;
+
       function render(p: number) {
-        // Progress bar
-        if (progressRef.current) {
-          progressRef.current.style.height = `${p * 100}%`;
-        }
+        // Progress bar — scaleY (transform), no layout reflow
+        setProgress?.(p);
 
         // Hint — hide once scrolling starts
         if (hintRef.current) {
@@ -164,16 +181,12 @@ export function ServicesScroll() {
 
           cards.forEach((card, i) => {
             const off = stackOffsets[i];
-            gsap.to(card, {
-              x: off.x,
-              y: off.y + (1 - t) * 80,
-              rotation: off.r,
-              scale: 0.5 + t * 0.5,
-              opacity: t,
-              duration: 0.4,
-              ease: 'power3.out',
-              overwrite: true,
-            });
+            const s = setters[i];
+            s.x(off.x);
+            s.y(off.y + (1 - t) * 80);
+            s.rotation(off.r);
+            s.scale(0.5 + t * 0.5);
+            s.opacity(t);
             card.style.zIndex = String(i);
           });
 
@@ -192,17 +205,12 @@ export function ServicesScroll() {
           cards.forEach((card, i) => {
             const off = stackOffsets[i];
             const lineX = i * CARD_GAP;
-
-            gsap.to(card, {
-              x: off.x + (lineX - off.x) * t,
-              y: off.y * (1 - t),
-              rotation: off.r * (1 - t),
-              scale: 1 - t * 0.15,
-              opacity: 1 - t * 0.15,
-              duration: 0.4,
-              ease: 'power3.out',
-              overwrite: true,
-            });
+            const s = setters[i];
+            s.x(off.x + (lineX - off.x) * t);
+            s.y(off.y * (1 - t));
+            s.rotation(off.r * (1 - t));
+            s.scale(1 - t * 0.15);
+            s.opacity(1 - t * 0.15);
             card.style.zIndex = String(i);
           });
 
@@ -237,17 +245,13 @@ export function ServicesScroll() {
             const shadowAlpha = 0.06 + proxSmooth * 0.12;
             const shadow = `0 ${4 + proxSmooth * 8}px ${shadowBlur}px rgba(0,0,0,${shadowAlpha.toFixed(3)})`;
 
-            gsap.to(card, {
-              x: baseX,
-              y: yLift,
-              rotation: 0,
-              scale: sc,
-              opacity: op,
-              boxShadow: shadow,
-              duration: 0.35,
-              ease: 'power2.out',
-              overwrite: true,
-            });
+            const s = setters[i];
+            s.x(baseX);
+            s.y(yLift);
+            s.rotation(0);
+            s.scale(sc);
+            s.opacity(op);
+            s.boxShadow(shadow);
             card.style.zIndex = String(Math.round(proxSmooth * 10));
           });
 
@@ -275,16 +279,12 @@ export function ServicesScroll() {
             const driftX = driftDir * cardTSmooth * 150;
             const isLast = i === N - 1;
 
-            gsap.to(card, {
-              x: baseX + driftX,
-              y: cardTSmooth * 50,
-              scale: Math.max(0.2, (isLast ? 1.0 : 0.75) * (1 - cardTSmooth * 0.5)),
-              opacity: Math.max(0, (isLast ? 1 : 0.3) * (1 - cardTSmooth)),
-              boxShadow: `0 4px 12px rgba(0,0,0,${(0.08 * (1 - cardTSmooth)).toFixed(3)})`,
-              duration: 0.35,
-              ease: 'power2.out',
-              overwrite: true,
-            });
+            const s = setters[i];
+            s.x(baseX + driftX);
+            s.y(cardTSmooth * 50);
+            s.scale(Math.max(0.2, (isLast ? 1.0 : 0.75) * (1 - cardTSmooth * 0.5)));
+            s.opacity(Math.max(0, (isLast ? 1 : 0.3) * (1 - cardTSmooth)));
+            s.boxShadow(`0 4px 12px rgba(0,0,0,${(0.08 * (1 - cardTSmooth)).toFixed(3)})`);
           });
 
           updateActiveIndex(N - 1);
@@ -296,18 +296,19 @@ export function ServicesScroll() {
            AFTER — blank
            ═══════════════════════════════════════════ */
         else {
-          cards.forEach((card) => {
-            gsap.to(card, { opacity: 0, duration: 0.3, overwrite: true });
-          });
+          setters.forEach((s) => s.opacity(0));
         }
       }
 
       // ---- ScrollTrigger: map vertical scroll to animation progress ----
+      // scrub:0.5 gives ~0.5s of built-in lag-smoothing so the deck
+      // doesn't snap with every scroll tick. Combined with quickSetters
+      // (no internal tweens) this stays at 60fps.
       ScrollTrigger.create({
         trigger: section,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 0,
+        scrub: 0.5,
         onUpdate: (self) => render(self.progress),
       });
 
@@ -396,8 +397,10 @@ export function ServicesScroll() {
         <div className="absolute right-6 top-1/2 z-10 h-40 w-0.5 -translate-y-1/2 rounded-full bg-[var(--color-border)]">
           <div
             ref={progressRef}
-            className="w-full rounded-full bg-[var(--color-accent-primary)]"
-            style={{ height: '0%', transition: 'height 0.1s linear' }}
+            className="h-full w-full rounded-full bg-[var(--color-accent-primary)] will-change-transform"
+            // scaleY animated by GSAP from 0 → 1; transform-origin top so
+            // the bar fills downward. Pure transform = no layout reflow.
+            style={{ transform: 'scaleY(0)', transformOrigin: 'top center' }}
           />
         </div>
 

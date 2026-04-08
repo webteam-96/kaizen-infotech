@@ -1,47 +1,47 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useRef } from 'react';
+import { useGSAP } from '@gsap/react';
+import { gsap, ScrollTrigger, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 
 export default function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const bar = barRef.current;
-    if (!bar) return;
+  registerGSAPPlugins();
 
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
+  useGSAP(
+    () => {
+      const bar = barRef.current;
+      if (!bar) return;
 
-    // Set initial state
-    gsap.set(bar, { scaleX: 0, transformOrigin: 'left center' });
+      const prefersReducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
 
-    const trigger = ScrollTrigger.create({
-      trigger: document.documentElement,
-      start: 'top top',
-      end: 'bottom bottom',
-      onUpdate: (self) => {
-        if (prefersReducedMotion) {
-          gsap.set(bar, { scaleX: self.progress });
-        } else {
-          gsap.to(bar, {
-            scaleX: self.progress,
-            duration: 0.15,
-            ease: 'none',
-            overwrite: true,
-          });
-        }
-      },
-    });
+      // Cache a quickTo for scaleX so onUpdate doesn't allocate a new
+      // tween every scroll tick. quickTo gives us tween-like smoothing
+      // (built-in lerp toward target) at ~zero per-frame cost.
+      gsap.set(bar, { scaleX: 0, transformOrigin: 'left center' });
+      const xTo = gsap.quickTo(bar, 'scaleX', {
+        duration: 0.15,
+        ease: 'none',
+      });
 
-    return () => {
-      trigger.kill();
-    };
-  }, []);
+      ScrollTrigger.create({
+        trigger: document.documentElement,
+        start: 'top top',
+        end: 'bottom bottom',
+        onUpdate: (self) => {
+          if (prefersReducedMotion) {
+            bar.style.transform = `scaleX(${self.progress})`;
+          } else {
+            xTo(self.progress);
+          }
+        },
+      });
+    },
+    { scope: barRef }
+  );
 
   return (
     <div

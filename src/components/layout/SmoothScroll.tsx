@@ -10,12 +10,12 @@ import {
   type ReactNode,
 } from 'react';
 import Lenis from 'lenis';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { usePathname } from 'next/navigation';
+import { gsap, ScrollTrigger, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { useScrollStore } from '@/lib/store/scroll-store';
 
-gsap.registerPlugin(ScrollTrigger);
+// Centralized plugin registration (idempotent guard inside).
+registerGSAPPlugins();
 
 interface LenisContextValue {
   lenis: Lenis | null;
@@ -98,12 +98,38 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
 
     instance.on('scroll', handleScroll);
 
+    // Refresh ScrollTrigger after web fonts swap in. next/font with
+    // display: 'swap' shifts text metrics on load, which can move every
+    // pinned section's `start`/`end` boundaries by a few pixels. We also
+    // refresh once after the window load event so any late-loading
+    // images (hero, project cards) recompute trigger positions.
+    let fontsLoaded = false;
+    const refreshAfterFonts = () => {
+      if (fontsLoaded) return;
+      fontsLoaded = true;
+      ScrollTrigger.refresh();
+    };
+    if (typeof document !== 'undefined' && 'fonts' in document) {
+      document.fonts.ready.then(refreshAfterFonts).catch(() => {
+        /* noop — fall through to window.load */
+      });
+    }
+    const onLoad = () => ScrollTrigger.refresh();
+    if (document.readyState === 'complete') {
+      // Already loaded — schedule a refresh on the next frame so the
+      // ScrollTriggers created by sibling effects have time to register.
+      requestAnimationFrame(() => ScrollTrigger.refresh());
+    } else {
+      window.addEventListener('load', onLoad, { once: true });
+    }
+
     return () => {
       gsap.ticker.remove(tickerCallback);
       instance.off('scroll', handleScroll);
       instance.off('scroll', ScrollTrigger.update);
       instance.destroy();
       lenisRef.current = null;
+      window.removeEventListener('load', onLoad);
 
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);

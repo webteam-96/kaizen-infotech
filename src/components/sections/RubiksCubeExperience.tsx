@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
 
 /* ══════════════════════════════════════════════════════════════
@@ -99,7 +100,7 @@ export function RubiksCubeExperience() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => {
+  useGSAP(() => {
     if (!mounted || !canvasContainerRef.current || !containerRef.current) return;
     registerGSAPPlugins();
 
@@ -318,6 +319,13 @@ export function RubiksCubeExperience() {
     const SHIFT = 2.2;
     let smoothCubeX = 0;
     let baseRotY = 0;
+    // Frame-rate independent smoothing helper.
+    // `tau` is the time-constant in seconds (≈ time to reach 63%).
+    // dt is current frame delta in seconds. Stable on 60Hz/120Hz/144Hz.
+    function smoothLerp(current: number, target: number, tau: number, dt: number) {
+      const a = 1 - Math.exp(-dt / tau);
+      return current + (target - current) * a;
+    }
 
     function cubeTargetX(p: number) {
       if (p < P.hero) return 0;
@@ -515,7 +523,9 @@ export function RubiksCubeExperience() {
       }
 
       const targetX = cubeTargetX(p);
-      smoothCubeX += (targetX - smoothCubeX) * 0.05;
+      // Smooth cube X with ~0.35s time-constant (frame-rate independent).
+      // dt is updated by the ticker; fall back to 16.67ms if unavailable.
+      smoothCubeX = smoothLerp(smoothCubeX, targetX, 0.35, lastDt);
       cubeGroup.position.x = smoothCubeX;
       discGroup.position.x = smoothCubeX;
 
@@ -612,29 +622,44 @@ export function RubiksCubeExperience() {
     }
 
     /* ═══ Scroll + Render loop ═══ */
+    // Use raw scrub progress (no double-smoothing). The JS smoothing layer
+    // (smoothProgress) handles the visual ease independent of scroll, so
+    // ScrollTrigger.scrub stays at 0 to give us a fresh value every frame.
     const scrollState = { progress: 0 };
     let smoothProgress = 0;
+    let lastDt = 1 / 60;
+    let isVisible = true;
 
-    ScrollTrigger.create({
+    const scrollTrigger = ScrollTrigger.create({
       trigger: rootEl.querySelector('[data-scroll-spacer]') as HTMLElement,
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 1.5,
+      scrub: 0.6,
       onUpdate: self => { scrollState.progress = self.progress; },
+      onToggle: self => { isVisible = self.isActive || self.progress < 1; },
     });
 
-    let animId: number;
-    function render() {
-      animId = requestAnimationFrame(render);
-      smoothProgress += (scrollState.progress - smoothProgress) * 0.05;
+    // GSAP ticker drives the loop (single source of truth, lockstep with
+    // Lenis + ScrollTrigger). Pass the function reference so we can remove
+    // it cleanly on unmount.
+    function tick(_time: number, deltaTime: number) {
+      // deltaTime is in milliseconds; convert to seconds and clamp so a
+      // tab-switch pause can't dump a huge dt into the smoothing math.
+      lastDt = Math.min(0.05, Math.max(0.001, deltaTime / 1000));
+
+      // Skip the heavy three.js work entirely when the section is fully
+      // out of view. Cards/UI/visibility checks are cheap so still run.
+      updateFixedVisibility();
+      if (!isVisible) return;
+
+      smoothProgress = smoothLerp(smoothProgress, scrollState.progress, 0.18, lastDt);
       updateCube(smoothProgress);
       updateParticles(smoothProgress);
       updateCards(smoothProgress);
       updateUI(smoothProgress);
-      updateFixedVisibility();
       renderer.render(scene, camera);
     }
-    render();
+    gsap.ticker.add(tick);
 
     function onResize() {
       camera.aspect = innerWidth / innerHeight;
@@ -644,16 +669,16 @@ export function RubiksCubeExperience() {
     window.addEventListener('resize', onResize);
 
     return () => {
-      cancelAnimationFrame(animId);
+      gsap.ticker.remove(tick);
       window.removeEventListener('resize', onResize);
-      ScrollTrigger.getAll().forEach(st => st.kill());
+      scrollTrigger.kill();
       renderer.dispose();
       scene.clear();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [mounted]);
+  }, { dependencies: [mounted], scope: containerRef });
 
   if (!mounted) return <div style={{ height: '1600vh', background: BG_COLOR }} />;
 
