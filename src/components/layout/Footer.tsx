@@ -123,9 +123,11 @@ export function Footer() {
               />
             </Link>
             <p className="mt-4 max-w-sm text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
-              Kaizen Infotech Solutions Pvt. Ltd. delivers custom software, mobile apps, event
-              management systems, and digital marketing solutions that help organizations
-              operate smarter and scale faster.
+              Kaizen Infotech Solutions Pvt. Ltd. is a Mumbai-based custom software company
+              with over 10 years of experience delivering scalable digital platforms for
+              government organisations, enterprises, NGOs, and community networks. From custom
+              ERP systems and mobile apps to event management platforms and digital marketing,
+              we build technology that works.
             </p>
           </div>
 
@@ -173,7 +175,8 @@ export function Footer() {
               Stay Updated
             </h3>
             <p className="mb-4 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-              Subscribe to our newsletter for insights and updates.
+              Subscribe for technology insights, project stories, and digital transformation
+              tips from the Kaizen team.
             </p>
             <form
               onSubmit={(e) => e.preventDefault()}
@@ -210,8 +213,8 @@ export function Footer() {
 
             <div className="mt-6 space-y-2 text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]">
               <p>info@kaizeninfotech.com</p>
-              <p>+91 98200 00000</p>
-              <p>Mumbai, Maharashtra, India</p>
+              <p>+91 99201 30855</p>
+              <p>Thane West, Thane, Maharashtra 400604</p>
             </div>
           </div>
         </div>
@@ -219,7 +222,8 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[var(--color-border)] pt-8 md:flex-row">
           <p className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]">
-            &copy; {new Date().getFullYear()} Kaizen Infotech Solutions. All rights reserved.
+            &copy; {new Date().getFullYear()} Kaizen Infotech Solutions Pvt. Ltd. All rights
+            reserved.
           </p>
 
           {/* Social Icons */}

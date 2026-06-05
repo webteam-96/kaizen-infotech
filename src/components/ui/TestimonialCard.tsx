@@ -74,7 +74,7 @@ export function TestimonialCard({
       {/* Quote text */}
       <blockquote className="relative z-10 mb-8 flex-1">
         <p
-          className="text-[length:var(--text-xl)] leading-relaxed text-[var(--color-text-primary)] md:text-[length:var(--text-2xl)]"
+          className="text-[length:var(--h-card)] leading-relaxed text-[var(--color-text-primary)]"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {quote}
@@ -111,7 +111,7 @@ export function TestimonialCard({
         <div>
           <p
             className="text-[length:var(--text-base)] font-semibold text-[var(--color-text-primary)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
           >
             {clientName}
           </p>

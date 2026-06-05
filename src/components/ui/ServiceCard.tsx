@@ -75,7 +75,7 @@ export function ServiceCard({
           {/* Title — single fixed size */}
           <h3
             className="mb-3 text-2xl font-semibold leading-snug text-[var(--color-text-primary)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
           >
             {title}
           </h3>

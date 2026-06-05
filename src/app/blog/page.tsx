@@ -58,17 +58,18 @@ export default function BlogPage() {
           <TextReveal
             as="h1"
             splitBy="words"
-            className="mb-6 text-[length:var(--text-6xl)] font-bold leading-[1.05] text-[var(--color-text-primary)] md:text-[length:var(--text-7xl)]"
+            className="mb-6 text-[length:var(--h-page)] font-bold leading-[1.05] text-[var(--color-text-primary)]"
           >
-            Insights &amp; Perspectives
+            Insights &amp; Perspectives — Technology, Business &amp; Digital Transformation
           </TextReveal>
           <FadeIn delay={0.3}>
             <p
-              className="max-w-2xl text-[length:var(--text-xl)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Thoughts on engineering, design, AI, and building software that
-              matters.
+              Practical thinking on enterprise software, government digital
+              transformation, mobile development, event technology, and digital
+              marketing — written by the team that builds it.
             </p>
           </FadeIn>
         </div>
@@ -155,7 +156,7 @@ export default function BlogPage() {
                         </div>
 
                         <h2
-                          className="mb-4 text-[length:var(--text-2xl)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)] md:text-[length:var(--text-3xl)]"
+                          className="mb-4 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
                           style={{ fontFamily: 'var(--font-heading)' }}
                         >
                           {featuredPost.title}
@@ -224,7 +225,7 @@ export default function BlogPage() {
                         </div>
 
                         <h3
-                          className="mb-3 text-[length:var(--text-lg)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                          className="mb-3 text-[length:var(--h-card)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
                           style={{ fontFamily: 'var(--font-heading)' }}
                         >
                           {post.title}
@@ -264,7 +265,7 @@ export default function BlogPage() {
         <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
             <h2
-              className="mb-4 text-[length:var(--text-4xl)] font-bold text-[var(--color-text-primary)]"
+              className="mb-4 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Stay in the Loop
@@ -273,8 +274,8 @@ export default function BlogPage() {
               className="mx-auto mb-10 max-w-lg text-[length:var(--text-lg)] text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Get our latest insights on engineering, design, and technology
-              delivered to your inbox. No spam, unsubscribe anytime.
+              Get practical technology insights from the Kaizen team delivered
+              to your inbox. No spam — unsubscribe anytime.
             </p>
             <form
               onSubmit={handleNewsletterSubmit}
@@ -306,7 +307,7 @@ export default function BlogPage() {
                   className="mt-4 text-[length:var(--text-sm)] text-[var(--color-accent-secondary)]"
                   style={{ fontFamily: 'var(--font-body)' }}
                 >
-                  You&apos;re subscribed! Check your inbox for a welcome email.
+                  Thank you! You will receive our next article in your inbox.
                 </motion.p>
               )}
             </AnimatePresence>

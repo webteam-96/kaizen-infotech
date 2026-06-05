@@ -10,6 +10,7 @@ export interface Service {
   features: string[];
   technologies: string[];
   relatedProjects: string[];
+  faqs?: { question: string; answer: string }[];
 }
 
 export interface Project {

@@ -13,7 +13,7 @@ const stats = [
   { number: 10, suffix: '+', label: 'Years of Experience' },
   { number: 100, suffix: '+', label: 'Projects Delivered' },
   { number: 8, suffix: '+', label: 'Industries Served' },
-  { number: 5, suffix: '', label: 'Core Services' },
+  { number: 3, suffix: ' Lakh+', label: 'Users on Our Platforms' },
 ];
 
 export function StatsGrid() {
@@ -120,7 +120,7 @@ export function StatsGrid() {
         {/* Section label */}
         <ScrollFadeIn direction="up" className="mb-16 text-center">
           <span
-            className="text-[length:var(--text-xs)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+            className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             By the Numbers

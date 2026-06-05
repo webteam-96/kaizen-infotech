@@ -18,34 +18,28 @@ import { cn } from '@/lib/utils/cn';
 
 const milestones = [
   {
-    year: '01',
-    title: 'Custom Software Development',
+    year: '[Year]',
+    title: 'Founded',
     description:
-      'Enterprise web applications, business process automation, custom ERP and management platforms, dashboards and MIS reporting.',
+      'Kaizen Infotech was founded in Mumbai with a mission to make enterprise technology accessible, practical, and genuinely impactful.',
   },
   {
-    year: '02',
-    title: 'Mobile App Development',
+    year: '[Year]',
+    title: 'First Major Government Project',
     description:
-      'Android and iOS applications for member engagement, enterprise mobility, field force management, and real-time communication.',
+      '[Describe first government engagement - e.g., Income Tax Department, Mumbai Port Trust, or another early client.]',
   },
   {
-    year: '03',
-    title: 'Event Management Systems',
+    year: '[Year]',
+    title: '100+ Projects Milestone',
     description:
-      'Online registrations, secure payments, QR-based check-in, attendance tracking, and automated communication.',
+      'Crossed 100 delivered projects across government, enterprise, and community sectors in India.',
   },
   {
-    year: '04',
-    title: 'Enterprise Web Portals',
+    year: 'Present',
+    title: '3 Lakh+ Users on Our Platforms',
     description:
-      'Secure websites and portals with role-based access, content management, and enterprise system integration.',
-  },
-  {
-    year: '05',
-    title: 'Digital Marketing',
-    description:
-      'SEO, social media marketing, Google and Meta Ads campaigns, content marketing, and conversion optimization.',
+      'Today our platforms serve over 3 lakh active users across India and globally through clients like Rotary Zones 4–7 and JITO World.',
   },
 ];
 
@@ -55,9 +49,9 @@ const milestones = [
 
 const values = [
   {
-    title: 'Long-Term Value',
+    title: 'Long-Term Value Over Quick Fixes',
     subtitle: null,
-    description: 'We focus on long-term value, not quick fixes. Every solution is built to serve your organization for years.',
+    description: 'We build for the long run. Every solution is architected to serve your organisation for years, not just months. We avoid shortcuts that create technical debt.',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
@@ -68,7 +62,7 @@ const values = [
   {
     title: 'Business-First Design',
     subtitle: null,
-    description: 'We build solutions around real business workflows, ensuring practical adoption and measurable impact.',
+    description: 'We build around real operational workflows - not generic templates. Practical adoption and measurable impact are the standards we hold every solution to.',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -77,9 +71,9 @@ const values = [
     ),
   },
   {
-    title: 'Scalable & Future-Ready',
+    title: 'Scalable & Future-Ready Architecture',
     subtitle: null,
-    description: 'Our systems are designed to be scalable and future-ready, growing alongside your organization.',
+    description: 'Systems we deliver are designed to scale with your growth, integrate with future tools, and adapt as your needs evolve.',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <line x1="9" y1="18" x2="15" y2="18" />
@@ -91,10 +85,20 @@ const values = [
   {
     title: 'Continuous Improvement',
     subtitle: 'Kaizen',
-    description: 'We continuously improve through feedback and learning — it is in our name and our DNA.',
+    description: 'We improve through feedback, retrospectives, and learning. From sprint reviews to post-launch support, getting better is built into our process.',
     icon: (
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Transparency & Accountability',
+    subtitle: null,
+    description: 'We communicate honestly about timelines, challenges, and constraints. Clients know exactly what we are building and why.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
   },
@@ -105,7 +109,7 @@ const values = [
 // ---------------------------------------------------------------------------
 
 const deliverySteps = [
-  { number: '01', title: 'Understand', description: 'We study your organization, users, and operational challenges in detail.' },
+  { number: '01', title: 'Understand', description: 'We study your organisation, users, and operational challenges in detail.' },
   { number: '02', title: 'Design', description: 'We design secure and scalable system architecture aligned with your goals.' },
   { number: '03', title: 'Develop', description: 'We follow clean development practices with strong testing and performance focus.' },
   { number: '04', title: 'Deploy & Support', description: 'We ensure smooth deployment and provide continuous support and enhancements.' },
@@ -160,7 +164,7 @@ export default function AboutPage() {
         <div className="relative z-10 mx-auto max-w-5xl text-center">
           <ScrollFadeIn delay={0.1}>
             <span
-              className="mb-6 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
+              className="mb-6 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               About Kaizen Infotech
@@ -170,7 +174,7 @@ export default function AboutPage() {
           <TextReveal
             as="h1"
             splitBy="words"
-            className="text-[clamp(3rem,6vw,5.5rem)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
+            className="text-[length:var(--h-page)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
             stagger={0.06}
           >
             A Technology Partner Focused on Solving Real Business Problems
@@ -178,20 +182,20 @@ export default function AboutPage() {
 
           <ScrollFadeIn delay={0.6}>
             <p
-              className="mx-auto mt-8 max-w-2xl text-[length:var(--text-lg)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="mx-auto mt-8 max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               For over a decade, we have partnered with enterprises, government
-              bodies, associations, and institutions to design and deliver digital
-              platforms that simplify operations, improve engagement, and support
-              long-term growth.
+              bodies, associations, and institutions across India to design and
+              deliver digital platforms that simplify operations, improve
+              engagement, and support long-term growth.
             </p>
           </ScrollFadeIn>
 
           {/* Scroll indicator */}
           <ScrollFadeIn delay={1}>
             <div className="mt-16 flex flex-col items-center gap-2">
-              <span className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]">
+              <span className="text-[length:var(--h-eyebrow)] text-[var(--color-text-tertiary)]">
                 Scroll to explore
               </span>
               <motion.div
@@ -214,7 +218,7 @@ export default function AboutPage() {
           <div>
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Who We Are
@@ -223,12 +227,12 @@ export default function AboutPage() {
 
             <ScrollFadeIn delay={0.1}>
               <h2
-                className="mb-8 text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+                className="mb-8 text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Built on the philosophy of{' '}
+                Headquartered in Mumbai, trusted across{' '}
                 <span className="italic text-[var(--color-accent-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-                  practical solutions
+                  India
                 </span>
               </h2>
             </ScrollFadeIn>
@@ -239,20 +243,36 @@ export default function AboutPage() {
                 style={{ fontFamily: 'var(--font-body)' }}
               >
                 Kaizen Infotech Solutions Pvt. Ltd. is a trusted technology partner
-                with over a decade of experience in delivering practical and scalable
-                digital solutions. We believe technology should simplify operations,
-                not complicate them.
+                headquartered in Mumbai, India. With over a decade of experience
+                building enterprise-grade and government digital platforms, we have
+                earned a reputation for delivering solutions that genuinely work -
+                not just technically, but operationally.
               </p>
             </ScrollFadeIn>
 
             <ScrollFadeIn delay={0.3}>
               <p
+                className="mb-6 text-[length:var(--text-base)] leading-[1.8] text-[var(--color-text-secondary)]"
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                Our name comes from the Japanese philosophy of Kaizen - continuous,
+                deliberate improvement. That principle drives everything we do: how
+                we engage with clients, how we design systems, and how we deliver
+                long-term support. We believe great technology is built through deep
+                understanding, not quick assumptions.
+              </p>
+            </ScrollFadeIn>
+
+            <ScrollFadeIn delay={0.35}>
+              <p
                 className="mb-8 text-[length:var(--text-base)] leading-[1.8] text-[var(--color-text-secondary)]"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
-                Our team works closely with stakeholders to understand business
-                objectives, design the right solution architecture, and deliver
-                reliable systems that are easy to use, secure, and future-ready.
+                From powering Rotary International across India to digitising
+                operations at Mumbai Port Trust and the Income Tax Department, our
+                platforms serve hundreds of thousands of users every day. Each
+                engagement reinforces our core belief: technology should simplify
+                life, not complicate it.
               </p>
             </ScrollFadeIn>
 
@@ -365,18 +385,18 @@ export default function AboutPage() {
                 transition={{ duration: 0.5 }}
               >
                 <span
-                  className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                  className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   Our Mission
                 </span>
                 <h2
-                  className="text-[clamp(2rem,4vw,3.75rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+                  className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   To make technology work for people, processes, and progress —
                   simplifying operations, improving engagement, and supporting
-                  long-term growth for every organization we serve.
+                  long-term growth for every organisation we serve.
                 </h2>
               </motion.div>
             ) : (
@@ -388,18 +408,19 @@ export default function AboutPage() {
                 transition={{ duration: 0.5 }}
               >
                 <span
-                  className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                  className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   Our Vision
                 </span>
                 <h2
-                  className="text-[clamp(2rem,4vw,3.75rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+                  className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  To be the trusted technology partner that organizations choose
-                  for building reliable, scalable, and future-ready digital
-                  platforms that deliver measurable business impact.
+                  To be the most trusted technology partner for organisations
+                  across India and beyond - building reliable, scalable, and
+                  future-ready digital platforms that deliver measurable
+                  business impact.
                 </h2>
               </motion.div>
             )}
@@ -435,16 +456,16 @@ export default function AboutPage() {
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Our Philosophy
+                Our Values
               </span>
             </ScrollFadeIn>
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               The Kaizen Way
             </TextReveal>
@@ -471,7 +492,7 @@ export default function AboutPage() {
 
                 {/* Title */}
                 <h3
-                  className="mb-1 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]"
+                  className="mb-1 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {value.title}
@@ -479,7 +500,7 @@ export default function AboutPage() {
 
                 {value.subtitle && (
                   <span
-                    className="mb-2 inline-block text-[length:var(--text-xs)] italic text-[var(--color-accent-primary)]"
+                    className="mb-2 inline-block text-[length:var(--h-eyebrow)] italic text-[var(--color-accent-primary)]"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
                     {value.subtitle}
@@ -507,18 +528,18 @@ export default function AboutPage() {
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                What We Do
+                Our Journey
               </span>
             </ScrollFadeIn>
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
-              End-to-End Digital Solutions
+              A Decade of Delivering Impact
             </TextReveal>
           </div>
 
@@ -575,7 +596,7 @@ export default function AboutPage() {
                         {isLeft ? (
                           <>
                             <h3
-                              className="text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]"
+                              className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                               style={{ fontFamily: 'var(--font-heading)' }}
                             >
                               {milestone.title}
@@ -628,7 +649,7 @@ export default function AboutPage() {
                         ) : (
                           <>
                             <h3
-                              className="text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]"
+                              className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                               style={{ fontFamily: 'var(--font-heading)' }}
                             >
                               {milestone.title}
@@ -645,7 +666,7 @@ export default function AboutPage() {
 
                       {/* Mobile: number badge */}
                       <span
-                        className="absolute -left-0.5 top-0 text-[length:var(--text-xs)] font-bold text-[var(--color-accent-primary)] md:hidden"
+                        className="absolute -left-0.5 top-0 text-[length:var(--h-eyebrow)] font-bold text-[var(--color-accent-primary)] md:hidden"
                         style={{ fontFamily: 'var(--font-heading)' }}
                       >
                         {milestone.year}
@@ -667,7 +688,7 @@ export default function AboutPage() {
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 How We Work
@@ -676,7 +697,7 @@ export default function AboutPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               Our Delivery Process
             </TextReveal>
@@ -711,7 +732,7 @@ export default function AboutPage() {
                   {step.number}
                 </span>
                 <h3
-                  className="mb-2 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]"
+                  className="mb-2 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {step.title}
@@ -735,7 +756,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
-              className="text-[clamp(2.25rem,4vw,4rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Let&apos;s Build Technology That Works
@@ -746,8 +767,8 @@ export default function AboutPage() {
               className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Whether you are planning a new digital platform or modernizing
-              existing systems, Kaizen Infotech is ready to support your journey.
+              Whether you are planning a new digital platform or modernising
+              your existing systems, Kaizen Infotech is ready to support your journey.
             </p>
           </ScrollFadeIn>
           <ScrollFadeIn delay={0.3}>

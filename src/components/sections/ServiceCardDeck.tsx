@@ -202,7 +202,7 @@ export function ServiceCardDeck() {
                 {/* Title */}
                 <h3
                   className="mb-2.5 line-clamp-2 text-[length:var(--text-base)] font-semibold leading-snug text-[var(--color-text-primary)]"
-                  style={{ fontFamily: 'var(--font-heading)' }}
+                  style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
                 >
                   {service.title}
                 </h3>
@@ -272,7 +272,7 @@ export function ServiceCardDeck() {
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)] transition-transform duration-300 group-hover:scale-110">
                 <ServiceIcon name={service.icon} />
               </div>
-              <h3 className="mb-2 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-heading)' }}>
+              <h3 className="mb-2 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}>
                 {service.title}
               </h3>
               <p className="mb-5 flex-1 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]" style={{ fontFamily: 'var(--font-body)' }}>

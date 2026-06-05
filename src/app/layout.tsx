@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Jost, Lato, JetBrains_Mono } from 'next/font/google';
+import { Jost, Lato, JetBrains_Mono, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Navbar } from '@/components/layout/Navbar';
@@ -23,6 +23,13 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-mono',
+  display: 'swap',
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-card-heading',
   display: 'swap',
 });
 
@@ -72,7 +79,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} antialiased`}
         style={{ fontFamily: 'var(--font-body)' }}
       >
         <Providers>

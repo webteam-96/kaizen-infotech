@@ -24,17 +24,19 @@ export default function WorkPage() {
           <TextReveal
             as="h1"
             splitBy="words"
-            className="mb-6 text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.05] text-[var(--color-text-primary)]"
+            className="mb-6 text-[length:var(--h-page)] font-bold leading-[1.05] text-[var(--color-text-primary)]"
           >
             Real-World Digital Solutions Built for Impact
           </TextReveal>
           <ScrollFadeIn delay={0.3}>
             <p
-              className="max-w-2xl text-[length:var(--text-lg)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Explore our portfolio of digital platforms built for government,
-              enterprise, healthcare, and global communities.
+              Explore our portfolio of digital platforms delivered for government
+              organisations, enterprises, healthcare providers, and global
+              communities. Every project here represents a real problem, a
+              thoughtful solution, and a measurable outcome.
             </p>
           </ScrollFadeIn>
         </div>
@@ -110,7 +112,7 @@ export default function WorkPage() {
         <div className="mx-auto max-w-7xl text-center">
           <ScrollFadeIn>
             <h2
-              className="mb-6 text-[clamp(2rem,4vw,3.5rem)] font-bold text-[var(--color-text-primary)]"
+              className="mb-6 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Let&apos;s Build the Next Success Story
@@ -119,7 +121,7 @@ export default function WorkPage() {
               className="mx-auto mb-10 max-w-xl text-[length:var(--text-lg)] text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Looking to build a similar digital solution for your organization?
+              Looking to build a similar digital solution for your organisation?
               Our team is ready to help.
             </p>
             <Button href="/contact" size="lg">

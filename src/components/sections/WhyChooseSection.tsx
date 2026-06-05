@@ -9,11 +9,11 @@ import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { cn } from '@/lib/utils/cn';
 
 const reasons = [
-  { title: 'Over 10 Years of Experience', description: 'Deep industry knowledge built over a decade of delivering enterprise and government projects.' },
-  { title: 'Business Process Expertise', description: 'We understand how organizations work and build solutions that align with real operational workflows.' },
-  { title: 'Secure & Scalable Architecture', description: 'Every system we build is designed for security, performance, and long-term scalability.' },
-  { title: 'Transparent Communication', description: 'Open communication, honest timelines, and clear expectations throughout every engagement.' },
-  { title: 'Dedicated Post-Launch Support', description: 'We provide continuous support, maintenance, and enhancements long after deployment.' },
+  { title: 'Over 10 Years of Deep Domain Experience', description: 'We have been building enterprise and government solutions for over a decade. Our team understands the complexity of large organisations and delivers solutions that work in the real world.' },
+  { title: 'Business-First Engineering', description: 'We study your organisation, workflows, and users before writing a single line of code. Technology follows strategy — not the other way around.' },
+  { title: 'Secure & Scalable Architecture', description: 'Every platform we build is designed for security, long-term scalability, and performance — ready to grow with your organisation.' },
+  { title: 'Transparent Communication', description: 'Honest timelines, clear deliverables, and regular updates. You always know exactly where your project stands.' },
+  { title: 'Dedicated Post-Launch Partnership', description: 'Our relationship does not end at deployment. We provide ongoing support, maintenance, and continuous improvements long after go-live.' },
 ];
 
 export function WhyChooseSection() {
@@ -34,7 +34,7 @@ export function WhyChooseSection() {
         <div className="mb-16 text-center">
           <ScrollFadeIn direction="up">
             <span
-              className="text-[length:var(--text-xs)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+              className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Why Kaizen Infotech
@@ -46,11 +46,11 @@ export function WhyChooseSection() {
             stagger={0.04}
             className={cn(
               'mt-3 font-[family-name:var(--font-display)]',
-              'text-[clamp(2rem,4vw,3rem)] leading-tight tracking-tight',
+              'text-[length:var(--h-section)] leading-tight tracking-tight',
               'text-[var(--color-text-primary)]'
             )}
           >
-            Long-term value, not just project delivery
+            Long-Term Value, Not Just Project Delivery
           </TextReveal>
         </div>
 
@@ -68,7 +68,7 @@ export function WhyChooseSection() {
               </ParallaxLayer>
               <div>
                 <h3
-                  className="mb-2 text-[length:var(--text-base)] font-semibold text-[var(--color-text-primary)]"
+                  className="mb-2 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {reason.title}

@@ -41,7 +41,7 @@ export function useParallax(
             trigger: ref.current,
             start,
             end,
-            scrub: ANIMATION_CONFIG.scrub.smooth,
+            scrub: ANIMATION_CONFIG.scrub.cinematic,
           },
         }
       );

@@ -64,14 +64,14 @@ export default function ProjectDetailClient({
           <TextReveal
             as="h1"
             splitBy="words"
-            className="mb-6 text-[length:var(--text-5xl)] font-bold leading-[1.1] text-[var(--color-text-primary)] md:text-[length:var(--text-7xl)]"
+            className="mb-6 text-[length:var(--h-page)] font-bold leading-[1.1] text-[var(--color-text-primary)]"
           >
             {project.title}
           </TextReveal>
 
           <FadeIn delay={0.3}>
             <p
-              className="max-w-3xl text-[length:var(--text-xl)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="max-w-3xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               {project.description}
@@ -147,7 +147,7 @@ export default function ProjectDetailClient({
                 </span>
               </div>
               <h2
-                className="mb-6 text-[length:var(--text-3xl)] font-bold text-[var(--color-text-primary)]"
+                className="mb-6 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Understanding the Problem
@@ -174,7 +174,7 @@ export default function ProjectDetailClient({
                 </span>
               </div>
               <h2
-                className="mb-6 text-[length:var(--text-3xl)] font-bold text-[var(--color-text-primary)]"
+                className="mb-6 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Building the Answer
@@ -201,7 +201,7 @@ export default function ProjectDetailClient({
                 </span>
               </div>
               <h2
-                className="mb-6 text-[length:var(--text-3xl)] font-bold text-[var(--color-text-primary)]"
+                className="mb-6 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Measurable Impact
@@ -249,7 +249,7 @@ export default function ProjectDetailClient({
                 Previous Project
               </span>
               <span
-                className="text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {prevProject.title}
@@ -271,7 +271,7 @@ export default function ProjectDetailClient({
                 Next Project
               </span>
               <span
-                className="text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {nextProject.title}
@@ -288,7 +288,7 @@ export default function ProjectDetailClient({
         <div className="mx-auto max-w-7xl text-center">
           <FadeIn>
             <h2
-              className="mb-6 text-[length:var(--text-4xl)] font-bold text-[var(--color-text-primary)]"
+              className="mb-6 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Ready to Build Something Great?

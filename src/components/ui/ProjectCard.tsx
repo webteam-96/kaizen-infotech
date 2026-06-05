@@ -115,8 +115,8 @@ export function ProjectCard({
 
           {/* Title */}
           <motion.h3
-            className="mb-1 text-[length:var(--text-2xl)] font-bold text-[var(--color-text-inverse)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            className="mb-1 text-[length:var(--h-card)] font-bold text-[var(--color-text-inverse)]"
+            style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : undefined}
             transition={{ delay: 0.4, ...spring }}

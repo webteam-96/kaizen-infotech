@@ -52,6 +52,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
   const setScrollY = useScrollStore((s) => s.setScrollY);
   const setScrollDirection = useScrollStore((s) => s.setScrollDirection);
   const setScrollProgress = useScrollStore((s) => s.setScrollProgress);
+  const setScrollVelocity = useScrollStore((s) => s.setScrollVelocity);
   const setIsScrolling = useScrollStore((s) => s.setIsScrolling);
 
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,11 +61,14 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
   useEffect(() => {
     const isTouch = isTouchDevice();
 
+    // Cinematic smoothing — heavier coast on desktop with a quartic ease-out.
+    // Lenis interprets `duration` as the time (in seconds) to settle from a
+    // scroll burst to rest; a higher value gives more weight/inertia.
     const instance = new Lenis({
-      duration: isTouch ? 0.8 : 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      wheelMultiplier: 1,
-      touchMultiplier: isTouch ? 1.5 : 2,
+      duration: isTouch ? 1.0 : 1.8,
+      easing: (t: number) => 1 - Math.pow(1 - t, 4),
+      wheelMultiplier: 0.9,
+      touchMultiplier: isTouch ? 1.2 : 1.8,
       smoothWheel: !isTouch,
     });
 
@@ -81,18 +85,51 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     };
     gsap.ticker.add(tickerCallback);
 
+    // Velocity-driven `--scroll-skew` CSS variable on the document root.
+    // Elements opt in via `transform: skewY(var(--scroll-skew, 0deg))` (see
+    // the `.rc-scroll-skew` helper in globals.css). The hero owns its own
+    // RAF transforms; using a CSS var keeps the two systems composable
+    // instead of fighting per-frame.
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let smoothedVelocity = 0;
+    const updateSkew = (velocity: number) => {
+      if (prefersReducedMotion) return;
+      smoothedVelocity = smoothedVelocity * 0.85 + velocity * 0.15;
+      const clamped = Math.max(-1, Math.min(1, smoothedVelocity / 80));
+      document.documentElement.style.setProperty(
+        '--scroll-skew',
+        `${(clamped * 1.2).toFixed(3)}deg`
+      );
+    };
+
     // Update scroll store on scroll
-    const handleScroll = ({ scroll, direction, progress }: { scroll: number; direction: number; progress: number }) => {
+    const handleScroll = ({
+      scroll,
+      direction,
+      progress,
+      velocity,
+    }: {
+      scroll: number;
+      direction: number;
+      progress: number;
+      velocity: number;
+    }) => {
       setScrollY(scroll);
       setScrollDirection(direction >= 0 ? 'down' : 'up');
       setScrollProgress(progress);
+      setScrollVelocity(velocity);
       setIsScrolling(true);
+      updateSkew(velocity);
 
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
       scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
+        setScrollVelocity(0);
+        updateSkew(0);
       }, 150);
     };
 
@@ -135,7 +172,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [setScrollY, setScrollDirection, setScrollProgress, setIsScrolling]);
+  }, [setScrollY, setScrollDirection, setScrollProgress, setScrollVelocity, setIsScrolling]);
 
   // Scroll restoration on route change
   const handleRouteChange = useCallback(() => {

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { StaggerChildren } from '@/components/animation/StaggerChildren';
+import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
 import type { Service } from '@/types';
@@ -198,7 +199,7 @@ export default function ServiceDetailClient({
           <TextReveal
             as="h1"
             splitBy="words"
-            className="text-[clamp(2rem,5vw,4rem)] font-semibold leading-[1.1] text-[var(--color-text-primary)]"
+            className="text-[length:var(--h-page)] font-semibold leading-[1.1] text-[var(--color-text-primary)]"
             stagger={0.06}
           >
             {service.title}
@@ -207,7 +208,7 @@ export default function ServiceDetailClient({
           {/* Short description */}
           <FadeIn delay={0.4}>
             <p
-              className="mt-6 max-w-2xl text-[length:var(--text-lg)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="mt-6 max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               {service.description}
@@ -225,7 +226,7 @@ export default function ServiceDetailClient({
           <div>
             <FadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Overview
@@ -244,7 +245,7 @@ export default function ServiceDetailClient({
             <FadeIn delay={0.2}>
               <div className="mt-10">
                 <h3
-                  className="mb-4 text-[length:var(--text-sm)] font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]"
+                  className="mb-4 text-[length:var(--h-eyebrow)] font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   Technologies
@@ -273,7 +274,7 @@ export default function ServiceDetailClient({
           <div>
             <FadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 What We Deliver
@@ -307,6 +308,42 @@ export default function ServiceDetailClient({
       </section>
 
       {/* ================================================================= */}
+      {/* FAQ SECTION */}
+      {/* ================================================================= */}
+      {service.faqs && service.faqs.length > 0 && (
+        <section className="relative px-6 py-32">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-16 text-center">
+              <FadeIn>
+                <span
+                  className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  Common Questions
+                </span>
+              </FadeIn>
+              <TextReveal
+                as="h2"
+                splitBy="words"
+                className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              >
+                Frequently Asked Questions
+              </TextReveal>
+            </div>
+
+            <FadeIn delay={0.1}>
+              <Accordion
+                items={service.faqs.map((faq) => ({
+                  title: faq.question,
+                  content: faq.answer,
+                }))}
+              />
+            </FadeIn>
+          </div>
+        </section>
+      )}
+
+      {/* ================================================================= */}
       {/* RELATED SERVICES */}
       {/* ================================================================= */}
       <section className="relative px-6 py-32">
@@ -314,7 +351,7 @@ export default function ServiceDetailClient({
           <div className="mb-12">
             <FadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Explore More
@@ -323,7 +360,7 @@ export default function ServiceDetailClient({
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(1.5rem,3vw,2.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               Related Services
             </TextReveal>
@@ -350,7 +387,7 @@ export default function ServiceDetailClient({
                     {serviceIconsSmall[related.icon] ?? serviceIconsSmall.Code}
                   </div>
                   <h3
-                    className="mb-2 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]"
+                    className="mb-2 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                     style={{ fontFamily: 'var(--font-heading)' }}
                   >
                     {related.title}
@@ -362,7 +399,7 @@ export default function ServiceDetailClient({
                     {related.description}
                   </p>
                   <span
-                    className="mt-4 inline-flex items-center gap-1 text-[length:var(--text-xs)] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] transition-colors duration-200 group-hover:text-[var(--color-accent-primary)]"
+                    className="mt-4 inline-flex items-center gap-1 text-[length:var(--h-eyebrow)] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] transition-colors duration-200 group-hover:text-[var(--color-accent-primary)]"
                     style={{ fontFamily: 'var(--font-heading)' }}
                   >
                     View service
@@ -390,7 +427,7 @@ export default function ServiceDetailClient({
         <div className="mx-auto max-w-3xl text-center">
           <FadeIn>
             <h2
-              className="text-[clamp(2rem,4vw,3.5rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Ready to Get Started?

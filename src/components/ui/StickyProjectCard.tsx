@@ -126,8 +126,8 @@ export function StickyProjectCard({
         {/* Title + client + CTA — bottom */}
         <div className="absolute inset-x-0 bottom-0 p-6 md:p-10">
           <h3
-            className="mb-1 text-[clamp(1.5rem,3vw,2.5rem)] font-bold leading-tight text-[var(--color-text-inverse)]"
-            style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}
+            className="mb-1 text-[length:var(--h-card)] font-bold leading-tight text-[var(--color-text-inverse)]"
+            style={{ fontFamily: 'var(--font-card-heading), var(--font-display)', letterSpacing: '-0.02em' }}
           >
             {title}
           </h3>

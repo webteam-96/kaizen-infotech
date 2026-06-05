@@ -17,19 +17,19 @@ const steps = [
     number: '02',
     title: 'Design',
     description:
-      'We create scalable and secure solution architectures aligned with long-term growth and business objectives.',
+      'We create secure, scalable solution architectures aligned with your long-term growth objectives.',
   },
   {
     number: '03',
     title: 'Develop',
     description:
-      'We follow clean coding practices with strong testing and performance optimization throughout the development lifecycle.',
+      'We follow clean coding practices with rigorous testing and performance optimisation throughout development.',
   },
   {
     number: '04',
     title: 'Deploy & Support',
     description:
-      'We ensure smooth deployment with continuous support, maintenance, and enhancements post-launch.',
+      'We ensure smooth deployment with continuous post-launch support, maintenance, and enhancements.',
   },
 ];
 
@@ -87,7 +87,7 @@ export function ProcessSteps() {
         {/* Section header */}
         <FadeIn direction="up" className="mb-20">
           <span
-            className="text-[length:var(--text-xs)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+            className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             How We Work
@@ -95,11 +95,11 @@ export function ProcessSteps() {
           <h2
             className={cn(
               'mt-3 font-[family-name:var(--font-display)]',
-              'text-[clamp(2rem,4vw,3rem)] leading-tight tracking-tight',
+              'text-[length:var(--h-section)] leading-tight tracking-tight',
               'text-[var(--color-text-primary)]'
             )}
           >
-            Business First. Technology Driven.
+            Business First. Technology Second.
           </h2>
         </FadeIn>
 
@@ -169,7 +169,7 @@ export function ProcessSteps() {
                       <h3
                         className={cn(
                           'mb-3 font-[family-name:var(--font-heading)]',
-                          'text-[length:var(--text-2xl)] font-bold',
+                          'text-[length:var(--h-card)] font-bold',
                           isActive
                             ? 'text-[var(--color-accent-primary)]'
                             : 'text-[var(--color-text-tertiary)]'

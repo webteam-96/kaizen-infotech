@@ -160,7 +160,7 @@ export function TeamCard({
             'mb-1 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]',
             'relative inline-block'
           )}
-          style={{ fontFamily: 'var(--font-heading)' }}
+          style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
         >
           {name}
           {/* Underline on hover */}

@@ -27,12 +27,11 @@ export const footerLinkGroups: FooterLinkGroup[] = [
   {
     title: 'Services',
     links: [
-      { label: 'Custom Software', href: '/services/custom-software-development' },
-      { label: 'Mobile Apps', href: '/services/mobile-app-development' },
-      { label: 'Cloud & DevOps', href: '/services/cloud-devops-solutions' },
-      { label: 'AI & ML', href: '/services/ai-machine-learning' },
-      { label: 'UI/UX Design', href: '/services/ui-ux-design-strategy' },
-      { label: 'Consulting', href: '/services/digital-transformation-consulting' },
+      { label: 'Custom Software Development', href: '/services/custom-software-development' },
+      { label: 'Mobile App Development', href: '/services/mobile-app-development' },
+      { label: 'Event Management Systems', href: '/services/event-registration-management' },
+      { label: 'Enterprise Web Portals', href: '/services/enterprise-web-portals' },
+      { label: 'Digital Marketing', href: '/services/digital-marketing-services' },
     ],
   },
   {
@@ -54,18 +53,18 @@ export const socialLinks: SocialLink[] = [
     icon: 'Linkedin',
   },
   {
-    platform: 'Twitter',
-    href: 'https://twitter.com/kaizeninfotech',
-    icon: 'Twitter',
-  },
-  {
-    platform: 'GitHub',
-    href: 'https://github.com/kaizen-infotech',
-    icon: 'Github',
-  },
-  {
     platform: 'Instagram',
     href: 'https://instagram.com/kaizeninfotech',
     icon: 'Instagram',
+  },
+  {
+    platform: 'Facebook',
+    href: 'https://facebook.com/kaizeninfotech',
+    icon: 'Facebook',
+  },
+  {
+    platform: 'Twitter',
+    href: 'https://twitter.com/kaizeninfotech',
+    icon: 'Twitter',
   },
 ];

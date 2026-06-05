@@ -123,11 +123,11 @@ export function CTASection() {
           className={cn(
             'mx-auto max-w-3xl',
             'font-[family-name:var(--font-display)]',
-            'text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.1] tracking-tight',
+            'text-[length:var(--h-section)] leading-[1.1] tracking-tight',
             'text-[var(--color-text-primary)]'
           )}
         >
-          Ready to Digitize Your Operations?
+          Ready to Digitise Your Operations?
         </TextReveal>
 
         <ScrollFadeIn direction="up" delay={0.5} distance={20}>
@@ -139,7 +139,7 @@ export function CTASection() {
               'font-[family-name:var(--font-body)]'
             )}
           >
-            Whether you are planning a new digital platform or upgrading an
+            Whether you are planning a new digital platform or modernising an
             existing system, our team is ready to help you build technology that
             delivers real results.
           </p>

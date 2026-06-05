@@ -10,28 +10,43 @@ import { cn } from '@/lib/utils/cn';
 const industries = [
   {
     title: 'Government & Public Sector',
-    description: 'Digital platforms for governance, grievance redressal, and citizen services.',
+    description: 'Digital platforms for governance, grievance redressal, citizen services, and administrative efficiency.',
     icon: '01',
   },
   {
-    title: 'Enterprises & Corporate Teams',
-    description: 'Custom software and portals for operational efficiency and internal communication.',
+    title: 'Enterprises & Corporates',
+    description: 'Custom software and portals for operational efficiency, internal communication, and workforce management.',
     icon: '02',
   },
   {
     title: 'Associations & Memberships',
-    description: 'Member engagement platforms with directories, events, and communication tools.',
+    description: 'Member engagement platforms with directories, event management, communication tools, and reporting.',
     icon: '03',
   },
   {
-    title: 'Event & Conference Organizers',
-    description: 'End-to-end event registration, QR check-in, and real-time reporting systems.',
+    title: 'Event & Conference Organisers',
+    description: 'End-to-end event registration, QR check-in, payment processing, and real-time reporting.',
     icon: '04',
   },
   {
-    title: 'SMEs & Growing Businesses',
-    description: 'Scalable digital solutions to digitize operations and accelerate growth.',
+    title: 'NGOs & Social Organisations',
+    description: 'Digital platforms to connect beneficiaries with support schemes, grants, and social services.',
     icon: '05',
+  },
+  {
+    title: 'Healthcare & Clinics',
+    description: 'Clinic management with online appointments, digital records, billing, and WhatsApp reminders.',
+    icon: '06',
+  },
+  {
+    title: 'Mobility & Transport',
+    description: 'Fair-pricing ride platforms and GPS-enabled field force management applications.',
+    icon: '07',
+  },
+  {
+    title: 'SMEs & Growing Businesses',
+    description: 'Scalable digital solutions to digitise operations, automate workflows, and accelerate growth.',
+    icon: '08',
   },
 ];
 
@@ -54,7 +69,7 @@ export function IndustriesSection() {
         <div className="mb-16 text-center">
           <ScrollFadeIn direction="up">
             <span
-              className="text-[length:var(--text-xs)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+              className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Industries We Serve
@@ -65,11 +80,11 @@ export function IndustriesSection() {
             splitBy="words"
             className={cn(
               'mt-3 font-[family-name:var(--font-display)]',
-              'text-[clamp(2rem,4vw,3rem)] leading-tight tracking-tight',
+              'text-[length:var(--h-section)] leading-tight tracking-tight',
               'text-[var(--color-text-primary)]'
             )}
           >
-            Trusted across multiple sectors
+            Industries We Serve
           </TextReveal>
         </div>
 
@@ -117,7 +132,7 @@ export function IndustriesSection() {
                   {industry.icon}
                 </span>
                 <h3
-                  className="mb-3 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]"
+                  className="mb-3 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {industry.title}

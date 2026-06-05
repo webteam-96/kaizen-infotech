@@ -54,27 +54,27 @@ const faqItems = [
   {
     title: 'What industries do you serve?',
     content:
-      'We work with government and public sector organizations, enterprises, associations and membership-based organizations, event organizers, and SMEs. Our cross-industry experience lets us bring best practices from one domain to solve challenges in another.',
+      'We work with government and public sector organisations, enterprises, associations and membership-based organisations, event organisers, healthcare providers, and SMEs across India.',
   },
   {
     title: 'What technologies do you use?',
     content:
-      'We use reliable and proven technologies including ASP.NET, HTML, CSS, JavaScript, MySQL, SQL Server, Android, iOS, APIs, payment gateway integrations, WhatsApp, and email systems.',
+      'We use proven enterprise technologies including ASP.NET, JavaScript, SQL Server, MySQL, Android, iOS, REST APIs, Payment Gateways, WhatsApp API, and email communication systems.',
   },
   {
     title: 'Do you offer post-launch support?',
     content:
-      'Yes, we provide dedicated post-launch support and maintenance. Our engagement does not end at deployment — we provide continuous enhancements, monitoring, and technical support.',
+      'Yes. We provide dedicated post-launch support and maintenance. Our engagement continues well beyond deployment with continuous enhancements, monitoring, and technical support.',
   },
   {
     title: 'How do you ensure project quality?',
     content:
-      'We follow clean coding practices, strong testing protocols, and performance optimization throughout development. Our structured delivery process includes discovery, design, development, and deployment with support at each stage.',
+      'We follow structured delivery with clean coding practices, comprehensive testing, and performance optimisation at every stage - from discovery and design through to deployment.',
   },
   {
-    title: 'Can you work with existing systems?',
+    title: 'Can you integrate with our existing systems?',
     content:
-      'Yes, we specialize in integrating with existing enterprise systems through APIs and custom connectors. Whether you need to modernize legacy systems or add new capabilities, we design solutions that work alongside your current infrastructure.',
+      'Yes. API integration with existing enterprise backends, legacy systems, and third-party platforms is a core capability. We design solutions that work alongside your current infrastructure.',
   },
 ];
 
@@ -122,7 +122,7 @@ export default function ServicesPage() {
         <div className="relative z-10 mx-auto max-w-5xl text-center">
           <ScrollFadeIn delay={0.1}>
             <span
-              className="mb-6 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
+              className="mb-6 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Our Services
@@ -133,7 +133,7 @@ export default function ServicesPage() {
             <TextReveal
               as="h1"
               splitBy="words"
-              className="text-[clamp(3rem,6vw,5.5rem)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-page)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
               stagger={0.06}
             >
               What We Do Best
@@ -143,7 +143,7 @@ export default function ServicesPage() {
             <ScrollFadeIn delay={0.5}>
               <div className="mt-6 flex items-center gap-3">
                 <span
-                  className="text-[length:var(--text-lg)] text-[var(--color-text-secondary)]"
+                  className="text-[length:var(--h-sub)] text-[var(--color-text-secondary)]"
                   style={{ fontFamily: 'var(--font-body)' }}
                 >
                   We specialize in
@@ -156,7 +156,7 @@ export default function ServicesPage() {
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -24, opacity: 0 }}
                       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute left-0 top-0 text-[length:var(--text-lg)] font-semibold text-[var(--color-accent-primary)]"
+                      className="absolute left-0 top-0 text-[length:var(--h-sub)] font-semibold text-[var(--color-accent-primary)]"
                       style={{ fontFamily: 'var(--font-heading)' }}
                     >
                       {keywords[keywordIndex]}
@@ -169,12 +169,13 @@ export default function ServicesPage() {
 
           <ScrollFadeIn delay={0.7}>
             <p
-              className="mx-auto mt-8 max-w-2xl text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="mx-auto mt-8 max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              From custom software and mobile apps to event management systems and
-              digital marketing — we deliver end-to-end digital solutions
-              designed for modern organizations.
+              From custom enterprise software and mobile apps to event management
+              systems and digital marketing - we deliver complete digital
+              solutions designed to simplify operations, improve engagement, and
+              drive measurable results.
             </p>
           </ScrollFadeIn>
         </div>
@@ -187,7 +188,7 @@ export default function ServicesPage() {
         <div className="mx-auto mb-16 max-w-7xl px-6 text-center">
           <ScrollFadeIn>
             <span
-              className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+              className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Capabilities
@@ -196,7 +197,7 @@ export default function ServicesPage() {
           <TextReveal
             as="h2"
             splitBy="words"
-            className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+            className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
           >
             End-to-End Technology Services
           </TextReveal>
@@ -213,7 +214,7 @@ export default function ServicesPage() {
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 The Kaizen Difference
@@ -222,7 +223,7 @@ export default function ServicesPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               Why Choose Us
             </TextReveal>
@@ -235,7 +236,7 @@ export default function ServicesPage() {
                   {item.icon}
                 </div>
                 <h3
-                  className="mb-3 text-[length:var(--text-xl)] font-semibold text-[var(--color-text-primary)]"
+                  className="mb-3 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {item.title}
@@ -260,7 +261,7 @@ export default function ServicesPage() {
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--text-xs)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Common Questions
@@ -269,7 +270,7 @@ export default function ServicesPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               Frequently Asked Questions
             </TextReveal>
@@ -288,7 +289,7 @@ export default function ServicesPage() {
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
-              className="text-[clamp(2.25rem,4vw,4rem)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Let&apos;s Discuss Your Project
@@ -299,7 +300,7 @@ export default function ServicesPage() {
               className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Ready to digitize your operations? Tell us about your challenges
+              Ready to digitise your operations? Tell us about your challenges
               and we will show you how we can help.
             </p>
           </ScrollFadeIn>

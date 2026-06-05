@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import { gsap, ScrollTrigger, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
+import { useScrollStore } from '@/lib/store/scroll-store';
 
 export default function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
@@ -43,6 +44,32 @@ export default function ScrollProgress() {
     { scope: barRef }
   );
 
+  // Velocity-driven hue shift: hue eases between the brand accent (rest)
+  // and a warmer/cooler tone (peak burst) so the bar reads as a kinetic
+  // signal of scroll intensity. Smoothed so it doesn't strobe.
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    if (prefersReducedMotion) return;
+
+    let smoothed = 0;
+    let rafId = 0;
+    const loop = () => {
+      const v = Math.abs(useScrollStore.getState().scrollVelocity);
+      const target = Math.min(1, v / 4);
+      smoothed = smoothed * 0.88 + target * 0.12;
+      const hue = 212 + smoothed * 36;
+      const sat = 78 + smoothed * 14;
+      bar.style.backgroundColor = `hsl(${hue.toFixed(1)}, ${sat.toFixed(1)}%, 55%)`;
+      rafId = requestAnimationFrame(loop);
+    };
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   return (
     <div
       style={{
@@ -62,7 +89,7 @@ export default function ScrollProgress() {
           height: '100%',
           backgroundColor: 'var(--color-accent-primary)',
           transformOrigin: 'left center',
-          willChange: 'transform',
+          willChange: 'transform, background-color',
         }}
       />
     </div>

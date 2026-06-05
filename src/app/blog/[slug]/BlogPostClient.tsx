@@ -68,7 +68,7 @@ export default function BlogPostClient({
           <TextReveal
             as="h1"
             splitBy="words"
-            className="mb-8 text-[length:var(--text-4xl)] font-bold leading-[1.15] text-[var(--color-text-primary)] md:text-[length:var(--text-5xl)]"
+            className="mb-8 text-[length:var(--h-page)] font-bold leading-[1.15] text-[var(--color-text-primary)]"
           >
             {post.title}
           </TextReveal>
@@ -112,7 +112,7 @@ export default function BlogPostClient({
                   return (
                     <h3
                       key={i}
-                      className="mb-4 mt-10 text-[length:var(--text-lg)] font-bold text-[var(--color-text-primary)]"
+                      className="mb-4 mt-10 text-[length:var(--h-card)] font-bold text-[var(--color-text-primary)]"
                       style={{ fontFamily: 'var(--font-heading)' }}
                     >
                       {block.replace('### ', '')}
@@ -123,7 +123,7 @@ export default function BlogPostClient({
                   return (
                     <h2
                       key={i}
-                      className="mb-4 mt-12 text-[length:var(--text-2xl)] font-bold text-[var(--color-text-primary)]"
+                      className="mb-4 mt-12 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
                       style={{ fontFamily: 'var(--font-heading)' }}
                     >
                       {block.replace('## ', '')}
@@ -220,7 +220,7 @@ export default function BlogPostClient({
                     Written by
                   </p>
                   <h3
-                    className="mb-1 text-[length:var(--text-xl)] font-bold text-[var(--color-text-primary)]"
+                    className="mb-1 text-[length:var(--h-card)] font-bold text-[var(--color-text-primary)]"
                     style={{ fontFamily: 'var(--font-heading)' }}
                   >
                     {post.author.name}
@@ -250,7 +250,7 @@ export default function BlogPostClient({
           <div className="mx-auto max-w-7xl">
             <FadeIn>
               <h2
-                className="mb-12 text-[length:var(--text-3xl)] font-bold text-[var(--color-text-primary)]"
+                className="mb-12 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Related Articles
@@ -280,7 +280,7 @@ export default function BlogPostClient({
                           </span>
                         </div>
                         <h3
-                          className="mb-3 text-[length:var(--text-lg)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                          className="mb-3 text-[length:var(--h-card)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
                           style={{ fontFamily: 'var(--font-heading)' }}
                         >
                           {related.title}
@@ -306,13 +306,13 @@ export default function BlogPostClient({
         <div className="mx-auto max-w-7xl text-center">
           <FadeIn>
             <h2
-              className="mb-6 text-[length:var(--text-4xl)] font-bold text-[var(--color-text-primary)]"
+              className="mb-6 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Want to Work With Us?
             </h2>
             <p
-              className="mx-auto mb-10 max-w-xl text-[length:var(--text-lg)] text-[var(--color-text-secondary)]"
+              className="mx-auto mb-10 max-w-xl text-[length:var(--h-sub)] text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               We help ambitious companies build exceptional digital products.

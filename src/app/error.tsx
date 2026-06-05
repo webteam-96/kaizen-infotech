@@ -10,12 +10,12 @@ export default function Error({
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg-primary)] px-6">
       <p
-        className="text-[length:var(--text-4xl)] font-bold text-[var(--color-accent-warm)]"
+        className="text-[length:var(--h-page)] font-bold text-[var(--color-accent-warm)]"
         style={{ fontFamily: 'var(--font-display)' }}
       >
         Something went wrong
       </p>
-      <p className="mt-4 max-w-md text-center text-[length:var(--text-base)] text-[var(--color-text-secondary)]">
+      <p className="mt-4 max-w-md text-center text-[length:var(--h-sub)] text-[var(--color-text-secondary)]">
         {error.message || 'An unexpected error occurred. Please try again.'}
       </p>
       <button

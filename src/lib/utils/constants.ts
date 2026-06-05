@@ -1,10 +1,13 @@
 export const SITE_CONFIG = {
   name: 'Kaizen Infotech Solutions',
-  tagline: 'Custom Software and Digital Solutions That Drive Business Efficiency',
+  tagline: 'Custom Software & Digital Solutions That Drive Business Efficiency',
   url: 'https://kaizeninfotech.com',
   email: 'info@kaizeninfotech.com',
-  phone: '+91 98200 00000',
-  address: 'Mumbai, Maharashtra, India',
+  contactEmail: 'connect@kaizeninfotech.com',
+  phone: '+91 99201 30855',
+  whatsapp: '+91 99201 30855',
+  address:
+    'Centrum Business Square, A 406, Road No. 16, Nehru Nagar, Wagle Industrial Estate, Thane West, Thane, Maharashtra 400604',
 };
 
 export const BREAKPOINTS = {

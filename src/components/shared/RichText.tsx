@@ -22,9 +22,9 @@ export function RichText({ content, className }: RichTextProps) {
         'leading-relaxed',
 
         // Headings
-        '[&_h1]:text-[var(--text-3xl)] [&_h1]:font-[family-name:var(--font-heading)] [&_h1]:font-bold [&_h1]:text-[var(--color-text-primary)] [&_h1]:mt-12 [&_h1]:mb-4',
-        '[&_h2]:text-[var(--text-2xl)] [&_h2]:font-[family-name:var(--font-heading)] [&_h2]:font-bold [&_h2]:text-[var(--color-text-primary)] [&_h2]:mt-10 [&_h2]:mb-3',
-        '[&_h3]:text-[var(--text-xl)] [&_h3]:font-[family-name:var(--font-heading)] [&_h3]:font-semibold [&_h3]:text-[var(--color-text-primary)] [&_h3]:mt-8 [&_h3]:mb-3',
+        '[&_h1]:text-[var(--h-page)] [&_h1]:font-[family-name:var(--font-heading)] [&_h1]:font-bold [&_h1]:text-[var(--color-text-primary)] [&_h1]:mt-12 [&_h1]:mb-4',
+        '[&_h2]:text-[var(--h-section)] [&_h2]:font-[family-name:var(--font-heading)] [&_h2]:font-bold [&_h2]:text-[var(--color-text-primary)] [&_h2]:mt-10 [&_h2]:mb-3',
+        '[&_h3]:text-[var(--h-card)] [&_h3]:font-[family-name:var(--font-heading)] [&_h3]:font-semibold [&_h3]:text-[var(--color-text-primary)] [&_h3]:mt-8 [&_h3]:mb-3',
 
         // Paragraphs
         '[&_p]:mb-4 [&_p]:last:mb-0',

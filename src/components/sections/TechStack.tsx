@@ -79,7 +79,7 @@ export function TechStack() {
         <div className="mb-16 text-center">
           <ScrollFadeIn direction="up">
             <span
-              className="text-[length:var(--text-xs)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+              className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               What Powers Us
@@ -90,7 +90,7 @@ export function TechStack() {
             splitBy="words"
             className={cn(
               'mt-3 font-[family-name:var(--font-display)]',
-              'text-[clamp(2rem,4vw,3rem)] leading-tight tracking-tight',
+              'text-[length:var(--h-section)] leading-tight tracking-tight',
               'text-[var(--color-text-primary)]'
             )}
           >

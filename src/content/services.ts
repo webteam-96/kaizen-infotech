@@ -7,9 +7,9 @@ export const services: Service[] = [
     slug: 'custom-software-development',
     title: 'Custom Software Development',
     description:
-      'Tailor-made software solutions designed around your business processes to improve efficiency, visibility, and control.',
+      'Tailor-made enterprise software designed around your unique business processes to improve efficiency, visibility, and operational control.',
     longDescription:
-      'Our custom software development practice takes a business-first approach to engineering. We begin with deep discovery sessions to understand your domain, map out user workflows, and define success metrics. Our teams then design scalable and secure system architectures that evolve alongside your business. Whether you need enterprise web applications with admin dashboards, business process automation systems, custom ERP and internal management platforms, dashboards and MIS reporting systems, or API development with third-party integrations — we deliver production-grade software backed by clean coding practices, strong testing, and performance optimization.',
+      'Our custom software development practice is built on a business-first philosophy. We never apply off-the-shelf thinking to your unique challenges. Every engagement begins with in-depth discovery sessions where we learn your domain, map user workflows, identify bottlenecks, and define success metrics together. From there, our architects design scalable, secure systems that will grow alongside your organisation. Our engineers build with clean coding standards, comprehensive testing protocols, and performance benchmarks baked in from day one - not as an afterthought.',
     icon: 'Code',
     features: [
       'Enterprise web applications with admin dashboards',
@@ -17,84 +17,152 @@ export const services: Service[] = [
       'Custom ERP and internal management platforms',
       'Dashboards and MIS reporting systems',
       'API development and third-party integrations',
+      'Workflow automation and notification systems',
     ],
-    technologies: ['ASP.NET', 'JavaScript', 'SQL Server', 'MySQL', 'APIs'],
+    technologies: ['ASP.NET', 'JavaScript', 'SQL Server', 'MySQL', 'REST APIs', 'Payment Gateways'],
     relatedProjects: ['proj-001', 'proj-002', 'proj-004'],
+    faqs: [
+      {
+        question: 'How long does custom software development take?',
+        answer:
+          'Project timelines depend on scope and complexity. A focused automation module may take 6–8 weeks, while a comprehensive enterprise platform typically requires 4–8 months. We provide detailed timelines during discovery.',
+      },
+      {
+        question: 'Do you sign NDAs?',
+        answer:
+          'Yes. We sign Non-Disclosure Agreements before any project discussions and handle client data with strict confidentiality protocols.',
+      },
+    ],
   },
   {
     id: 'svc-002',
     slug: 'mobile-app-development',
     title: 'Mobile App Development',
     description:
-      'High-performance Android and iOS applications that improve accessibility, user engagement, and real-time communication.',
+      'High-performance Android and iOS applications that improve accessibility, user engagement, and real-time communication for enterprises and organisations.',
     longDescription:
-      'We deliver end-to-end mobile app development services for Android and iOS platforms. Our mobile applications help organizations improve accessibility, engagement, and real-time communication. Each app is built with strong performance, security, and seamless backend integration. Our services include Android app development, iOS app development, member and customer engagement apps, enterprise mobility and field force apps, and push notification systems with in-app communication.',
+      'We build end-to-end mobile applications for Android and iOS that help organisations stay connected with their members, customers, and field teams. From initial UX wireframes through to Play Store and App Store deployment, we manage the full development lifecycle. Every app is engineered for performance, security, and seamless integration with your existing backend systems. We focus on smooth, intuitive user experiences that drive genuine adoption - not just downloads.',
     icon: 'Smartphone',
     features: [
-      'Android app development',
-      'iOS app development',
+      'Native Android and iOS app development',
       'Member and customer engagement apps',
-      'Enterprise mobility and field force apps',
-      'Push notifications and in-app communication',
+      'Enterprise mobility and field force management apps',
+      'Push notification and in-app communication systems',
+      'Offline capability and sync for low-connectivity environments',
+      'App Store and Play Store deployment and management',
     ],
-    technologies: ['Android', 'iOS', 'APIs', 'Push Notifications'],
+    technologies: ['Android (Java/Kotlin)', 'iOS (Swift)', 'REST APIs', 'Push Notifications', 'GPS'],
     relatedProjects: ['proj-001', 'proj-005', 'proj-010'],
+    faqs: [
+      {
+        question: 'Do you build both Android and iOS?',
+        answer:
+          'Yes. We develop for both platforms, either simultaneously or in a phased approach depending on your budget and user base.',
+      },
+      {
+        question: 'Can you integrate the app with our existing software?',
+        answer:
+          'Yes. API integration with existing enterprise systems is a core part of our mobile development process.',
+      },
+    ],
   },
   {
     id: 'svc-003',
     slug: 'event-registration-management',
-    title: 'Event Registration and Management Systems',
+    title: 'Event Registration & Management Systems',
     description:
-      'Complete digital solutions for event registrations, secure payments, QR-based event check-in, attendance tracking, and real-time reporting.',
+      'Complete digital solutions for managing events of any size - from online registrations and secure payments to QR-based check-in and real-time reporting.',
     longDescription:
-      'We provide complete digital solutions for managing events of all sizes, from registrations to on-ground execution. Our event management systems include online event registrations and secure payment processing, QR-based event check-in for faster entry, attendance tracking and real-time reporting dashboards, and automated email and WhatsApp communication. Each system is designed to handle scale, ensure data security, and provide organizers with full visibility into event operations.',
+      'We have built event management platforms for some of India\'s largest community organisations, handling thousands of registrations and on-ground check-ins simultaneously. Our systems are designed to handle scale, stress, and the unpredictable nature of large events. Every solution is custom-built to match your event\'s unique requirements - single conference or multi-day annual convention, ticketed or free, with complex delegate categories or simple open registration.',
     icon: 'Calendar',
     features: [
-      'Online event registrations and secure payments',
-      'QR-based event check-in for faster entry',
-      'Attendance tracking and real-time reporting',
-      'Automated email and WhatsApp communication',
-      'Scalable architecture for events of all sizes',
+      'Online event registration portals with dynamic forms',
+      'Secure online payment processing with multiple gateways',
+      'QR code generation and mobile-based check-in systems',
+      'Real-time attendance tracking and live dashboards',
+      'Automated confirmation, reminder, and communication via email and WhatsApp',
+      'Post-event reporting and data export',
+      'Multi-event and multi-category management',
     ],
-    technologies: ['ASP.NET', 'QR Systems', 'Payment Gateways', 'WhatsApp API'],
+    technologies: ['ASP.NET', 'QR Code Systems', 'Payment Gateways', 'WhatsApp API', 'SQL Server'],
     relatedProjects: ['proj-001', 'proj-003'],
+    faqs: [
+      {
+        question: 'Can your system handle thousands of simultaneous registrations?',
+        answer:
+          'Yes. Our event platforms are load-tested and architected for high-concurrency scenarios. We have managed large-scale events with thousands of simultaneous users.',
+      },
+      {
+        question: 'Do you support WhatsApp confirmations?',
+        answer:
+          'Yes. We integrate with the official WhatsApp Business API to send automated registration confirmations, event reminders, and post-event communications.',
+      },
+    ],
   },
   {
     id: 'svc-004',
     slug: 'enterprise-web-portals',
-    title: 'Enterprise Web Portals and Websites',
+    title: 'Enterprise Web Portals & Websites',
     description:
-      'Secure and scalable websites and portals that act as powerful digital touchpoints for organizations, members, and stakeholders.',
+      'Secure and scalable websites and portals that serve as powerful digital touchpoints for your organisation, members, and stakeholders.',
     longDescription:
-      'We develop secure, scalable, and professional websites and portals that serve as powerful digital touchpoints for organizations. Our web solutions include responsive corporate and institutional websites, member portals with role-based access control, content management and publishing platforms, integration with existing enterprise systems, and SEO-optimized architecture for better discoverability. Each portal is designed with security, performance, and long-term maintainability in mind.',
+      'A great enterprise portal is more than a website - it is the digital front door of your organisation. We build portals that are secure, fast, accessible, and genuinely easy to manage by your internal team without constant developer involvement. From government institutional websites serving lakhs of citizens to private member portals with complex access hierarchies, we deliver web platforms that are built to last and built to be maintained.',
     icon: 'Globe',
     features: [
       'Responsive corporate and institutional websites',
-      'Member portals with role-based access',
-      'Content management and publishing platforms',
-      'Integration with existing enterprise systems',
-      'SEO-optimized architecture',
+      'Member portals with role-based access control',
+      'Content management systems for non-technical administrators',
+      'Integration with existing enterprise backends and databases',
+      'SEO-optimised architecture for organic search visibility',
+      'Accessibility compliance (WCAG) for government and public-facing sites',
+      'Security hardening - SSL, CSRF protection, input validation',
     ],
-    technologies: ['HTML', 'CSS', 'JavaScript', 'ASP.NET', 'SQL Server'],
+    technologies: ['ASP.NET', 'HTML5', 'CSS3', 'JavaScript', 'SQL Server', 'CMS Integration'],
     relatedProjects: ['proj-001', 'proj-005'],
+    faqs: [
+      {
+        question: 'Will my team be able to update the website without developers?',
+        answer:
+          'Yes. We build intuitive CMS interfaces that allow your team to publish content, update pages, and manage media without any technical knowledge.',
+      },
+      {
+        question: 'Is the portal mobile-responsive?',
+        answer:
+          'Absolutely. All portals we develop are fully responsive and tested across devices, screen sizes, and browsers.',
+      },
+    ],
   },
   {
     id: 'svc-005',
     slug: 'digital-marketing-services',
     title: 'Digital Marketing Services',
     description:
-      'SEO, social media marketing, content, and performance campaigns to improve online visibility, brand credibility, and lead generation.',
+      'Result-oriented digital marketing services to improve online visibility, build brand credibility, and generate qualified leads aligned with your business goals.',
     longDescription:
-      'We provide result-oriented digital marketing services designed to improve online visibility, build brand credibility, and generate qualified leads. Our strategies are performance-driven and aligned with clear business objectives. Our services include search engine optimization, social media marketing and management, Google Ads and Meta Ads campaigns, content marketing and branding, and website optimization with conversion tracking. We focus on lead quality and ROI with transparent reporting.',
+      'Our digital marketing practice is performance-driven and strategy-led. We do not just run campaigns - we build integrated digital marketing systems that attract the right audience, nurture interest, and convert prospects into clients. All campaigns are tracked, measured, and continuously optimised. We provide transparent monthly reporting with clear attribution - so you always know exactly which channels are delivering results.',
     icon: 'TrendingUp',
     features: [
-      'Search engine optimization (SEO)',
-      'Social media marketing and management',
-      'Google Ads and Meta Ads campaigns',
-      'Content marketing and branding',
-      'Website optimization and conversion tracking',
+      'Search Engine Optimisation (SEO) - on-page, off-page, and technical',
+      'Google Ads (Search, Display, YouTube) campaign management',
+      'Meta Ads (Facebook and Instagram) performance campaigns',
+      'Social media marketing and community management',
+      'Content marketing and blog strategy',
+      'Website conversion rate optimisation (CRO)',
+      'Monthly performance reporting with ROI analysis',
     ],
     technologies: ['Google Ads', 'Meta Ads', 'SEO Tools', 'Analytics'],
     relatedProjects: [],
+    faqs: [
+      {
+        question: 'How quickly will I see results from SEO?',
+        answer:
+          'Meaningful keyword ranking improvements typically appear within 3–6 months. Paid campaigns can generate leads within days of launch.',
+      },
+      {
+        question: 'Do you offer performance-based pricing?',
+        answer:
+          'Our standard engagement is retainer-based with transparent monthly reporting. We can discuss performance milestones as part of the contract for qualified campaigns.',
+      },
+    ],
   },
 ];

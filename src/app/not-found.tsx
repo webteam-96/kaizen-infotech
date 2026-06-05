@@ -10,14 +10,13 @@ export default function NotFound() {
         404
       </p>
       <h1
-        className="mt-4 text-[length:var(--text-2xl)] text-[var(--color-text-primary)]"
+        className="mt-4 text-[length:var(--h-page)] text-[var(--color-text-primary)]"
         style={{ fontFamily: 'var(--font-heading)' }}
       >
         Page Not Found
       </h1>
-      <p className="mt-2 max-w-md text-center text-[length:var(--text-base)] text-[var(--color-text-secondary)]">
-        The page you&apos;re looking for doesn&apos;t exist or has been moved. Let&apos;s get you
-        back on track.
+      <p className="mt-2 max-w-md text-center text-[length:var(--h-sub)] text-[var(--color-text-secondary)]">
+        The page you are looking for does not exist or has been moved. Let us get you back on track.
       </p>
       <Link
         href="/"
@@ -25,6 +24,26 @@ export default function NotFound() {
       >
         Back to Home
       </Link>
+      <nav className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+        <Link
+          href="/services"
+          className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)] underline underline-offset-4 hover:text-[var(--color-accent-primary)] transition-colors"
+        >
+          Our Services
+        </Link>
+        <Link
+          href="/work"
+          className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)] underline underline-offset-4 hover:text-[var(--color-accent-primary)] transition-colors"
+        >
+          Our Work
+        </Link>
+        <Link
+          href="/contact"
+          className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)] underline underline-offset-4 hover:text-[var(--color-accent-primary)] transition-colors"
+        >
+          Contact Us
+        </Link>
+      </nav>
     </main>
   );
 }

@@ -5,9 +5,9 @@ import { PinnedSection } from '@/components/animation/PinnedSection';
 import { cn } from '@/lib/utils/cn';
 
 const lines = [
-  { text: 'Solve real business problems', verb: 'Solve' },
-  { text: 'Deliver measurable results', verb: 'Deliver' },
-  { text: 'Build systems that scale', verb: 'Build' },
+  { text: 'Solve real business problems.', verb: 'Solve' },
+  { text: 'Deliver measurable results.', verb: 'Deliver' },
+  { text: 'Build systems that scale.', verb: 'Build' },
 ];
 
 export function BrandPromise() {

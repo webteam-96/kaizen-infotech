@@ -30,9 +30,9 @@ export const ANIMATION_CONFIG = {
   },
   scrub: {
     tight: 0.5,
-    smooth: 1,
-    cinematic: 2,
-    heavy: 3,
+    smooth: 1.8,
+    cinematic: 3.5,
+    heavy: 5,
   },
   reducedMotion: {
     respectPreference: true,

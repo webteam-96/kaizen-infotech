@@ -131,7 +131,7 @@ export function Hero() {
           className={cn(
             'mx-auto w-full max-w-4xl',
             'font-[family-name:var(--font-display)]',
-            'text-[length:var(--text-hero)]',
+            'text-[length:var(--h-hero)]',
             'leading-[1.08] tracking-tight',
             'text-[var(--color-text-primary)]',
             'text-balance hyphens-none break-normal whitespace-normal'
@@ -145,7 +145,7 @@ export function Hero() {
           <p
             className={cn(
               'mx-auto mt-4 max-w-2xl sm:mt-6',
-              'text-[length:var(--text-base)] leading-relaxed sm:text-[length:var(--text-lg)]',
+              'text-[length:var(--h-sub)] leading-relaxed',
               'text-[var(--color-text-secondary)]',
               'font-[family-name:var(--font-body)]',
               'text-pretty'

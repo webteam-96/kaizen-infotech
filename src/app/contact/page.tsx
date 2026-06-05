@@ -17,15 +17,16 @@ import { Button } from '@/components/ui/Button';
 // ---------------------------------------------------------------------------
 
 const budgetOptions = [
-  { value: 'under-5l', label: 'Under 5 Lakhs' },
-  { value: '5l-15l', label: '5 - 15 Lakhs' },
-  { value: '15l-50l', label: '15 - 50 Lakhs' },
-  { value: '50l-plus', label: '50 Lakhs+' },
+  { value: 'under-5l', label: 'Under ₹5 Lakhs' },
+  { value: '5l-15l', label: '₹5–15 Lakhs' },
+  { value: '15l-50l', label: '₹15–50 Lakhs' },
+  { value: '50l-plus', label: '₹50 Lakhs+' },
+  { value: 'not-decided', label: 'Not decided yet - let\'s discuss' },
 ];
 
 const projectTypeOptions = [
-  { value: 'custom-software', label: 'Custom Software Development' },
-  { value: 'mobile-app', label: 'Mobile App Development' },
+  { value: 'custom-software', label: 'Custom Software' },
+  { value: 'mobile-app', label: 'Mobile App' },
   { value: 'event-management', label: 'Event Registration & Management' },
   { value: 'web-portal', label: 'Enterprise Web Portal' },
   { value: 'digital-marketing', label: 'Digital Marketing' },
@@ -39,29 +40,35 @@ const projectTypeOptions = [
 const contactInfo = [
   {
     label: 'Email',
-    value: 'info@kaizeninfotech.com',
-    href: 'mailto:info@kaizeninfotech.com',
+    value: 'connect@kaizeninfotech.com',
+    href: 'mailto:connect@kaizeninfotech.com',
     copyable: true,
   },
   {
     label: 'Phone',
-    value: '+91 98200 00000',
-    href: 'tel:+919820000000',
+    value: '+91 99201 30855',
+    href: 'tel:+919920130855',
+    copyable: true,
+  },
+  {
+    label: 'WhatsApp',
+    value: '+91 99201 30855',
+    href: 'https://wa.me/919920130855',
     copyable: true,
   },
   {
     label: 'Address',
-    value: 'Mumbai, Maharashtra, India',
+    value: 'Centrum Business Square, A 406, Road No. 16, Nehru Nagar, Wagle Industrial Estate, Thane West, Thane, Maharashtra 400604',
     href: null,
     copyable: false,
   },
 ];
 
 const socialLinks = [
-  { name: 'LinkedIn', href: 'https://linkedin.com' },
-  { name: 'Twitter', href: 'https://twitter.com' },
-  { name: 'Instagram', href: 'https://instagram.com' },
-  { name: 'Facebook', href: 'https://facebook.com' },
+  { name: 'LinkedIn', href: '#' },
+  { name: 'Instagram', href: '#' },
+  { name: 'Facebook', href: '#' },
+  { name: 'Twitter / X', href: '#' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -72,6 +79,7 @@ export default function ContactPage() {
   const [formState, setFormState] = useState({
     name: '',
     email: '',
+    phone: '',
     company: '',
     budget: '',
     projectType: '',
@@ -132,6 +140,7 @@ export default function ContactPage() {
           setFormState({
             name: '',
             email: '',
+            phone: '',
             company: '',
             budget: '',
             projectType: '',
@@ -157,16 +166,16 @@ export default function ContactPage() {
           <TextReveal
             as="h1"
             splitBy="words"
-            className="mb-6 text-[length:var(--text-6xl)] font-bold leading-[1.05] text-[var(--color-text-primary)] md:text-[length:var(--text-7xl)]"
+            className="mb-6 text-[length:var(--h-page)] font-bold leading-[1.05] text-[var(--color-text-primary)]"
           >
             Let&apos;s Start a Conversation
           </TextReveal>
           <ScrollFadeIn delay={0.3}>
             <p
-              className="max-w-2xl text-[length:var(--text-xl)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Tell us about your project and we&apos;ll get back to you within 24 hours.
+              Tell us about your project, your goals, or your challenges - and we will get back to you within 24 hours. No obligation, just a conversation.
             </p>
           </ScrollFadeIn>
         </div>
@@ -194,11 +203,19 @@ export default function ContactPage() {
                 />
               </div>
 
-              <Input
-                label="Company"
-                value={formState.company}
-                onChange={handleInputChange('company')}
-              />
+              <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+                <Input
+                  label="Phone"
+                  type="tel"
+                  value={formState.phone}
+                  onChange={handleInputChange('phone')}
+                />
+                <Input
+                  label="Company / Organisation"
+                  value={formState.company}
+                  onChange={handleInputChange('company')}
+                />
+              </div>
 
               <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
                 <Select
@@ -217,6 +234,7 @@ export default function ContactPage() {
 
               <Textarea
                 label="Message"
+                placeholder="Tell us about your project..."
                 value={formState.message}
                 onChange={handleInputChange('message')}
                 maxLength={2000}
@@ -239,7 +257,7 @@ export default function ContactPage() {
                     className="text-[length:var(--text-sm)] text-[var(--color-accent-secondary)]"
                     style={{ fontFamily: 'var(--font-body)' }}
                   >
-                    Message sent successfully!
+                    Thank you! Your message has been sent. We will get back to you within 24 hours.
                   </motion.p>
                 )}
                 {submitStatus === 'error' && (
@@ -250,7 +268,7 @@ export default function ContactPage() {
                     className="text-[length:var(--text-sm)] text-[var(--color-accent-warm)]"
                     style={{ fontFamily: 'var(--font-body)' }}
                   >
-                    Something went wrong. Please try again.
+                    Something went wrong. Please try again or email us directly at info@kaizeninfotech.com
                   </motion.p>
                 )}
               </AnimatePresence>

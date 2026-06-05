@@ -11,3 +11,4 @@ export { ClipReveal } from './ClipReveal';
 export { FloatingElement } from './FloatingElement';
 export { MagneticElement } from './MagneticElement';
 export { SectionDivider } from './SectionDivider';
+export { default as GlassCardTilt } from './GlassCardTilt';

@@ -162,7 +162,7 @@ export function FeaturedWork() {
         <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
           <FadeIn direction="up">
             <span
-              className="text-[length:var(--text-xs)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+              className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Selected Work
@@ -170,7 +170,7 @@ export function FeaturedWork() {
             <h2
               className={cn(
                 'mt-3 font-[family-name:var(--font-display)]',
-                'text-[clamp(2rem,4vw,3rem)] leading-tight tracking-tight',
+                'text-[length:var(--h-section)] leading-tight tracking-tight',
                 'text-[var(--color-text-primary)]'
               )}
             >
@@ -223,16 +223,18 @@ export function FeaturedWork() {
                         'object-contain p-4 transition-transform duration-[1.6s]',
                         i === activeIdx ? 'scale-[1.04]' : 'scale-100'
                       )}
-                      style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                      // Pivot the scroll-zoom 30% past the image's right edge so it
+                      // visibly grows toward the right rather than from the centre.
+                      style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)', transformOrigin: '130% 50%' }}
                     />
                   </div>
 
                   {/* Content side */}
                   <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
                     <h3
-                      className="mb-4 text-[clamp(2rem,3vw,2.75rem)] font-medium leading-[1.15] tracking-tight text-[var(--color-text-primary)]"
+                      className="mb-4 text-[length:var(--h-card)] font-medium leading-[1.15] tracking-tight text-[var(--color-text-primary)]"
                       style={{
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-card-heading), var(--font-display)',
                         letterSpacing: '-0.02em',
                       }}
                     >
@@ -303,7 +305,7 @@ export function FeaturedWork() {
             style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
           >
             <Button variant="primary" size="lg" href="/work">
-              View All Projects
+              View All Work
             </Button>
           </div>
         </div>

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
+import { useLoaderStore } from '@/store/loaderStore';
+import Spline from '@splinetool/react-spline';
 
 /* ══════════════════════════════════════════════════════════════
    RubiksCubeExperience — 3D Rubik's Cube scroll narrative
@@ -14,18 +16,44 @@ import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-
 function easeOutExpo(t: number) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
 function easeInOutCubic(t: number) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 function easeOutCubic(t: number) { return 1 - Math.pow(1 - t, 3); }
+function easeInCubic(t: number) { return t * t * t; }
+function easeInOutSine(t: number) { return -(Math.cos(Math.PI * t) - 1) / 2; }
+function easeOutBack(t: number, overshoot = 1.70158) {
+  return 1 + (overshoot + 1) * Math.pow(t - 1, 3) + overshoot * Math.pow(t - 1, 2);
+}
 function lerp01(val: number, a: number, b: number) { return Math.max(0, Math.min(1, (val - a) / (b - a))); }
 
 /* ── Phase boundaries ── */
 const P = { hero: 0.04, s1: 0.12, s2: 0.26, s3: 0.48, s4: 0.60, s5: 0.68, s6: 0.76, s7: 0.83 };
 
+/* ── Opening "assembly" act ──
+   The intro occupies the first INTRO_END of the *raw* scroll progress. Everything
+   after it is the original narrative, re-mapped onto [0..1] so none of the existing
+   phase/card constants above need to change. Spacer height grows to give the intro
+   real scroll room: ~180vh intro + ~1600vh narrative = 1780vh total. */
+const INTRO_VH = 180;
+const MAIN_VH = 1600;
+const SPACER_VH = INTRO_VH + MAIN_VH; // 1780
+const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.101
+const AMBIENT_DESKTOP = 120;
+const AMBIENT_MOBILE = 50;
+
+/* ── Small-cube burst window (raw scroll progress) ──
+   At the burst peak the ambient InstancedMesh is driven to full opacity and
+   ~2.5x scale so the cubes read clearly. Outside the window everything reverts
+   to its calm-scroll values, so the rest of the timeline is unaffected. */
+const BURST_START = 0.32;
+const BURST_PEAK  = 0.37;
+const BURST_END   = 0.46;
+const BURST_BASE_OPACITY = 0.5;  // calm-scroll cap (matches pre-burst formula)
+const BURST_SCALE_BOOST  = 1.5;  // burstScale = 1 + burst * this  → 2.5x at peak
+
 /* ── Side labels ── */
 const SIDE_LABELS = [
-  [0, 0.12, '01 \u2014 The Scramble'],
-  [0.12, 0.26, '02 \u2014 The First Move'],
-  [0.26, 0.48, '03 \u2014 How We Apply Kaizen'],
-  [0.48, 0.60, '04 \u2014 From Chaos to Clarity'],
-  [0.60, 0.68, '05 \u2014 Real Transformation'],
+  [0, 0.21, '01 \u2014 The Scramble'],
+  [0.21, 0.39, '02 \u2014 The First Move'],
+  [0.39, 0.56, '03 \u2014 How We Apply Kaizen'],
+  [0.56, 0.68, '04 \u2014 From Chaos to Clarity'],
   [0.68, 0.76, 'Expertise'],
   [0.76, 0.83, 'Kaizen'],
   [0.83, 1.0, "Let's Solve It"],
@@ -37,14 +65,10 @@ interface CardCfg {
   side: 'left' | 'right' | 'center'; stg: string; ss: number; st: number;
 }
 const CARDS: CardCfg[] = [
-  { id: 'card-s1', eIn: 0.040, eFull: 0.062, xS: 0.082, xE: 0.098, side: 'right', stg: 's1', ss: 0.046, st: 0.007 },
-  { id: 'card-s1b', eIn: 0.100, eFull: 0.115, xS: 0.126, xE: 0.138, side: 'right', stg: 's1b', ss: 0.105, st: 0.008 },
-  { id: 'card-s2', eIn: 0.140, eFull: 0.165, xS: 0.200, xE: 0.220, side: 'left', stg: 's2', ss: 0.148, st: 0.015 },
-  { id: 'card-s2b', eIn: 0.222, eFull: 0.245, xS: 0.258, xE: 0.272, side: 'left', stg: 's2b', ss: 0.230, st: 0.012 },
-  { id: 'card-s3', eIn: 0.275, eFull: 0.300, xS: 0.360, xE: 0.380, side: 'right', stg: 's3', ss: 0.285, st: 0.012 },
-  { id: 'card-s3b', eIn: 0.382, eFull: 0.405, xS: 0.445, xE: 0.465, side: 'right', stg: 's3b', ss: 0.388, st: 0.009 },
-  { id: 'card-s4', eIn: 0.495, eFull: 0.525, xS: 0.570, xE: 0.598, side: 'left', stg: 's4', ss: 0.505, st: 0.012 },
-  { id: 'card-s5', eIn: 0.610, eFull: 0.638, xS: 0.660, xE: 0.678, side: 'right', stg: 's5', ss: 0.618, st: 0.012 },
+  { id: 'card-s1', eIn: 0.040, eFull: 0.085, xS: 0.180, xE: 0.210, side: 'right', stg: 's1', ss: 0.055, st: 0.015 },
+  { id: 'card-s2', eIn: 0.225, eFull: 0.270, xS: 0.355, xE: 0.385, side: 'left',  stg: 's2', ss: 0.240, st: 0.015 },
+  { id: 'card-s3', eIn: 0.400, eFull: 0.445, xS: 0.525, xE: 0.555, side: 'right', stg: 's3', ss: 0.415, st: 0.015 },
+  { id: 'card-s4', eIn: 0.570, eFull: 0.615, xS: 0.680, xE: 0.695, side: 'left',  stg: 's4', ss: 0.585, st: 0.015 },
   { id: 'card-s6', eIn: 0.700, eFull: 0.725, xS: 0.745, xE: 0.762, side: 'center', stg: 's6', ss: 0.710, st: 0.015 },
   { id: 'card-s7', eIn: 0.770, eFull: 0.795, xS: 0.818, xE: 0.835, side: 'center', stg: 's7', ss: 0.780, st: 0.015 },
   { id: 'card-s8', eIn: 0.870, eFull: 0.910, xS: 1.000, xE: 1.100, side: 'center', stg: 's8', ss: 0.890, st: 0.018 },
@@ -62,6 +86,12 @@ const ANGLEVALS = [Math.PI / 2, -Math.PI / 2];
 
 /* ── Light theme colors ── */
 const BG_COLOR = '#f5f5f5';
+
+/* The Spline canvas always renders at this fixed square size (big enough to hold
+   the whole monitor), then is scaled DOWN to fit any viewport — so the monitor is
+   never cropped, even on short laptop screens. */
+const SPLINE_DESIGN_W = 1200;
+const SPLINE_DESIGN_H = 900;
 
 /* ── Rounded box geometry ── */
 function createRoundedBox(w: number, h: number, d: number, r: number, seg = 6) {
@@ -96,13 +126,53 @@ export function RubiksCubeExperience() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const fixedLayerRef = useRef<HTMLDivElement>(null);
   const sideRef = useRef<HTMLDivElement>(null);
+  const introCardRef = useRef<HTMLDivElement>(null);
+  const introInnerRef = useRef<HTMLDivElement>(null);
+  const splineRef = useRef<HTMLDivElement>(null);
+  const splineFitRef = useRef<HTMLDivElement>(null);
+  const splineFrameRef = useRef<HTMLDivElement>(null);
+  const splineZoomRef = useRef<HTMLDivElement>(null);
+  // Travel-through effect overlays — opacity driven by updateIntro.
+  const scanlineRef = useRef<HTMLDivElement>(null);
+  const diveVignetteRef = useRef<HTMLDivElement>(null);
+  const streaksRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+  const loaderComplete = useLoaderStore((s) => s.isComplete);
 
   useEffect(() => { setMounted(true); }, []);
+
+  /* Hook-line entrance: rises bottom → center once the loader has cleared.
+     Plays a single time; scroll-out is handled separately in the render loop. */
+  useEffect(() => {
+    if (!mounted || !loaderComplete || !introInnerRef.current) return;
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const el = introInnerRef.current;
+    if (reduce) {
+      gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.8, ease: 'power2.out' });
+      return;
+    }
+    gsap.fromTo(
+      el,
+      { opacity: 0, y: '38vh', filter: 'blur(10px)' },
+      { opacity: 1, y: '0vh', filter: 'blur(0px)', duration: 1.5, ease: 'expo.out', delay: 0.15 }
+    );
+  }, [mounted, loaderComplete]);
 
   useGSAP(() => {
     if (!mounted || !canvasContainerRef.current || !containerRef.current) return;
     registerGSAPPlugins();
+
+    // Hard-refresh fix: disable browser scroll restoration and reset to top.
+    // Without this, F5/Ctrl+Shift+R can restore a mid-narrative scroll position;
+    // with scrub:0 the ScrollTrigger fires instantly at the restored progress,
+    // smoothProgress jumps near 1.0, and updateIntroExit() destroys the intro
+    // state before updateIntro() ever runs.
+    if (typeof history !== 'undefined') {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
 
     const container = canvasContainerRef.current;
     const rootEl = containerRef.current;
@@ -110,13 +180,16 @@ export function RubiksCubeExperience() {
 
     /* ═══ THREE.js Scene — Light theme ═══ */
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(BG_COLOR);
+    // Transparent so the Spline desktop layer (behind the canvas) and the page
+    // background (#f5f5f5 on the container) show through during the opening act.
+    scene.background = null;
     scene.fog = new THREE.FogExp2(new THREE.Color(BG_COLOR).getHex(), 0.02);
 
     const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
     camera.position.set(0, 0, 4.5);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setClearColor(0x000000, 0);
     renderer.setSize(innerWidth, innerHeight);
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -170,7 +243,13 @@ export function RubiksCubeExperience() {
           cubies.push(c);
           cubeGroup.add(c);
         }
-    scene.add(cubeGroup);
+    // The cube cloud + ambient cubes live under introStage so the opening act can
+    // "dock" them inside the on-screen monitor and release them to full-frame as
+    // the camera flies through the screen. introStage is identity during the main
+    // narrative, so all existing phase maths run unchanged in world space.
+    const introStage = new THREE.Group();
+    introStage.add(cubeGroup);
+    scene.add(introStage);
 
     /* ═══ Scramble / Solve ═══ */
     function getGrid(cubie: THREE.Mesh, axis: 'x' | 'y' | 'z') {
@@ -248,6 +327,500 @@ export function RubiksCubeExperience() {
     const origColors = cubies.map(c =>
       (c.material as THREE.MeshStandardMaterial[]).map(m => m.color.clone())
     );
+
+    /* ═══ Opening assembly: monitor + scattered starts + ambient cloud ═══ */
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = innerWidth < 768;
+
+    const WHITE = new THREE.Color(0xffffff);
+    const tmpCol = new THREE.Color();
+    const tmpV = new THREE.Vector3();
+
+    // The monitor screen as a fraction of the (square, aspect-locked) Spline frame.
+    // Stable across viewports because the frame keeps a fixed aspect; measured once
+    // via Playwright. The cube viewport + the zoom origin both derive from this.
+    const SCREEN_IN_FRAME = isMobile
+      ? { x: 0.30, y: 0.16, w: 0.40, h: 0.27 }
+      : { x: 0.39, y: 0.201, w: 0.267, h: 0.322 }; // measured (2 methods, centre agrees): CRT black-screen rect
+
+    // Live viewport-fraction rect for the cube scissor; recomputed each intro frame
+    // from the frame's on-screen box so it tracks the monitor at any window size.
+    const SCREEN_RECT = { x: 0.6, y: 0.2, w: 0.2, h: 0.2 };
+    function computeScreenRect() {
+      const el = splineFrameRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4) return;
+      SCREEN_RECT.x = (r.left + SCREEN_IN_FRAME.x * r.width) / innerWidth;
+      SCREEN_RECT.y = (r.top + SCREEN_IN_FRAME.y * r.height) / innerHeight;
+      SCREEN_RECT.w = (SCREEN_IN_FRAME.w * r.width) / innerWidth;
+      SCREEN_RECT.h = (SCREEN_IN_FRAME.h * r.height) / innerHeight;
+    }
+
+    // Zoom origin must land on the CENTER of the CRT screen so the dive-into-screen
+    // scaling stays anchored to that point. Previous static-percentage math applied
+    // SCREEN_IN_FRAME fractions (defined relative to the 1200×900 splineFrame) to the
+    // splineZoom box (1320×900 — wider due to right:-120 overflow), shifting the
+    // origin left by ~14-46px. This reads the actual screen-center in viewport px
+    // and converts to a percentage of the zoom element's live bounding rect, so it
+    // is correct at any window size, scale, or overflow value.
+    function updateZoomOrigin() {
+      const zoomEl = splineZoomRef.current;
+      const frameEl = splineFrameRef.current;
+      if (!zoomEl || !frameEl) return;
+      const zoomRect = zoomEl.getBoundingClientRect();
+      const frameRect = frameEl.getBoundingClientRect();
+      if (zoomRect.width < 4 || zoomRect.height < 4) return;
+      const screenCenterX = frameRect.left + (SCREEN_IN_FRAME.x + SCREEN_IN_FRAME.w / 2) * frameRect.width;
+      const screenCenterY = frameRect.top  + (SCREEN_IN_FRAME.y + SCREEN_IN_FRAME.h / 2) * frameRect.height;
+      const ox = ((screenCenterX - zoomRect.left) / zoomRect.width)  * 100;
+      const oy = ((screenCenterY - zoomRect.top)  / zoomRect.height) * 100;
+      zoomEl.style.transformOrigin = `${ox.toFixed(2)}% ${oy.toFixed(2)}%`;
+    }
+
+    // Scale the fixed-size Spline canvas DOWN to fit the available space, so the
+    // whole monitor is always visible (never cropped) on any screen — bigger on
+    // large displays, shrunk to fit on short laptops. Allows slight upscale.
+    function fitSpline() {
+      if (!splineFitRef.current) return;
+      // Two-column layout: Spline lives in the right 50% on desktop, full width on mobile.
+      // Reserve navbar room at the top so the monitor never touches the menu.
+      const navbarReserve = 130;
+      const colWidth = isMobile ? innerWidth : innerWidth * 0.6;
+      const availW = colWidth * 0.92;
+      const availH = (innerHeight - navbarReserve) * 0.92;
+      const s = Math.min(1.18, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
+      splineFitRef.current.style.transform = `scale(${s})`;
+    }
+
+    // Anchor the hook card, size the Spline layer + set the zoom origin at the screen.
+    if (introCardRef.current) {
+      introCardRef.current.style.left = isMobile ? '50%' : '5vw';
+      introCardRef.current.style.right = 'auto';
+      introCardRef.current.style.top = isMobile ? '24%' : '50%';
+      introCardRef.current.style.transform = isMobile ? 'translate(-50%, -50%)' : 'translateY(-50%)';
+    }
+    if (splineRef.current) {
+      // Two-column layout: card on left 40%, monitor on right 60%.
+      splineRef.current.style.width = isMobile ? '100%' : '60%';
+    }
+    fitSpline();
+    computeScreenRect();
+    // Must run AFTER fitSpline so the splineFitRef scale is applied and the
+    // child bounding rects reflect their true on-screen size.
+    updateZoomOrigin();
+
+    // Per-cubie floating start position + idle-float params. Even angular
+    // distribution around the ring so the 26 floating cubes never overlap each
+    // other in screen space — each cube gets its own ~13.8° slice (with mild
+    // jitter for organic variety).
+    for (let ci = 0; ci < cubies.length; ci++) {
+      const c = cubies[ci];
+      // Even slice + jitter; radius varies for parallax depth without overlap.
+      const ang = (ci / cubies.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.18;
+      const rad = 4.4 + Math.random() * 1.0;
+      c.userData.introPos = new THREE.Vector3(
+        Math.cos(ang) * rad,
+        Math.sin(ang) * rad,
+        (Math.random() - 0.5) * 1.5,
+      );
+      c.userData.introQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+        (Math.random() - 0.5) * Math.PI * 4,
+        (Math.random() - 0.5) * Math.PI * 4,
+        (Math.random() - 0.5) * Math.PI * 4,
+      ));
+      c.userData.floatPhase = Math.random() * Math.PI * 2;
+      c.userData.floatSpeed = 0.6 + Math.random() * 0.8;
+      c.userData.floatDir = new THREE.Vector3(
+        Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5
+      ).normalize();
+    }
+
+    // Ambient background cube cloud — one InstancedMesh = one draw call.
+    const ambientCount = innerWidth < 768 ? AMBIENT_MOBILE : AMBIENT_DESKTOP;
+    const ambientGeo = createRoundedBox(0.22, 0.22, 0.22, 0.05, 3);
+    const ambientMat = new THREE.MeshStandardMaterial({
+      roughness: 0.35, metalness: 0.15, transparent: true, opacity: 0, fog: false,
+    });
+    const ambientMesh = new THREE.InstancedMesh(ambientGeo, ambientMat, ambientCount);
+    ambientMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    ambientMesh.visible = false;
+    // Rubik face palette — matches the main 26-cubie cubies so the ambient cloud
+    // reads as "the same kind of cube, smaller, floating in the periphery".
+    const ambientPalette = [0xcc2200, 0xff6600, 0xffd000, 0xffffff, 0x0055cc, 0x00aa44]
+      .map(c => new THREE.Color(c));
+    interface AmbientCfg {
+      base: THREE.Vector3; scale: number; phase: number; speed: number;
+      amp: number; drift: THREE.Vector3; rotAxis: THREE.Vector3; rotSpeed: number;
+      // trigger = 0 → Tier A (always visible);
+      // trigger > 0 → Tier B (fades/scales in as scrollP crosses the trigger).
+      trigger: number;
+    }
+    const ambient: AmbientCfg[] = [];
+    const ambientTargets: THREE.Color[] = []; // colourful target per cube (starts white)
+    const am = new THREE.Matrix4();
+    const aq = new THREE.Quaternion();
+    const av = new THREE.Vector3();
+    const asc = new THREE.Vector3();
+    // Collision-free placement. All cubes live BEHIND the origin (z = -6 to -22)
+    // so they read as small distant background, never in the foreground covering
+    // the computer or the assembled cube. Camera is at z=4.5, so these are
+    // 10.5–26.5 world units away — small in screen space.
+    const AMBIENT_MIN_DIST = 0.55;
+    const AMBIENT_XY_SPREAD = new THREE.Vector3(16.0, 11.0, 0);
+    const AMBIENT_Z_NEAR = -6;
+    const AMBIENT_Z_FAR  = -22;
+    const tierA_count = Math.floor(ambientCount / 2);
+    const placed: THREE.Vector3[] = [];
+    for (let i = 0; i < ambientCount; i++) {
+      const pos: THREE.Vector3 = new THREE.Vector3();
+      for (let att = 0; att < 200; att++) {
+        pos.set(
+          (Math.random() - 0.5) * AMBIENT_XY_SPREAD.x,
+          (Math.random() - 0.5) * AMBIENT_XY_SPREAD.y,
+          AMBIENT_Z_NEAR + Math.random() * (AMBIENT_Z_FAR - AMBIENT_Z_NEAR),
+        );
+        if (placed.every(p => p.distanceTo(pos) >= AMBIENT_MIN_DIST)) break;
+      }
+      placed.push(pos.clone());
+      const isTierA = i < tierA_count;
+      const bIdx = i - tierA_count;
+      const trigger = isTierA
+        ? 0
+        : 0.05 + (bIdx / Math.max(1, ambientCount - tierA_count - 1)) * 0.80 + (Math.random() - 0.5) * 0.04;
+      ambient.push({
+        base: pos.clone(),
+        // Smaller cubes — user wants "small". Effective render size = scale * 0.22 base.
+        scale: 0.25 + Math.random() * 0.55,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.4 + Math.random() * 0.7,
+        amp: 0.25 + Math.random() * 0.5,
+        drift: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+        rotAxis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+        rotSpeed: 0.3 + Math.random() * 0.6,
+        trigger,
+      });
+      ambientTargets.push(ambientPalette[Math.floor(Math.random() * ambientPalette.length)]);
+      ambientMesh.setColorAt(i, ambientTargets[i]);
+    }
+    if (ambientMesh.instanceColor) ambientMesh.instanceColor.needsUpdate = true;
+    introStage.add(ambientMesh);
+
+    /* ── Intro render functions ── */
+    function updateAmbient(t: number, scrollP: number) {
+      // Small background cube cloud. INVISIBLE while the visitor is still on the
+      // computer (Phase 1 + start of Phase 2). Reveal begins only after the
+      // screen-zoom of Phase 2 completes — i.e. once the computer has faded into
+      // the screen. From there, opacity caps at 0.5 (user wants 50%).
+      //   Tier A (trigger=0): visible at scale a.scale once the gate opens.
+      //   Tier B (trigger>0): scale 0 → a.scale as scrollP crosses the per-cube
+      //                      trigger value (over a 0.10 reveal window).
+      // Gate range (raw scroll): 0.075 → 0.090 corresponds to introT 0.75 → 0.90
+      // — i.e. AFTER the pass-through into the screen. Before that the cloud is
+      // fully hidden so the portal traversal itself reads clean.
+      const gate = lerp01(scrollP, 0.075, 0.090);
+      // Triangle window: 0 at BURST_START / 2*PEAK-START (=0.42), 1 at PEAK.
+      const burst = Math.max(0, Math.min(1,
+        1 - Math.abs(scrollP - BURST_PEAK) / (BURST_PEAK - BURST_START)
+      ));
+      // Force visibility throughout the burst window even if the gate hasn't opened.
+      ambientMesh.visible = gate > 0.001 || burst > 0;
+      const appear = Math.min(1, t / 0.8);
+      const baseOpacity = appear * BURST_BASE_OPACITY * gate;
+      ambientMat.opacity = THREE.MathUtils.lerp(baseOpacity, 1.0, burst);
+      const burstScale = 1 + burst * BURST_SCALE_BOOST;
+      for (let i = 0; i < ambient.length; i++) {
+        const a = ambient[i];
+        const fl = prefersReduced ? 0 : Math.sin(t * a.speed + a.phase) * a.amp;
+        av.copy(a.base).addScaledVector(a.drift, fl);
+        if (prefersReduced) aq.identity();
+        else aq.setFromAxisAngle(a.rotAxis, t * a.rotSpeed + a.phase);
+        // Reveal factor: 1 for Tier A, scroll-driven for Tier B.
+        const reveal = a.trigger > 0
+          ? easeOutCubic(lerp01(scrollP, a.trigger, a.trigger + 0.10))
+          : 1;
+        const s = a.scale * reveal * burstScale;
+        asc.set(s, s, s);
+        am.compose(av, aq, asc);
+        ambientMesh.setMatrixAt(i, am);
+      }
+      ambientMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    function updateIntro(introT: number, t: number) {
+      // Portal-style scroll narrative:
+      //   Phase 1 — Approach        (0.00 → 0.40): computer slides + grows to viewport centre; card fades.
+      //   Phase 2 — Travel-to-screen(0.40 → 0.65): splineZoomRef scales screen up; cube canvas viewport
+      //                                             tracks the live screen rect so we ride INTO the screen.
+      //   Phase 3 — Pass-through    (0.65 → 0.75): screen has filled the viewport; Spline fades 1 → 0;
+      //                                             cubies fade in (we're "inside" now).
+      //   Phase 4 — Floating cubes  (0.75 → 0.85): cubies arrive at ring positions (burst).
+      //   Phase 5 — Assemble        (0.85 → 1.00): cubies converge into the scrambled cube.
+      // Eased Spline crossfade: holds visible longer, then drops out faster.
+      // Window widened slightly (0.62 → 0.78) to give the ease room to breathe.
+      const splineFade =     easeInCubic(lerp01(introT, 0.62, 0.78));
+      const screenZoom = easeInOutCubic(lerp01(introT, 0.32, 0.70)); // Phase 2: dive INTO the screen (widened to 38% of introT)
+      // Recenter LAG. The CRT sits right-of-centre, but the cube narrative that
+      // follows is viewport-centred — so the focus must end at viewport centre.
+      // Driving that recenter off screenZoom slid the focus LEFT the entire dive
+      // ("zooming to the left"). Instead, hold the focus ON the screen centre for
+      // most of the dive, then glide to viewport centre only over 0.50→0.72 —
+      // late enough that the screen has already filled the frame and the Spline
+      // is crossfading out, so the move is masked. Reads as "dive straight INTO
+      // the screen, punch through, land centred" with no early leftward drift.
+      const recenter = easeInOutCubic(lerp01(introT, 0.50, 0.72));
+      // Three-segment camera dolly. Burst ring radius is up to ~3 units, which
+      // does not fit at z=4.5 (visible half = 2.1) — cropped on wide viewports.
+      // So we pull back far (z=7) during the ring/burst window, then settle to
+      // z=4.5 at intro-end to match main phase (no handoff snap).
+      const cameraPushIn   = easeInOutCubic(lerp01(introT, 0.32, 0.55));  //  6  → 3.2
+      const cameraPullback = easeInOutCubic(lerp01(introT, 0.55, 0.75));  //  3.2 → 7
+      const cameraSettle   = easeInOutCubic(lerp01(introT, 0.85, 1.00));  //  7  → 4.5
+      // Cubie appear: ease-out for a gentle pop, widened to 0.65 → 0.85.
+      // Burst pushed later (0.72 → 0.88) so it doesn't collide with the fade-in.
+      // Assemble nudged with it (0.88 → 1.00) so conv picks up exactly where burst lands.
+      const appear     = easeOutCubic   (lerp01(introT, 0.65, 0.85));
+      const burst      = easeOutCubic   (lerp01(introT, 0.72, 0.88));
+      const conv       = easeInOutCubic (lerp01(introT, 0.88, 1.00));
+      // Spring-style overshoot: cubies briefly scale past 1.0 before settling.
+      // easeOutBack peaks at ~1.10 with the default overshoot, lerp extrapolates
+      // through the upper bound so popScale peaks at ~1.055 then snaps to 1.0.
+      const popScale   = burst < 1
+        ? THREE.MathUtils.lerp(0.45, 1.0, easeOutBack(burst))
+        : 1.0;
+      const floatAmt   = (1 - conv) * 0.45;
+      // Phase 3 → 4 lens blur: cubies emerge "out of focus" and snap into focus
+      // as they settle. 1 (heavy blur) → 0 (sharp) over introT 0.65 → 0.80.
+      const burstBlur  = Math.max(0, 1 - lerp01(introT, 0.65, 0.80));
+
+      // 1) Apply Spline DOM transforms FIRST so the live frame box reflects them
+      //    when we read getBoundingClientRect below.
+      if (splineRef.current) {
+        splineRef.current.style.display = 'flex';
+        splineRef.current.style.opacity = String(1 - splineFade);
+      }
+      // Lens-blur the cube canvas while cubies are emerging — sells "we just
+      // passed through the surface; eyes are still re-focusing."
+      const canvasContainer = canvasContainerRef.current;
+      if (canvasContainer) {
+        canvasContainer.style.filter = burstBlur > 0.01
+          ? `blur(${(burstBlur * 8).toFixed(1)}px)`
+          : '';
+      }
+      if (splineFitRef.current) {
+        const navbarReserve = 130;
+        const colWidth = isMobile ? innerWidth : innerWidth * 0.6;
+        const availW2 = colWidth * 0.92;
+        const availH2 = (innerHeight - navbarReserve) * 0.92;
+        const baseScale = Math.min(1.18, availW2 / SPLINE_DESIGN_W, availH2 / SPLINE_DESIGN_H);
+        // Computer is STATIONARY. No slide, no grow. The dive happens purely via
+        // splineZoomRef's scale anchored at the CRT centre — so the CRT screen
+        // grows to fill the viewport while the rest of the monitor scales
+        // outward and off-screen. Cubies later emerge at the CRT's viewport
+        // position (handled by canvas-container translate, below).
+        splineFitRef.current.style.transform = `scale(${baseScale.toFixed(4)})`;
+      }
+
+      // 2) Compute the live screen rect (viewport pixels). The splineFit slide
+      //    has already brought the CRT to viewport centre by introT=0.40, so
+      //    sCenterX/Y read directly off the live frame rect — no further DOM
+      //    translate is needed on the zoom layer (it just scales in place,
+      //    anchored at the CRT via its transform-origin).
+      const W = innerWidth, H = innerHeight;
+      let vx = 0, vy = 0, vw = W, vh = H, vyBottom = 0;
+      let zoomFactor = 1;
+      // Viewport-% anchor for the dive overlays; lerps screen-centre → centre.
+      let screenAnchorX = 50, screenAnchorY = 50;
+      const frameEl = splineFrameRef.current;
+      if (frameEl) {
+        const fr = frameEl.getBoundingClientRect();
+        const sIn_w = SCREEN_IN_FRAME.w * fr.width;
+        const sIn_h = SCREEN_IN_FRAME.h * fr.height;
+        // requiredZoom uses distance-to-furthest-corner so the scissor fully
+        // covers the viewport even when the CRT centre is off-centre at rest.
+        // Without this, the scissor would clamp asymmetrically and the cube
+        // canvas would render off-centre.
+        const sCenterX = fr.left + (SCREEN_IN_FRAME.x + SCREEN_IN_FRAME.w / 2) * fr.width;
+        const sCenterY = fr.top  + (SCREEN_IN_FRAME.y + SCREEN_IN_FRAME.h / 2) * fr.height;
+        // Effective scissor centre LERPS from the CRT viewport position to
+        // viewport centre as zoom progresses. By the time cubies become
+        // visible (screenZoom ~0.97), the cube canvas viewport is at viewport
+        // centre — cubies emerge dead-centre regardless of where the CRT was.
+        const effCenterX = THREE.MathUtils.lerp(sCenterX, W / 2, recenter);
+        const effCenterY = THREE.MathUtils.lerp(sCenterY, H / 2, recenter);
+        // Dive overlays home on the same point so the whole threshold-crossing
+        // converges on the CRT screen, then eases to centre with the cube.
+        screenAnchorX = THREE.MathUtils.lerp((sCenterX / W) * 100, 50, recenter);
+        screenAnchorY = THREE.MathUtils.lerp((sCenterY / H) * 100, 50, recenter);
+        // requiredZoom: enough to fully cover the viewport from the effective
+        // centre (which ends at viewport centre, so this matches the simple
+        // max-of-ratios formula).
+        const requiredZoom = Math.max(W / sIn_w, H / sIn_h) * 1.05;
+        zoomFactor = 1 + screenZoom * Math.max(0, requiredZoom - 1);
+        const sW = sIn_w * zoomFactor;
+        const sH = sIn_h * zoomFactor;
+        const x1 = Math.max(0, effCenterX - sW / 2);
+        const y1 = Math.max(0, effCenterY - sH / 2);
+        const x2 = Math.min(W, effCenterX + sW / 2);
+        const y2 = Math.min(H, effCenterY + sH / 2);
+        vx = x1; vy = y1;
+        vw = Math.max(1, x2 - x1);
+        vh = Math.max(1, y2 - y1);
+        vyBottom = H - vy - vh;
+      }
+      if (splineZoomRef.current) {
+        splineZoomRef.current.style.transform = `scale(${zoomFactor})`;
+      }
+
+      // 3) Apply renderer state — cube canvas viewport = live screen rect.
+      //    Once the screen overflows the viewport, vx/vy/vw/vh naturally clamp
+      //    to (0, 0, W, H), so the scissor becomes a no-op — clean "after-
+      //    portal" state without an explicit toggle.
+      renderer.setScissorTest(true);
+      renderer.setScissor(vx, vyBottom, vw, vh);
+      renderer.setViewport(vx, vyBottom, vw, vh);
+      camera.aspect = vw / vh;
+      camera.updateProjectionMatrix();
+      renderer.clear();
+      scissorActive = true;
+
+      // 4) Cubies.
+      const BURST_RADIUS = 0.5;
+      for (let i = 0; i < cubies.length; i++) {
+        const c = cubies[i];
+        tmpV.copy(c.userData.introPos).multiplyScalar(burst * BURST_RADIUS);
+        c.position.lerpVectors(tmpV, c.userData.scrPos, conv);
+        if (!prefersReduced && floatAmt > 0.001) {
+          c.position.addScaledVector(
+            c.userData.floatDir,
+            Math.sin(t * c.userData.floatSpeed + c.userData.floatPhase) * floatAmt,
+          );
+        }
+        c.quaternion.slerpQuaternions(c.userData.introQuat, c.userData.scrQuat, conv);
+        c.scale.setScalar(popScale);
+        c.visible = appear > 0.001;
+        (c.material as THREE.MeshStandardMaterial[]).forEach((m, fi) => {
+          m.color.copy(origColors[i][fi]);
+          m.metalness = 0.12; m.roughness = 0.25;
+          m.transparent = appear < 1;
+          m.opacity = appear;
+        });
+      }
+
+      introStage.position.set(0, 0, 0);
+      introStage.quaternion.identity();
+      introStage.scale.setScalar(1);
+
+      cubeGroup.position.set(0, 0, 0);
+      discGroup.position.set(0, 0, 0);
+      smoothCubeX = 0;
+      baseRotY = (1 - introT) * 0.6;
+      cubeGroup.rotation.set(
+        THREE.MathUtils.lerp(0.25, 0.35, introT),
+        baseRotY,
+        THREE.MathUtils.lerp(0.05, 0.1, introT),
+      );
+      // Camera trajectory: 6 (rest) → 3.2 (peak push) → 7 (held during burst ring)
+      // → 5.5 (settles at intro-end). Lands at 5.5 (not 4.5) so the rotated cube
+      // has comfortable margin (0.5 units) at the handoff instead of clipping the
+      // top corners. Main phase's phaseHero starts at 5.5 to keep handoff snap-free.
+      const zAfterPush     = THREE.MathUtils.lerp(6, 3.2, cameraPushIn);
+      const zAfterPullback = THREE.MathUtils.lerp(zAfterPush, 7.0, cameraPullback);
+      camera.position.z    = THREE.MathUtils.lerp(zAfterPullback, 5.5, cameraSettle);
+      // FOV pulse: gentle widen (+6°) during the dive, returns to base by intro end.
+      // Adds peripheral "warping" sense without disorienting the viewer.
+      const fovRise = lerp01(introT, 0.32, 0.58);
+      const fovFall = 1 - lerp01(introT, 0.58, 0.85);
+      const fovPulse = easeInOutSine(Math.max(0, Math.min(fovRise, fovFall)));
+      camera.fov = 45 + 6 * fovPulse;
+      camera.updateProjectionMatrix();
+
+      // Travel-through overlay effects — three brief pulses around the threshold.
+      // Speed streaks: bright radial lines (peak 0.6) suggesting forward velocity.
+      // Dive vignette : darkens edges (peak 0.35) for the "crossing the threshold" feel.
+      // CRT scanlines : faint horizontal lines (peak 0.18) for lens authenticity.
+      const ramp = (a: number, b: number) => easeInOutSine(lerp01(introT, a, b));
+      const fade = (a: number, b: number) => 1 - easeInOutSine(lerp01(introT, a, b));
+      const streakPulse   = Math.max(0, Math.min(ramp(0.50, 0.65), fade(0.65, 0.78)));
+      const vignettePulse = Math.max(0, Math.min(ramp(0.48, 0.62), fade(0.62, 0.78)));
+      const scanlinePulse = Math.max(0, Math.min(ramp(0.50, 0.65), fade(0.65, 0.78)));
+      if (streaksRef.current) {
+        streaksRef.current.style.opacity = (streakPulse * 0.6).toFixed(3);
+        // Slight scale-up adds "racing toward us" depth cue, emanating from the
+        // CRT screen so the rays point INTO it (not the viewport centre).
+        streaksRef.current.style.transformOrigin = `${screenAnchorX.toFixed(1)}% ${screenAnchorY.toFixed(1)}%`;
+        streaksRef.current.style.transform = `scale(${(1 + streakPulse * 0.25).toFixed(3)})`;
+      }
+      if (diveVignetteRef.current) {
+        diveVignetteRef.current.style.opacity = (vignettePulse * 0.35).toFixed(3);
+        // Tunnel darkening centres on the CRT screen during the dive, then eases
+        // to viewport centre as the cube takes over.
+        diveVignetteRef.current.style.background =
+          `radial-gradient(circle at ${screenAnchorX.toFixed(1)}% ${screenAnchorY.toFixed(1)}%, transparent 25%, rgba(0,0,0,0.9) 100%)`;
+      }
+      if (scanlineRef.current) {
+        scanlineRef.current.style.opacity = (scanlinePulse * 0.18).toFixed(3);
+      }
+
+      for (const d of discs) {
+        (d.material as THREE.MeshStandardMaterial).opacity = 0;
+        d.scale.setScalar(0.001);
+      }
+      pMat.opacity = 0;
+
+      updateAmbient(t, introT * INTRO_END); // map introT back to raw scroll progress
+
+      // Hook card: dissolves during the approach (eased holds visible longer,
+      // then drops out fast) and drifts up on a slightly tighter window.
+      if (introCardRef.current) {
+        const dySlide = easeInOutCubic(lerp01(introT, 0.20, 0.40));
+        const dy = -dySlide * 130;
+        const cardFade = 1 - easeInCubic(lerp01(introT, 0.20, 0.48));
+        introCardRef.current.style.opacity = String(Math.max(0, cardFade));
+        introCardRef.current.style.transform = isMobile
+          ? `translate(-50%, calc(-50% + ${dy}px))`
+          : `translateY(calc(-50% + ${dy}px))`;
+      }
+    }
+
+    function updateIntroExit() {
+      // Ambient cube cloud STAYS visible in main phase too — persistent background.
+      // Restore full-frame rendering (undo the screen-rect scissor/viewport).
+      if (scissorActive) {
+        renderer.setScissorTest(false);
+        renderer.setViewport(0, 0, innerWidth, innerHeight);
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        scissorActive = false;
+      }
+      // Hide the Spline desktop once past the intro (also stops it compositing).
+      if (splineRef.current && splineRef.current.style.display !== 'none') {
+        splineRef.current.style.opacity = '0';
+        splineRef.current.style.display = 'none';
+      }
+      // Clear the cube-canvas lens blur from Phase 3/4 so main phase renders sharp.
+      if (canvasContainerRef.current && canvasContainerRef.current.style.filter) {
+        canvasContainerRef.current.style.filter = '';
+      }
+      // Reset travel-through overlay opacities + camera FOV for main phase.
+      if (streaksRef.current) {
+        streaksRef.current.style.opacity = '0';
+        streaksRef.current.style.transform = 'scale(1)';
+      }
+      if (diveVignetteRef.current) diveVignetteRef.current.style.opacity = '0';
+      if (scanlineRef.current) scanlineRef.current.style.opacity = '0';
+      if (camera.fov !== 45) {
+        camera.fov = 45;
+        camera.updateProjectionMatrix();
+      }
+      // Reset the stage to identity so the main narrative runs in world space.
+      introStage.position.set(0, 0, 0);
+      introStage.quaternion.identity();
+      introStage.scale.setScalar(1);
+      // No hard opacity write here — updateIntro's cardFade already drives
+      // the card to opacity 0 by introT=1, so the exit dissolve continues
+      // through the approach rather than snapping off at handoff.
+    }
 
     /* ═══ Torus Disc Ring ═══ */
     const DISC_COUNT = 36, torusRadius = 2.0, discRadius = 0.85, discThick = 0.04;
@@ -327,13 +900,19 @@ export function RubiksCubeExperience() {
       return current + (target - current) * a;
     }
 
+    // Cube sits OPPOSITE the active card so they don't overlap.
+    // Boundaries match each card's eIn from the CARDS table:
+    //   card-s1 (right) → cube LEFT   from 0.040
+    //   card-s2 (left)  → cube RIGHT  from 0.225
+    //   card-s3 (right) → cube LEFT   from 0.400
+    //   card-s4 (left)  → cube RIGHT  from 0.570
+    //   card-s6 (center) → cube CENTER from 0.700
     function cubeTargetX(p: number) {
-      if (p < P.hero) return 0;
-      if (p < P.s1) return -SHIFT;
-      if (p < P.s2) return SHIFT;
-      if (p < P.s3) return -SHIFT;
-      if (p < P.s4) return SHIFT;
-      if (p < P.s5) return -SHIFT;
+      if (p < 0.040) return 0;
+      if (p < 0.225) return -SHIFT;
+      if (p < 0.400) return SHIFT;
+      if (p < 0.570) return -SHIFT;
+      if (p < 0.700) return SHIFT;
       return 0;
     }
 
@@ -346,7 +925,9 @@ export function RubiksCubeExperience() {
       }
       cubeGroup.rotation.set(0.35, lp * 0.3, 0.1);
       baseRotY = lp * 0.3;
-      camera.position.z = THREE.MathUtils.lerp(4.5, 7, easeOutCubic(lp));
+      // Starts at 5.5 to match intro's cameraSettle end value (no handoff snap),
+      // then drifts back to 7 across the hero scroll segment.
+      camera.position.z = THREE.MathUtils.lerp(5.5, 7, easeOutCubic(lp));
     }
 
     function phaseScramble(lp: number) {
@@ -628,13 +1209,15 @@ export function RubiksCubeExperience() {
     const scrollState = { progress: 0 };
     let smoothProgress = 0;
     let lastDt = 1 / 60;
+    let elapsed = 0;
     let isVisible = true;
+    let scissorActive = false;
 
     const scrollTrigger = ScrollTrigger.create({
       trigger: rootEl.querySelector('[data-scroll-spacer]') as HTMLElement,
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 0.6,
+      scrub: 0,
       onUpdate: self => { scrollState.progress = self.progress; },
       onToggle: self => { isVisible = self.isActive || self.progress < 1; },
     });
@@ -646,17 +1229,31 @@ export function RubiksCubeExperience() {
       // deltaTime is in milliseconds; convert to seconds and clamp so a
       // tab-switch pause can't dump a huge dt into the smoothing math.
       lastDt = Math.min(0.05, Math.max(0.001, deltaTime / 1000));
+      elapsed += lastDt;
 
       // Skip the heavy three.js work entirely when the section is fully
       // out of view. Cards/UI/visibility checks are cheap so still run.
       updateFixedVisibility();
       if (!isVisible) return;
 
-      smoothProgress = smoothLerp(smoothProgress, scrollState.progress, 0.18, lastDt);
-      updateCube(smoothProgress);
-      updateParticles(smoothProgress);
-      updateCards(smoothProgress);
-      updateUI(smoothProgress);
+      smoothProgress = smoothLerp(smoothProgress, scrollState.progress, 0.45, lastDt);
+      const rawP = smoothProgress;
+
+      if (rawP < INTRO_END) {
+        // Opening act: floating cubes assemble while the hook line holds center.
+        updateIntro(rawP / INTRO_END, elapsed);
+        if (sideRef.current) sideRef.current.textContent = 'Kaizen Infotech';
+      } else {
+        // Original narrative — re-mapped onto [0..1] so all phase/card maths
+        // below are untouched.
+        updateIntroExit();
+        updateAmbient(elapsed, rawP); // keep the background cube cloud animating + revealing Tier B in main phase
+        const mainP = (rawP - INTRO_END) / (1 - INTRO_END);
+        updateCube(mainP);
+        updateParticles(mainP);
+        updateCards(mainP);
+        updateUI(mainP);
+      }
       renderer.render(scene, camera);
     }
     gsap.ticker.add(tick);
@@ -665,6 +1262,9 @@ export function RubiksCubeExperience() {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
+      fitSpline();
+      computeScreenRect();
+      updateZoomOrigin();
     }
     window.addEventListener('resize', onResize);
 
@@ -672,6 +1272,9 @@ export function RubiksCubeExperience() {
       gsap.ticker.remove(tick);
       window.removeEventListener('resize', onResize);
       scrollTrigger.kill();
+      ambientMesh.dispose();
+      ambientGeo.dispose();
+      ambientMat.dispose();
       renderer.dispose();
       scene.clear();
       if (container.contains(renderer.domElement)) {
@@ -680,19 +1283,112 @@ export function RubiksCubeExperience() {
     };
   }, { dependencies: [mounted], scope: containerRef });
 
-  if (!mounted) return <div style={{ height: '1600vh', background: BG_COLOR }} />;
+  if (!mounted) return <div style={{ height: `${SPACER_VH}vh`, background: BG_COLOR }} />;
 
   return (
     <div ref={containerRef} className="relative" style={{ background: BG_COLOR }}>
       {/* All fixed elements wrapped in a single layer for visibility control */}
       <div ref={fixedLayerRef} className="transition-opacity duration-300" style={{ willChange: 'opacity' }}>
-        {/* Fixed canvas */}
-        <div ref={canvasContainerRef} className="fixed inset-0 z-0" />
+        {/* Spline desktop (opening act) — right side, behind the transparent cube canvas.
+            Width is set per-device in the effect; opacity/scale are scroll-driven. */}
+        <div
+          ref={splineRef}
+          className="fixed inset-y-0 right-0 z-0"
+          style={{ pointerEvents: 'auto', willChange: 'opacity', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 60, paddingLeft: 120 }}
+        >
+          {/* Fit layer: scales the fixed-size canvas DOWN to fit the viewport so the
+              whole monitor is always visible (never cropped) at any window size. */}
+          <div ref={splineFitRef} style={{ transformOrigin: 'center center', willChange: 'transform' }}>
+          {/* Fixed design-size frame (square). Floats gently inside its container. */}
+          <div
+            ref={splineFrameRef}
+            className="rc-spline-float"
+            style={{ position: 'relative', width: SPLINE_DESIGN_W, height: SPLINE_DESIGN_H }}
+          >
+            {/* Zoom layer — scroll pushes IN toward the monitor screen (immersive).
+                transformOrigin is set to the screen centre in the effect. */}
+            <div ref={splineZoomRef} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: -120, transformOrigin: '48% 36%', willChange: 'transform' }}>
+              <Spline
+                scene="https://prod.spline.design/bXo513RtAR9aENZB/scene.splinecode"
+                onLoad={(app: unknown) => {
+                  // Hide the pointing-hand prop, if this scene ships one (older scene did).
+                  try {
+                    const a = app as { findObjectByName?: (n: string) => { visible?: boolean } | undefined };
+                    const hand = a.findObjectByName?.('hand');
+                    if (hand) hand.visible = false;
+                  } catch {
+                    /* no-op */
+                  }
+                }}
+              />
+              {/* Mask the canvas-drawn "Built with Spline" watermark (bottom-right). */}
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute', bottom: 0, right: 0,
+                  width: '34%', height: '11%', background: BG_COLOR, pointerEvents: 'none',
+                }}
+              />
+            </div>
+          </div>
+          </div>
+        </div>
+
+        {/* CRT scanlines — sits over Spline, under the cube canvas. Opacity is
+            driven from updateIntro; transparent outside the dive window. */}
+        <div
+          ref={scanlineRef}
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[0]"
+          style={{
+            opacity: 0,
+            backgroundImage:
+              'repeating-linear-gradient(to bottom, rgba(0,0,0,0.55) 0px, rgba(0,0,0,0.55) 1px, transparent 1px, transparent 3px)',
+            mixBlendMode: 'multiply',
+            willChange: 'opacity',
+          }}
+        />
+
+        {/* Fixed canvas (transparent) — cubes render on top of the Spline desktop.
+            pointer-events:none so the Spline below stays mouse-interactive (its effects). */}
+        <div ref={canvasContainerRef} className="fixed inset-0 z-[1]" style={{ pointerEvents: 'none' }} />
 
         {/* Subtle vignette for light theme */}
         <div
           className="pointer-events-none fixed inset-0 z-[2]"
           style={{ background: 'radial-gradient(ellipse at center, transparent 45%, rgba(245,245,245,0.7) 100%)' }}
+        />
+
+        {/* Dive vignette — darkens viewport edges around the threshold so the
+            user feels they're crossing into the screen. Opacity from updateIntro. */}
+        <div
+          ref={diveVignetteRef}
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[3]"
+          style={{
+            opacity: 0,
+            background: 'radial-gradient(circle at center, transparent 25%, rgba(0,0,0,0.9) 100%)',
+            willChange: 'opacity',
+          }}
+        />
+
+        {/* Radial speed streaks — implies forward velocity through the threshold.
+            Conic-gradient creates radial light rays, masked to fade in the centre
+            so they don't obscure the subject. Opacity + scale from updateIntro. */}
+        <div
+          ref={streaksRef}
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[3]"
+          style={{
+            opacity: 0,
+            transformOrigin: '50% 50%',
+            backgroundImage:
+              'conic-gradient(from 0deg at center, transparent 0deg, rgba(255,255,255,0.55) 1deg, transparent 3deg, transparent 12deg, rgba(255,255,255,0.4) 13deg, transparent 15deg, transparent 27deg, rgba(255,255,255,0.5) 28deg, transparent 30deg, transparent 47deg, rgba(255,255,255,0.35) 48deg, transparent 50deg, transparent 67deg, rgba(255,255,255,0.45) 68deg, transparent 70deg, transparent 92deg, rgba(255,255,255,0.4) 93deg, transparent 95deg, transparent 119deg, rgba(255,255,255,0.5) 120deg, transparent 122deg, transparent 145deg, rgba(255,255,255,0.35) 146deg, transparent 148deg, transparent 175deg, rgba(255,255,255,0.45) 176deg, transparent 178deg, transparent 201deg, rgba(255,255,255,0.4) 202deg, transparent 204deg, transparent 232deg, rgba(255,255,255,0.5) 233deg, transparent 235deg, transparent 261deg, rgba(255,255,255,0.35) 262deg, transparent 264deg, transparent 295deg, rgba(255,255,255,0.45) 296deg, transparent 298deg, transparent 327deg, rgba(255,255,255,0.4) 328deg, transparent 330deg, transparent 359deg)',
+            WebkitMaskImage: 'radial-gradient(circle at center, transparent 18%, black 65%)',
+            maskImage: 'radial-gradient(circle at center, transparent 18%, black 65%)',
+            mixBlendMode: 'screen',
+            willChange: 'opacity, transform',
+          }}
         />
 
         {/* Side label */}
@@ -706,69 +1402,59 @@ export function RubiksCubeExperience() {
 
         {/* Glass card layer */}
         <div className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
-          {/* S1: THE SCRAMBLE */}
-          <div data-card="card-s1" className="rc-glass-card rc-side-right rc-card-hero" style={{ opacity: 0 }}>
-            <div className="rc-overline">&#x1f539; Kaizen</div>
-            <h1 className="rc-headline rc-headline-hero">
-              <span className="rc-stagger" data-stg="s1-0">A scrambled Rubik&apos;s Cube</span>
-              <span className="rc-stagger" data-stg="s1-1">looks <em>impossible</em> at first.</span>
-            </h1>
-            <p className="rc-body rc-stagger" data-stg="s1-2">Colors are scattered. Patterns are broken. Every move seems to disrupt something else.</p>
-            <div className="rc-scroll-cue"><span>Scroll</span><div className="rc-scroll-line" /></div>
+          {/* OPENING HOOK — left side, rises left-bottom → left-center, fades as we enter the screen */}
+          <div
+            ref={introCardRef}
+            className="rc-glass-card rc-side-left rc-hook-card"
+            style={{ opacity: 1, transform: 'translateY(-50%)' }}
+          >
+            <div ref={introInnerRef} className="rc-hook-inner" style={{ opacity: 0 }}>
+              <div className="rc-overline">Kaizen Infotech Solutions</div>
+              <h1 className="rc-hook-title">
+                Your Vision <em>Our Code</em>
+              </h1>
+              <div className="rc-scroll-cue">
+                <span>Scroll to begin</span>
+                <div className="rc-scroll-line" />
+              </div>
+            </div>
           </div>
 
-          <div data-card="card-s1b" className="rc-glass-card rc-side-right rc-card-hero" style={{ opacity: 0 }}>
-            <p className="rc-body rc-stagger" data-stg="s1b-0" style={{ margin: 0, fontSize: '1.0625rem', color: '#1a1a1a' }}>Many organizations feel exactly the same.</p>
-            <p className="rc-body rc-stagger" data-stg="s1b-1" style={{ marginTop: '0.6rem' }}>Disconnected systems. Manual processes. Scattered data. Limited visibility. Growing complexity.</p>
+          {/* S1: THE SCRAMBLE */}
+          <div data-card="card-s1" className="rc-glass-card rc-side-right rc-card-hero" style={{ opacity: 0 }}>
+            <div className="rc-overline">&#x25c6; Kaizen</div>
+            <h1 className="rc-headline rc-headline-hero">
+              <span className="rc-stagger" data-stg="s1-0">A scrambled Rubik&apos;s Cube looks <em>impossible</em> at first &mdash;</span>
+              <span className="rc-stagger" data-stg="s1-1">and so does your business.</span>
+            </h1>
+            <div className="rc-scroll-cue"><span>Scroll</span><div className="rc-scroll-line" /></div>
           </div>
 
           {/* S2: THE FIRST MOVE */}
           <div data-card="card-s2" className="rc-glass-card rc-side-left rc-card-s2" style={{ opacity: 0 }}>
+            <div className="rc-overline">&#x25c6; Kaizen</div>
             <h2 className="rc-headline rc-headline-s2">
-              <span className="rc-stagger" data-stg="s2-0">Trying to fix everything at once only makes it <em>worse.</em></span>
+              <span className="rc-stagger" data-stg="s2-0">Fixing everything at once only makes it <em>worse.</em></span>
+              <span className="rc-stagger" data-stg="s2-1">The right move, in the right sequence, changes everything.</span>
             </h2>
-            <p className="rc-body rc-stagger" data-stg="s2-1">But solving a Rubik&apos;s Cube isn&apos;t about random twists. It&apos;s about understanding the structure &mdash; and making the right moves in the right sequence.</p>
-          </div>
-
-          <div data-card="card-s2b" className="rc-glass-card rc-side-left rc-card-s2" style={{ opacity: 0 }}>
-            <h2 className="rc-headline rc-headline-s2">
-              <span className="rc-stagger" data-stg="s2b-0">That philosophy is called <em>Kaizen.</em></span>
-            </h2>
-            <p className="rc-body rc-stagger" data-stg="s2b-1">Continuous improvement through thoughtful, deliberate action.</p>
           </div>
 
           {/* S3: HOW WE APPLY KAIZEN */}
           <div data-card="card-s3" className="rc-glass-card rc-side-right rc-card-s3" style={{ opacity: 0 }}>
+            <div className="rc-overline">&#x25c6; Kaizen</div>
             <h2 className="rc-headline rc-headline-s3">
-              <span className="rc-stagger" data-stg="s3-0">We don&apos;t force technology</span>
-              <span className="rc-stagger" data-stg="s3-1">onto your <em>operations.</em></span>
+              <span className="rc-stagger" data-stg="s3-0">We don&apos;t force technology onto your operations.</span>
+              <span className="rc-stagger" data-stg="s3-1">We <em>understand your structure</em> &mdash; then solve it, step by step.</span>
             </h2>
-            <p className="rc-body rc-stagger" data-stg="s3-2">We study your business first. Your workflows. Your users. Your bottlenecks. Your growth goals.</p>
-          </div>
-
-          <div data-card="card-s3b" className="rc-glass-card rc-side-right rc-card-s3b" style={{ opacity: 0 }}>
-            <div className="rc-solved-word rc-stagger" data-stg="s3b-0" style={{ marginBottom: '0.6rem' }}>Then we start improving &mdash; step by step.</div>
-            <div className="rc-stagger rc-method" data-stg="s3b-1">&#10004; Automating manual processes</div>
-            <div className="rc-stagger rc-method" data-stg="s3b-2">&#10004; Integrating disconnected systems</div>
-            <div className="rc-stagger rc-method" data-stg="s3b-3">&#10004; Creating meaningful dashboards</div>
-            <div className="rc-stagger rc-method" data-stg="s3b-4">&#10004; Enhancing user experience</div>
-            <div className="rc-stagger rc-method rc-method-hl" data-stg="s3b-5">&#10004; Strengthening security &amp; scalability</div>
           </div>
 
           {/* S4: FROM CHAOS TO CLARITY */}
           <div data-card="card-s4" className="rc-glass-card rc-side-left rc-card-s4" style={{ opacity: 0 }}>
+            <div className="rc-overline">&#x25c6; Kaizen</div>
             <h2 className="rc-headline rc-headline-s4">
-              <span className="rc-stagger" data-stg="s4-0">What looks complex becomes <em>structured.</em></span>
+              <span className="rc-stagger" data-stg="s4-0">No temporary fixes. What was <em>complex becomes structured.</em></span>
+              <span className="rc-stagger" data-stg="s4-1">What slowed you down begins to accelerate you.</span>
             </h2>
-            <div className="rc-stagger rc-solved-word" data-stg="s4-1" style={{ marginTop: '0.8rem' }}>What feels disconnected becomes aligned.</div>
-            <div className="rc-stagger rc-solved-word" data-stg="s4-2" style={{ color: 'var(--color-accent-primary)', fontStyle: 'italic' }}>What slows growth begins to accelerate it.</div>
-          </div>
-
-          {/* S5: REAL TRANSFORMATION */}
-          <div data-card="card-s5" className="rc-glass-card rc-side-right rc-card-s5" style={{ opacity: 0 }}>
-            <div className="rc-stagger rc-solved-word" data-stg="s5-0">No temporary fixes.</div>
-            <div className="rc-stagger rc-solved-word" data-stg="s5-1">Solutions that evolve with you.</div>
-            <div className="rc-stagger rc-solved-word" data-stg="s5-2" style={{ color: 'var(--color-accent-primary)', fontStyle: 'italic' }}>Consistent, intelligent progress.</div>
           </div>
 
           {/* S6: TRANSFORMATION */}
@@ -799,7 +1485,7 @@ export function RubiksCubeExperience() {
       </div>
 
       {/* Scroll spacer */}
-      <div data-scroll-spacer className="relative z-[1]" style={{ height: '1600vh', pointerEvents: 'none' }} />
+      <div data-scroll-spacer className="relative z-[1]" style={{ height: `${SPACER_VH}vh`, pointerEvents: 'none' }} />
     </div>
   );
 }

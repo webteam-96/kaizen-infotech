@@ -15,7 +15,7 @@ export function TeamGrid() {
         {/* Section header */}
         <FadeIn direction="up" className="mb-16">
           <span
-            className="text-[length:var(--text-xs)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+            className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             The People
@@ -23,7 +23,7 @@ export function TeamGrid() {
           <h2
             className={cn(
               'mt-3 font-[family-name:var(--font-display)]',
-              'text-[clamp(2rem,4vw,3rem)] leading-tight tracking-tight',
+              'text-[length:var(--h-section)] leading-tight tracking-tight',
               'text-[var(--color-text-primary)]'
             )}
           >
