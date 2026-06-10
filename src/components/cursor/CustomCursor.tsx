@@ -9,16 +9,8 @@ import {
 } from 'framer-motion';
 import { useCursorContext } from './CursorProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { isTouchDevice } from './isTouchDevice';
 import styles from '@/styles/modules/cursor.module.css';
-
-function isTouchDevice(): boolean {
-  if (typeof window === 'undefined') return true;
-  return (
-    'ontouchstart' in window ||
-    navigator.maxTouchPoints > 0 ||
-    window.matchMedia('(hover: none)').matches
-  );
-}
 
 const noopSubscribe = () => () => {};
 

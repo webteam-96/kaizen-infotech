@@ -535,29 +535,32 @@ body.loader-active {
   .rc-glass-card.rc-side-left { left: 5% !important; right: 5% !important; }
 }
 
-/* ===== Ink dark-band system ===== */
-.section-ink {
-  background-color: var(--surface-ink);
-  color: var(--text-on-ink);
-}
-.section-ink h1, .section-ink h2, .section-ink h3, .section-ink h4 {
-  color: var(--text-on-ink);
-}
-.section-ink p {
-  color: var(--text-on-ink-muted);
-}
-.section-ink .ink-accent {
-  color: var(--accent-on-ink);
-}
+/* ===== Ink dark-band system =====
+   In @layer components so Tailwind utilities (@layer utilities) can override
+   these defaults inside ink bands, e.g. text-[var(--text-on-ink)]. */
+@layer components {
+  .section-ink {
+    background-color: var(--surface-ink);
+    color: var(--text-on-ink);
+  }
+  .section-ink h1, .section-ink h2, .section-ink h3, .section-ink h4 {
+    color: var(--text-on-ink);
+  }
+  .section-ink p {
+    color: var(--text-on-ink-muted);
+  }
+  .section-ink .ink-accent {
+    color: var(--accent-on-ink);
+  }
 
-/* ===== Focus ring (a11y) ===== */
-.focus-ring:focus-visible {
-  outline: 2px solid var(--color-accent-primary);
-  outline-offset: 3px;
-  border-radius: var(--radius-sm);
-}
-.section-ink .focus-ring:focus-visible {
-  outline-color: var(--accent-on-ink);
+  /* ===== Focus ring (a11y) ===== */
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 3px;
+  }
+  .section-ink .focus-ring:focus-visible {
+    outline-color: var(--accent-on-ink);
+  }
 }
 
 /* ===== PageHero gradient mesh ===== */

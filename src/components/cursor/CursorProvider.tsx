@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { isTouchDevice } from './isTouchDevice';
 
 export type CursorVariant = 'default' | 'hover' | 'text' | 'hidden';
 
@@ -31,26 +34,25 @@ export function CursorProvider({ children }: { children: ReactNode }) {
     setText(t);
   }, []);
 
-  // Toggle .has-custom-cursor on <html> so the CSS cursor:none rule only fires
-  // when the custom cursor is actually active (fine pointer + no reduced-motion).
-  useEffect(() => {
-    const isFinePonter = window.matchMedia('(pointer: fine)').matches;
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    const isTouch =
-      'ontouchstart' in window ||
-      navigator.maxTouchPoints > 0 ||
-      window.matchMedia('(hover: none)').matches;
+  const prefersReducedMotion = useReducedMotion();
+  const isFinePointer = useMediaQuery('(pointer: fine)');
 
-    if (isFinePonter && !prefersReducedMotion && !isTouch) {
+  // Toggle .has-custom-cursor on <html> so the CSS cursor:none rule only fires
+  // when the custom cursor is actually active (fine pointer + no reduced-motion
+  // + not touch). Reactive: if the user flips prefers-reduced-motion or the
+  // pointer capability changes mid-session, the class is removed so the native
+  // cursor comes back when CustomCursor unmounts.
+  useEffect(() => {
+    if (isFinePointer && !prefersReducedMotion && !isTouchDevice()) {
       document.documentElement.classList.add('has-custom-cursor');
+    } else {
+      document.documentElement.classList.remove('has-custom-cursor');
     }
 
     return () => {
       document.documentElement.classList.remove('has-custom-cursor');
     };
-  }, []);
+  }, [isFinePointer, prefersReducedMotion]);
 
   const value = useMemo<CursorContextType>(
     () => ({
