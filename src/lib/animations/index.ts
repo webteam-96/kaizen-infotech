@@ -5,3 +5,4 @@ export { presets, fadeUp, fadeDown, fadeLeft, fadeRight, scaleIn, scaleOut, slid
 export type { AnimationPreset, PresetName } from './presets';
 export { splitTextIntoSpans, killScrollTriggers, createScrollTimeline, getReducedMotionPreset } from './utils';
 export type { SplitType, SplitResult, ScrollTimelineOptions } from './utils';
+export * from './framer';

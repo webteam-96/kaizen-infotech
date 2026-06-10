@@ -10,9 +10,14 @@ import {
 import { useCursorContext } from './CursorProvider';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { isTouchDevice } from './isTouchDevice';
+import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import styles from '@/styles/modules/cursor.module.css';
 
 const noopSubscribe = () => () => {};
+
+// 0.2s is intentionally slightly longer than ANIMATION_CONFIG.duration.instant (0.15)
+// to give the dot opacity/scale transitions a softer feel on quick cursor state changes.
+const DOT_TRANSITION_DURATION = 0.2;
 
 export function CustomCursor() {
   const { variant, text } = useCursorContext();
@@ -88,7 +93,7 @@ export function CustomCursor() {
           opacity: isHidden ? 0 : 1,
           scale: isHidden ? 0 : 1,
         }}
-        transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.2 } }}
+        transition={{ opacity: { duration: DOT_TRANSITION_DURATION }, scale: { duration: DOT_TRANSITION_DURATION } }}
         aria-hidden="true"
       />
 
@@ -129,7 +134,7 @@ export function CustomCursor() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: ANIMATION_CONFIG.duration.instant }}
             >
               {text}
             </motion.span>

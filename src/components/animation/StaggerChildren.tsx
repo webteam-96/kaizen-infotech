@@ -2,6 +2,7 @@
 
 import { motion, type Variants } from 'framer-motion';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
+import { EASE_OUT } from '@/lib/animations/framer';
 import { useReducedMotion } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
 
@@ -63,7 +64,7 @@ export function StaggerChildren({
           y: 0,
           transition: {
             duration: ANIMATION_CONFIG.duration.normal,
-            ease: [0.25, 0.46, 0.45, 0.94],
+            ease: EASE_OUT,
           },
         },
       };
