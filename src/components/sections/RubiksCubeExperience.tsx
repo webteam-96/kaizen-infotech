@@ -35,18 +35,6 @@ const INTRO_VH = 180;
 const MAIN_VH = 1600;
 const SPACER_VH = INTRO_VH + MAIN_VH; // 1780
 const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.101
-const AMBIENT_DESKTOP = 120;
-const AMBIENT_MOBILE = 50;
-
-/* ── Small-cube burst window (raw scroll progress) ──
-   At the burst peak the ambient InstancedMesh is driven to full opacity and
-   ~2.5x scale so the cubes read clearly. Outside the window everything reverts
-   to its calm-scroll values, so the rest of the timeline is unaffected. */
-const BURST_START = 0.32;
-const BURST_PEAK  = 0.37;
-const BURST_END   = 0.46;
-const BURST_BASE_OPACITY = 0.5;  // calm-scroll cap (matches pre-burst formula)
-const BURST_SCALE_BOOST  = 1.5;  // burstScale = 1 + burst * this  → 2.5x at peak
 
 /* ── Side labels ── */
 const SIDE_LABELS = [
@@ -136,6 +124,7 @@ export function RubiksCubeExperience() {
   const scanlineRef = useRef<HTMLDivElement>(null);
   const diveVignetteRef = useRef<HTMLDivElement>(null);
   const streaksRef = useRef<HTMLDivElement>(null);
+  const backdropVideoRef = useRef<HTMLVideoElement>(null);
   const [mounted, setMounted] = useState(false);
   const loaderComplete = useLoaderStore((s) => s.isComplete);
 
@@ -243,10 +232,10 @@ export function RubiksCubeExperience() {
           cubies.push(c);
           cubeGroup.add(c);
         }
-    // The cube cloud + ambient cubes live under introStage so the opening act can
-    // "dock" them inside the on-screen monitor and release them to full-frame as
-    // the camera flies through the screen. introStage is identity during the main
-    // narrative, so all existing phase maths run unchanged in world space.
+    // The cube pieces live under introStage so the opening act can "dock" them
+    // inside the on-screen monitor and release them to full-frame as the camera
+    // flies through the screen. introStage is identity during the main narrative,
+    // so all existing phase maths run unchanged in world space.
     const introStage = new THREE.Group();
     introStage.add(cubeGroup);
     scene.add(introStage);
@@ -328,7 +317,7 @@ export function RubiksCubeExperience() {
       (c.material as THREE.MeshStandardMaterial[]).map(m => m.color.clone())
     );
 
-    /* ═══ Opening assembly: monitor + scattered starts + ambient cloud ═══ */
+    /* ═══ Opening assembly: monitor + scattered cube starts ═══ */
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = innerWidth < 768;
 
@@ -436,117 +425,7 @@ export function RubiksCubeExperience() {
       ).normalize();
     }
 
-    // Ambient background cube cloud — one InstancedMesh = one draw call.
-    const ambientCount = innerWidth < 768 ? AMBIENT_MOBILE : AMBIENT_DESKTOP;
-    const ambientGeo = createRoundedBox(0.22, 0.22, 0.22, 0.05, 3);
-    const ambientMat = new THREE.MeshStandardMaterial({
-      roughness: 0.35, metalness: 0.15, transparent: true, opacity: 0, fog: false,
-    });
-    const ambientMesh = new THREE.InstancedMesh(ambientGeo, ambientMat, ambientCount);
-    ambientMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    ambientMesh.visible = false;
-    // Rubik face palette — matches the main 26-cubie cubies so the ambient cloud
-    // reads as "the same kind of cube, smaller, floating in the periphery".
-    const ambientPalette = [0xcc2200, 0xff6600, 0xffd000, 0xffffff, 0x0055cc, 0x00aa44]
-      .map(c => new THREE.Color(c));
-    interface AmbientCfg {
-      base: THREE.Vector3; scale: number; phase: number; speed: number;
-      amp: number; drift: THREE.Vector3; rotAxis: THREE.Vector3; rotSpeed: number;
-      // trigger = 0 → Tier A (always visible);
-      // trigger > 0 → Tier B (fades/scales in as scrollP crosses the trigger).
-      trigger: number;
-    }
-    const ambient: AmbientCfg[] = [];
-    const ambientTargets: THREE.Color[] = []; // colourful target per cube (starts white)
-    const am = new THREE.Matrix4();
-    const aq = new THREE.Quaternion();
-    const av = new THREE.Vector3();
-    const asc = new THREE.Vector3();
-    // Collision-free placement. All cubes live BEHIND the origin (z = -6 to -22)
-    // so they read as small distant background, never in the foreground covering
-    // the computer or the assembled cube. Camera is at z=4.5, so these are
-    // 10.5–26.5 world units away — small in screen space.
-    const AMBIENT_MIN_DIST = 0.55;
-    const AMBIENT_XY_SPREAD = new THREE.Vector3(16.0, 11.0, 0);
-    const AMBIENT_Z_NEAR = -6;
-    const AMBIENT_Z_FAR  = -22;
-    const tierA_count = Math.floor(ambientCount / 2);
-    const placed: THREE.Vector3[] = [];
-    for (let i = 0; i < ambientCount; i++) {
-      const pos: THREE.Vector3 = new THREE.Vector3();
-      for (let att = 0; att < 200; att++) {
-        pos.set(
-          (Math.random() - 0.5) * AMBIENT_XY_SPREAD.x,
-          (Math.random() - 0.5) * AMBIENT_XY_SPREAD.y,
-          AMBIENT_Z_NEAR + Math.random() * (AMBIENT_Z_FAR - AMBIENT_Z_NEAR),
-        );
-        if (placed.every(p => p.distanceTo(pos) >= AMBIENT_MIN_DIST)) break;
-      }
-      placed.push(pos.clone());
-      const isTierA = i < tierA_count;
-      const bIdx = i - tierA_count;
-      const trigger = isTierA
-        ? 0
-        : 0.05 + (bIdx / Math.max(1, ambientCount - tierA_count - 1)) * 0.80 + (Math.random() - 0.5) * 0.04;
-      ambient.push({
-        base: pos.clone(),
-        // Smaller cubes — user wants "small". Effective render size = scale * 0.22 base.
-        scale: 0.25 + Math.random() * 0.55,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.4 + Math.random() * 0.7,
-        amp: 0.25 + Math.random() * 0.5,
-        drift: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
-        rotAxis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
-        rotSpeed: 0.3 + Math.random() * 0.6,
-        trigger,
-      });
-      ambientTargets.push(ambientPalette[Math.floor(Math.random() * ambientPalette.length)]);
-      ambientMesh.setColorAt(i, ambientTargets[i]);
-    }
-    if (ambientMesh.instanceColor) ambientMesh.instanceColor.needsUpdate = true;
-    introStage.add(ambientMesh);
-
     /* ── Intro render functions ── */
-    function updateAmbient(t: number, scrollP: number) {
-      // Small background cube cloud. INVISIBLE while the visitor is still on the
-      // computer (Phase 1 + start of Phase 2). Reveal begins only after the
-      // screen-zoom of Phase 2 completes — i.e. once the computer has faded into
-      // the screen. From there, opacity caps at 0.5 (user wants 50%).
-      //   Tier A (trigger=0): visible at scale a.scale once the gate opens.
-      //   Tier B (trigger>0): scale 0 → a.scale as scrollP crosses the per-cube
-      //                      trigger value (over a 0.10 reveal window).
-      // Gate range (raw scroll): 0.075 → 0.090 corresponds to introT 0.75 → 0.90
-      // — i.e. AFTER the pass-through into the screen. Before that the cloud is
-      // fully hidden so the portal traversal itself reads clean.
-      const gate = lerp01(scrollP, 0.075, 0.090);
-      // Triangle window: 0 at BURST_START / 2*PEAK-START (=0.42), 1 at PEAK.
-      const burst = Math.max(0, Math.min(1,
-        1 - Math.abs(scrollP - BURST_PEAK) / (BURST_PEAK - BURST_START)
-      ));
-      // Force visibility throughout the burst window even if the gate hasn't opened.
-      ambientMesh.visible = gate > 0.001 || burst > 0;
-      const appear = Math.min(1, t / 0.8);
-      const baseOpacity = appear * BURST_BASE_OPACITY * gate;
-      ambientMat.opacity = THREE.MathUtils.lerp(baseOpacity, 1.0, burst);
-      const burstScale = 1 + burst * BURST_SCALE_BOOST;
-      for (let i = 0; i < ambient.length; i++) {
-        const a = ambient[i];
-        const fl = prefersReduced ? 0 : Math.sin(t * a.speed + a.phase) * a.amp;
-        av.copy(a.base).addScaledVector(a.drift, fl);
-        if (prefersReduced) aq.identity();
-        else aq.setFromAxisAngle(a.rotAxis, t * a.rotSpeed + a.phase);
-        // Reveal factor: 1 for Tier A, scroll-driven for Tier B.
-        const reveal = a.trigger > 0
-          ? easeOutCubic(lerp01(scrollP, a.trigger, a.trigger + 0.10))
-          : 1;
-        const s = a.scale * reveal * burstScale;
-        asc.set(s, s, s);
-        am.compose(av, aq, asc);
-        ambientMesh.setMatrixAt(i, am);
-      }
-      ambientMesh.instanceMatrix.needsUpdate = true;
-    }
-
     function updateIntro(introT: number, t: number) {
       // Portal-style scroll narrative:
       //   Phase 1 — Approach        (0.00 → 0.40): computer slides + grows to viewport centre; card fades.
@@ -768,8 +647,6 @@ export function RubiksCubeExperience() {
       }
       pMat.opacity = 0;
 
-      updateAmbient(t, introT * INTRO_END); // map introT back to raw scroll progress
-
       // Hook card: dissolves during the approach (eased holds visible longer,
       // then drops out fast) and drifts up on a slightly tighter window.
       if (introCardRef.current) {
@@ -873,14 +750,15 @@ export function RubiksCubeExperience() {
     scene.add(new THREE.Points(pGeo, pMat));
 
     function updateParticles(gp: number) {
-      if (gp > 0.66 && gp < 0.77) {
-        const t = (gp - 0.66) / 0.11;
+      if (gp >= P.s6 && gp <= P.s7) {
+        const t = Math.min(1, (gp - P.s6) / (P.s7 - P.s6));
         pMat.opacity = Math.sin(t * Math.PI) * 0.7;
+        const et = easeOutExpo(t);
         const arr = pGeo.attributes.position.array as Float32Array;
         for (let i = 0; i < pCount; i++) {
-          arr[i * 3] = pVelocities[i].x * t;
-          arr[i * 3 + 1] = pVelocities[i].y * t;
-          arr[i * 3 + 2] = pVelocities[i].z * t;
+          arr[i * 3]     = pVelocities[i].x * et;
+          arr[i * 3 + 1] = pVelocities[i].y * et;
+          arr[i * 3 + 2] = pVelocities[i].z * et;
         }
         pGeo.attributes.position.needsUpdate = true;
       } else {
@@ -1239,6 +1117,13 @@ export function RubiksCubeExperience() {
       smoothProgress = smoothLerp(smoothProgress, scrollState.progress, 0.45, lastDt);
       const rawP = smoothProgress;
 
+      // Backdrop video: hidden during intro, fades to 30% once cubes are visible.
+      if (backdropVideoRef.current) {
+        backdropVideoRef.current.style.opacity = String(
+          lerp01(rawP, INTRO_END, INTRO_END + 0.03) * 0.3
+        );
+      }
+
       if (rawP < INTRO_END) {
         // Opening act: floating cubes assemble while the hook line holds center.
         updateIntro(rawP / INTRO_END, elapsed);
@@ -1247,7 +1132,6 @@ export function RubiksCubeExperience() {
         // Original narrative — re-mapped onto [0..1] so all phase/card maths
         // below are untouched.
         updateIntroExit();
-        updateAmbient(elapsed, rawP); // keep the background cube cloud animating + revealing Tier B in main phase
         const mainP = (rawP - INTRO_END) / (1 - INTRO_END);
         updateCube(mainP);
         updateParticles(mainP);
@@ -1272,10 +1156,18 @@ export function RubiksCubeExperience() {
       gsap.ticker.remove(tick);
       window.removeEventListener('resize', onResize);
       scrollTrigger.kill();
-      ambientMesh.dispose();
-      ambientGeo.dispose();
-      ambientMat.dispose();
+      // Dispose per-mount GPU resources (cubie/disc/particle geometries and
+      // materials are all created fresh in this effect) before clearing.
+      scene.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((m) => m.dispose());
+        }
+      });
       renderer.dispose();
+      renderer.forceContextLoss?.();
       scene.clear();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -1289,6 +1181,20 @@ export function RubiksCubeExperience() {
     <div ref={containerRef} className="relative" style={{ background: BG_COLOR }}>
       {/* All fixed elements wrapped in a single layer for visibility control */}
       <div ref={fixedLayerRef} className="transition-opacity duration-300" style={{ willChange: 'opacity' }}>
+        {/* Continuous video backdrop — sits behind every layer, including Spline. */}
+        <video
+          ref={backdropVideoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[-1] h-full w-full object-cover"
+          style={{ opacity: 0 }}
+        >
+          <source src="/videos/backdrop-rubix.mp4" type="video/mp4" />
+        </video>
+
         {/* Spline desktop (opening act) — right side, behind the transparent cube canvas.
             Width is set per-device in the effect; opacity/scale are scroll-driven. */}
         <div
@@ -1475,8 +1381,7 @@ export function RubiksCubeExperience() {
           {/* S8: CTA */}
           <div data-card="card-s8" className="rc-glass-card rc-side-center rc-card-s8 rc-wide" style={{ opacity: 0 }}>
             <div className="rc-service-title rc-stagger" data-stg="s8-0">Let&apos;s Solve It &mdash; <em>The Right Way</em></div>
-            <div className="rc-service-desc rc-stagger" data-stg="s8-1">If your organization feels like a scrambled cube, you don&apos;t need more random moves. You need the right strategy. Let&apos;s turn complexity into clarity &mdash; one intelligent move at a time.</div>
-            <div className="rc-cta-row rc-stagger" data-stg="s8-2">
+            <div className="rc-cta-row rc-stagger" data-stg="s8-1">
               <a href="/services" className="rc-cta-btn rc-cta-primary">Explore Our Services</a>
               <a href="/contact" className="rc-cta-btn rc-cta-secondary">Talk to Our Experts</a>
             </div>

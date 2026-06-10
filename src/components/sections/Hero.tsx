@@ -101,7 +101,7 @@ export function Hero() {
       <div
         ref={orb1Ref}
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 will-change-transform"
         style={{
           background:
             'radial-gradient(ellipse 80% 60% at 50% 50%, var(--color-accent-primary)/0.08 0%, transparent 70%)',
@@ -110,7 +110,7 @@ export function Hero() {
       <div
         ref={orb2Ref}
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 will-change-transform"
         style={{
           background:
             'radial-gradient(ellipse 50% 40% at 30% 60%, var(--color-accent-secondary)/0.06 0%, transparent 70%)',
