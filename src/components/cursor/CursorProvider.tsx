@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 export type CursorVariant = 'default' | 'hover' | 'text' | 'hidden';
@@ -29,6 +29,27 @@ export function CursorProvider({ children }: { children: ReactNode }) {
 
   const handleSetText = useCallback((t: string) => {
     setText(t);
+  }, []);
+
+  // Toggle .has-custom-cursor on <html> so the CSS cursor:none rule only fires
+  // when the custom cursor is actually active (fine pointer + no reduced-motion).
+  useEffect(() => {
+    const isFinePonter = window.matchMedia('(pointer: fine)').matches;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const isTouch =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia('(hover: none)').matches;
+
+    if (isFinePonter && !prefersReducedMotion && !isTouch) {
+      document.documentElement.classList.add('has-custom-cursor');
+    }
+
+    return () => {
+      document.documentElement.classList.remove('has-custom-cursor');
+    };
   }, []);
 
   const value = useMemo<CursorContextType>(
