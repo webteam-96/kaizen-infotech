@@ -529,11 +529,13 @@ body.loader-active {
   animation: rc-digitSwing 0.65s 0.35s cubic-bezier(0.25,0.8,0.25,1) forwards;
 }
 
-/* Mobile responsive glass cards */
+/* Mobile responsive glass cards. The hook card is excluded from the
+   left/right override: its JS anchors it at left:50% + translateX(-50%),
+   and the !important left:5% was shoving it half off-screen. */
 @media (max-width: 768px) {
   .rc-glass-card { max-width: 88vw !important; padding: 1.8rem 1.5rem; }
-  .rc-glass-card.rc-side-right,
-  .rc-glass-card.rc-side-left { left: 5% !important; right: 5% !important; }
+  .rc-glass-card.rc-side-right:not(.rc-hook-card),
+  .rc-glass-card.rc-side-left:not(.rc-hook-card) { left: 5% !important; right: 5% !important; }
 }
 
 /* ===== Ink dark-band system =====
