@@ -65,7 +65,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     // Lenis interprets `duration` as the time (in seconds) to settle from a
     // scroll burst to rest; a higher value gives more weight/inertia.
     const instance = new Lenis({
-      duration: isTouch ? 1.0 : 1.8,
+      duration: isTouch ? 1.0 : 1.2,
       easing: (t: number) => 1 - Math.pow(1 - t, 4),
       wheelMultiplier: 0.9,
       touchMultiplier: isTouch ? 1.2 : 1.8,

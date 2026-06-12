@@ -158,7 +158,7 @@ export function FeaturedWork() {
   return (
     <section data-section-index={4}>
       {/* Section header — outside the pinned area */}
-      <div className="bg-[var(--color-bg-primary)] pb-4 pt-16 md:pt-20">
+      <div className="bg-[var(--color-bg-primary)] pb-4 pt-8 md:pt-10">
         <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
           <FadeIn direction="up">
             <span
@@ -189,7 +189,7 @@ export function FeaturedWork() {
       {/* Scroll area — drives the animation */}
       <div ref={sectionRef} style={{ height: `${N * 100}vh` }} className="relative">
         {/* Sticky viewport */}
-        <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
+        <div className="sticky top-0 flex min-h-[720px] h-[80vh] items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
           {/* Card stack */}
           <div
             ref={stackRef}
@@ -297,7 +297,7 @@ export function FeaturedWork() {
           {/* View All CTA */}
           <div
             className={cn(
-              'absolute bottom-[max(52px,8vh)] left-1/2 -translate-x-1/2 transition-all duration-700',
+              'absolute bottom-6 left-1/2 z-20 -translate-x-1/2 transition-all duration-700',
               showCta
                 ? 'translate-y-0 opacity-100'
                 : 'pointer-events-none translate-y-3 opacity-0'

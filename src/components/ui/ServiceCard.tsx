@@ -51,7 +51,7 @@ export function ServiceCard({
           // Fixed size — no responsive breakpoints. Same dimensions on
           // every viewport so the carousel maths in ServicesScroll stays
           // in lockstep with the visual layout.
-          'flex w-[460px] h-[540px] cursor-pointer flex-col p-10',
+          'flex w-full h-auto cursor-pointer flex-col p-10 md:w-[760px] md:h-[760px] md:p-14',
           'transition-shadow duration-300',
           isActive && 'shadow-[0_0_40px_var(--color-glow)]'
         )}
@@ -64,9 +64,9 @@ export function ServiceCard({
           {/* Icon */}
           <div
             className={cn(
-              'mb-6 flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)]',
+              'mb-8 flex h-20 w-20 items-center justify-center rounded-[var(--radius-md)]',
               'bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]',
-              'text-2xl'
+              'text-4xl'
             )}
           >
             {icon}
@@ -74,7 +74,7 @@ export function ServiceCard({
 
           {/* Title — single fixed size */}
           <h3
-            className="mb-3 text-2xl font-semibold leading-snug text-[var(--color-text-primary)]"
+            className="mb-5 text-4xl font-semibold leading-snug text-[var(--color-text-primary)]"
             style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
           >
             {title}
@@ -82,37 +82,11 @@ export function ServiceCard({
 
           {/* Description — single fixed size */}
           <p
-            className="flex-1 text-base leading-relaxed text-[var(--color-text-secondary)]"
+            className="flex-1 text-2xl leading-relaxed text-[var(--color-text-primary)]"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {description}
           </p>
-        </div>
-
-        {/* CTA link */}
-        <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
-          <span
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-accent-primary)] transition-colors duration-200 group-hover:text-[var(--color-text-primary)]"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            Learn More
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="transition-transform duration-200 group-hover:translate-x-1"
-            >
-              <path
-                d="M3 8H13M13 8L9 4M13 8L9 12"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
         </div>
       </Card>
     </motion.div>
