@@ -15,6 +15,8 @@ export function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const lastScrollY = useRef(0);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const loaderComplete = useLoaderStore((s) => s.isComplete);
   const isHomepage = pathname === '/';
 
@@ -47,6 +49,48 @@ export function Navbar() {
     };
   }, [isMenuOpen]);
 
+  // Focus trap: focus the first link on open; Tab/Shift+Tab wrap within the
+  // menu; Escape closes and returns focus to the hamburger button.
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const menu = menuRef.current;
+    if (!menu) return;
+
+    const getFocusable = () =>
+      Array.from(menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+
+    getFocusable()[0]?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsMenuOpen(false);
+        toggleRef.current?.focus();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      // The hamburger lives outside the overlay but stays interactive; include
+      // it in the cycle by treating it as the element before `first`.
+      if (e.shiftKey) {
+        if (active === first || !menu.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !menu.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isMenuOpen]);
+
   return (
     <>
       <motion.header
@@ -65,7 +109,7 @@ export function Navbar() {
       >
         <nav className="mx-auto flex max-w-[var(--container-max)] items-center justify-between px-[var(--container-padding)]">
           {/* Logo */}
-          <Link href="/" className="relative z-10">
+          <Link href="/" className="focus-ring relative z-10">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -97,8 +141,9 @@ export function Navbar() {
 
           {/* Mobile Menu Toggle */}
           <button
+            ref={toggleRef}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 lg:hidden"
+            className="focus-ring relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 lg:hidden"
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMenuOpen}
           >
@@ -132,6 +177,7 @@ export function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            ref={menuRef}
             className="fixed inset-0 z-[calc(var(--z-sticky)-1)] bg-[var(--color-bg-primary)]"
           >
             <div className="flex h-full flex-col items-center justify-center gap-8">
@@ -151,7 +197,7 @@ export function Navbar() {
                     href={link.href}
                     onClick={() => setIsMenuOpen(false)}
                     className={cn(
-                      'block font-[family-name:var(--font-heading)] text-4xl font-medium transition-colors duration-300',
+                      'focus-ring block font-[family-name:var(--font-heading)] text-4xl font-medium transition-colors duration-300',
                       pathname === link.href
                         ? 'text-[var(--color-accent-primary)]'
                         : 'text-[var(--color-text-primary)] hover:text-[var(--color-accent-primary)]'
@@ -189,7 +235,7 @@ function NavLink({
       <Link
         href={href}
         className={cn(
-          'group relative py-1 font-[family-name:var(--font-body)] text-sm tracking-wide transition-colors duration-300',
+          'focus-ring group relative py-1 font-[family-name:var(--font-body)] text-sm tracking-wide transition-colors duration-300',
           isActive
             ? 'text-[var(--color-accent-primary)]'
             : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
