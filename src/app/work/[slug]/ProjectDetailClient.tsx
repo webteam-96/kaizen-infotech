@@ -37,28 +37,29 @@ export default function ProjectDetailClient({
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-16 pt-40 md:px-12 lg:px-24">
           <FadeIn delay={0.1}>
-            <Link
-              href="/work"
-              className="mb-6 inline-flex items-center gap-2 text-[length:var(--text-sm)] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-accent-primary)]"
+            <nav
+              aria-label="Breadcrumb"
+              className="mb-6 flex flex-wrap items-center gap-2 text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                className="rotate-180"
+              <Link
+                href="/"
+                className="focus-ring transition-colors hover:text-[var(--color-accent-primary)]"
               >
-                <path
-                  d="M6 3L11 8L6 13"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Back to Work
-            </Link>
+                Home
+              </Link>
+              <span aria-hidden>/</span>
+              <Link
+                href="/work"
+                className="focus-ring transition-colors hover:text-[var(--color-accent-primary)]"
+              >
+                Work
+              </Link>
+              <span aria-hidden>/</span>
+              <span aria-current="page" className="text-[var(--color-text-secondary)]">
+                {project.title}
+              </span>
+            </nav>
           </FadeIn>
 
           <TextReveal
@@ -240,7 +241,7 @@ export default function ProjectDetailClient({
           {prevProject ? (
             <Link
               href={`/work/${prevProject.slug}`}
-              className="group flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6 transition-colors duration-300 hover:border-[var(--color-border-hover)] hover:bg-[var(--color-surface-glass)]"
+              className="focus-ring group flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6 transition-colors duration-300 hover:border-[var(--color-border-hover)] hover:bg-[var(--color-surface-glass)]"
             >
               <span
                 className="mb-2 text-[length:var(--text-xs)] uppercase tracking-wider text-[var(--color-text-tertiary)]"
@@ -249,7 +250,7 @@ export default function ProjectDetailClient({
                 Previous Project
               </span>
               <span
-                className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)] group-hover:underline group-hover:underline-offset-4"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {prevProject.title}
@@ -262,7 +263,7 @@ export default function ProjectDetailClient({
           {nextProject ? (
             <Link
               href={`/work/${nextProject.slug}`}
-              className="group flex flex-col items-end rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6 text-right transition-colors duration-300 hover:border-[var(--color-border-hover)] hover:bg-[var(--color-surface-glass)]"
+              className="focus-ring group flex flex-col items-end rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6 text-right transition-colors duration-300 hover:border-[var(--color-border-hover)] hover:bg-[var(--color-surface-glass)]"
             >
               <span
                 className="mb-2 text-[length:var(--text-xs)] uppercase tracking-wider text-[var(--color-text-tertiary)]"
@@ -271,7 +272,7 @@ export default function ProjectDetailClient({
                 Next Project
               </span>
               <span
-                className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                className="text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)] group-hover:underline group-hover:underline-offset-4"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {nextProject.title}

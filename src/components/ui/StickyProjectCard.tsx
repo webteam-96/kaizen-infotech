@@ -85,7 +85,7 @@ export function StickyProjectCard({
     >
       <Link
         href={`/work/${slug}`}
-        className="relative block h-full w-full"
+        className="focus-ring relative block h-full w-full"
         aria-label={`View project: ${title}`}
       >
         {/* Project image — object-contain so mockups/screenshots aren't cropped */}
@@ -106,7 +106,7 @@ export function StickyProjectCard({
         {/* Dark gradient at bottom so text stays legible */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-inverse)]/75 via-[var(--color-bg-inverse)]/15 to-transparent"
+          className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-inverse)]/80 via-[var(--color-bg-inverse)]/30 to-transparent"
         />
 
         {/* Category pill — top left */}
