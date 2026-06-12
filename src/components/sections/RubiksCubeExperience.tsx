@@ -30,11 +30,26 @@ const P = { hero: 0.04, s1: 0.12, s2: 0.26, s3: 0.48, s4: 0.60, s5: 0.68, s6: 0.
    The intro occupies the first INTRO_END of the *raw* scroll progress. Everything
    after it is the original narrative, re-mapped onto [0..1] so none of the existing
    phase/card constants above need to change. Spacer height grows to give the intro
-   real scroll room: ~180vh intro + ~1600vh narrative = 1780vh total. */
+   real scroll room: ~180vh intro + ~970vh narrative = 1150vh total. */
 const INTRO_VH = 180;
-const MAIN_VH = 1600;
-const SPACER_VH = INTRO_VH + MAIN_VH; // 1780
-const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.101
+const MAIN_VH = 970;
+const SPACER_VH = INTRO_VH + MAIN_VH; // 1150
+const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.157
+
+/* ── Scroll warp ──
+   The dispersal tail (narrative t ≥ P.s7, where pieces scatter and the viewport
+   is near-empty) gets only half its proportional scroll share. Piecewise-linear
+   map from scroll fraction → original narrative timeline, so every phase/card
+   constant below stays untouched. */
+const TAIL_START = 0.83; // = P.s7
+const TAIL_WEIGHT = 0.5;
+const WARP_TOTAL = TAIL_START + (1 - TAIL_START) * TAIL_WEIGHT; // 0.915
+const WARP_KNEE = TAIL_START / WARP_TOTAL; // ≈ 0.907
+function warpMainP(s: number) {
+  return s <= WARP_KNEE
+    ? s * WARP_TOTAL
+    : TAIL_START + ((s - WARP_KNEE) / (1 - WARP_KNEE)) * (1 - TAIL_START);
+}
 
 /* ── Side labels ── */
 const SIDE_LABELS = [
@@ -1132,7 +1147,7 @@ export function RubiksCubeExperience() {
         // Original narrative — re-mapped onto [0..1] so all phase/card maths
         // below are untouched.
         updateIntroExit();
-        const mainP = (rawP - INTRO_END) / (1 - INTRO_END);
+        const mainP = warpMainP((rawP - INTRO_END) / (1 - INTRO_END));
         updateCube(mainP);
         updateParticles(mainP);
         updateCards(mainP);
