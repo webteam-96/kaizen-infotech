@@ -13,7 +13,7 @@ const stats = [
   { number: 10, suffix: '+', label: 'Years of Experience' },
   { number: 100, suffix: '+', label: 'Projects Delivered' },
   { number: 8, suffix: '+', label: 'Industries Served' },
-  { number: 3, suffix: ' Lakh+', label: 'Users on Our Platforms' },
+  { number: 3, suffix: 'Mn+', label: 'Users on Our Platforms' },
 ];
 
 export function StatsGrid() {
@@ -35,7 +35,7 @@ export function StatsGrid() {
           dotGridRef.current,
           { opacity: 0 },
           {
-            opacity: 0.03,
+            opacity: 0.06,
             ease: 'none',
             scrollTrigger: {
               trigger: sectionRef.current,
@@ -90,7 +90,7 @@ export function StatsGrid() {
     <section
       ref={sectionRef}
       data-section-index={3}
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-secondary)] py-[var(--space-section)]"
+      className="section-ink relative flex items-center justify-center overflow-hidden py-20"
     >
       {/* Decorative dot grid */}
       <div
@@ -99,7 +99,7 @@ export function StatsGrid() {
         className="pointer-events-none absolute inset-0 opacity-0"
         style={{
           backgroundImage:
-            'radial-gradient(circle, var(--color-text-primary) 1px, transparent 1px)',
+            'radial-gradient(circle, var(--text-on-ink) 1px, transparent 1px)',
           backgroundSize: '32px 32px',
         }}
       />
@@ -108,19 +108,19 @@ export function StatsGrid() {
       <div
         ref={circle1Ref}
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--color-border)] opacity-20"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[rgba(245,248,252,0.25)] opacity-20"
       />
       <div
         ref={circle2Ref}
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--color-border)] opacity-10"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[rgba(245,248,252,0.25)] opacity-10"
       />
 
-      <div className="relative z-10 mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
+      <div className="relative z-10 mx-auto max-w-[1000px] px-[var(--container-padding)]">
         {/* Section label */}
         <ScrollFadeIn direction="up" className="mb-16 text-center">
           <span
-            className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+            className="ink-accent text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             By the Numbers
@@ -128,16 +128,22 @@ export function StatsGrid() {
         </ScrollFadeIn>
 
         {/* 2x2 Grid */}
-        <ScrollFadeIn direction="up" stagger={0.15} className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:gap-16">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
+        <ScrollFadeIn direction="up" stagger={0.15} className="grid grid-cols-2 gap-y-8 md:grid-cols-4 md:gap-0">
+          {stats.map((stat, index) => (
+            <div
+              key={stat.label}
+              className={cn(
+                'text-center px-6',
+                index !== 0 && 'md:border-l md:border-[rgba(245,248,252,0.18)]'
+              )}
+            >
               {/* Number */}
               <div
                 className={cn(
                   'font-[family-name:var(--font-display)]',
-                  'text-[length:var(--text-mega)]',
+                  'text-[length:56px]',
                   'leading-none tracking-tight',
-                  'text-[var(--color-text-primary)]'
+                  'text-[var(--text-on-ink)]'
                 )}
               >
                 <CountUp end={stat.number} suffix={stat.suffix} />
@@ -146,7 +152,7 @@ export function StatsGrid() {
               {/* Label */}
               <p
                 className={cn(
-                  'mt-2 text-[var(--text-sm)] text-[var(--color-text-secondary)]',
+                  'mt-2 text-[var(--text-sm)] text-[var(--text-on-ink-muted)]',
                   'font-[family-name:var(--font-heading)]'
                 )}
               >
