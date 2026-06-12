@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useGSAP } from '@gsap/react';
-import { gsap, ScrollTrigger, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
+import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import Link from 'next/link';
 import { services } from '@/content/services';
 import { cn } from '@/lib/utils/cn';
@@ -102,15 +102,21 @@ export function ServiceCardDeck() {
     });
 
     // ── Phase 1 (tl 0–1): stack pops up ─────────────────────────────────────
-    // All cards animate together. scale→1, opacity→1, y settles.
+    // Opacity is clamped to the first ~15% of the phase so cards are readable
+    // at every static scroll position (no long semi-transparent ghost states);
+    // the y/scale rise carries the transition feel for the rest of the phase.
     cards.forEach((card, i) => {
       const s = STACK[i];
+      tl.to(card, {
+        opacity: 1,
+        ease: 'power1.out',
+        duration: 0.15,
+      }, 0);
       tl.to(card, {
         x: s.x,
         y: s.y,
         rotation: s.r,
         scale: 1,
-        opacity: 1,
         ease: 'power2.inOut',
         duration: 1,
       }, 0);

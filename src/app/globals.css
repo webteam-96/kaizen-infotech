@@ -564,6 +564,17 @@ body.loader-active {
   }
 }
 
+/* Secondary/ghost buttons inside ink bands — unlayered so it beats the
+   variant's text/border utilities. */
+.section-ink .on-ink-secondary {
+  border-color: rgba(245, 248, 252, 0.3);
+  color: var(--text-on-ink);
+}
+.section-ink .on-ink-secondary:hover {
+  border-color: var(--accent-on-ink);
+  background: rgba(245, 248, 252, 0.06);
+}
+
 /* ===== PageHero gradient mesh ===== */
 @keyframes ph-drift-a {
   0%, 100% { transform: translate3d(-6%, -4%, 0) scale(1); }

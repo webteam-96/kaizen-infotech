@@ -7,6 +7,7 @@ import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
+import { PageHero } from '@/components/sections/PageHero';
 import { ServiceCardDeck } from '@/components/sections/ServiceCardDeck';
 
 // Short keywords for hero rotation
@@ -107,79 +108,38 @@ export default function ServicesPage() {
       {/* ================================================================= */}
       {/* HERO SECTION */}
       {/* ================================================================= */}
-      <section className="relative flex min-h-screen items-center justify-center px-6">
-        {/* Background glow */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-20"
-          style={{
-            background:
-              'radial-gradient(ellipse 50% 40% at 50% 50%, var(--color-accent-primary) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-        />
-
-        <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <ScrollFadeIn delay={0.1}>
-            <span
-              className="mb-6 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Our Services
-            </span>
-          </ScrollFadeIn>
-
-          <div className="flex flex-col items-center">
-            <TextReveal
-              as="h1"
-              splitBy="words"
-              className="text-[length:var(--h-page)] font-normal leading-[1.1] text-[var(--color-text-primary)]"
-              stagger={0.06}
-            >
-              What We Do Best
-            </TextReveal>
-
-            {/* Animated keyword rotation — keep AnimatePresence for interaction-driven animation */}
-            <ScrollFadeIn delay={0.5}>
-              <div className="mt-6 flex items-center gap-3">
-                <span
-                  className="text-[length:var(--h-sub)] text-[var(--color-text-secondary)]"
-                  style={{ fontFamily: 'var(--font-body)' }}
-                >
-                  We specialize in
-                </span>
-                <div className="relative h-8 w-36 overflow-hidden">
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={keywords[keywordIndex]}
-                      initial={{ y: 24, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -24, opacity: 0 }}
-                      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute left-0 top-0 text-[length:var(--h-sub)] font-semibold text-[var(--color-accent-primary)]"
-                      style={{ fontFamily: 'var(--font-heading)' }}
-                    >
-                      {keywords[keywordIndex]}
-                    </motion.span>
-                  </AnimatePresence>
-                </div>
-              </div>
-            </ScrollFadeIn>
+      <PageHero
+        kicker="Our Services"
+        title="What We Do Best"
+        accentWords={['Best']}
+        description="From custom enterprise software and mobile apps to event management systems and digital marketing - we deliver complete digital solutions designed to simplify operations, improve engagement, and drive measurable results."
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services' }]}
+      >
+        {/* Animated keyword rotation — keep AnimatePresence for interaction-driven animation */}
+        <div className="flex items-center gap-3">
+          <span
+            className="text-[length:var(--h-sub)] text-[var(--color-text-secondary)]"
+            style={{ fontFamily: 'var(--font-body)' }}
+          >
+            We specialize in
+          </span>
+          <div className="relative h-8 w-36 overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={keywords[keywordIndex]}
+                initial={{ y: 24, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -24, opacity: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute left-0 top-0 text-[length:var(--h-sub)] font-semibold text-[var(--color-accent-primary)]"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
+                {keywords[keywordIndex]}
+              </motion.span>
+            </AnimatePresence>
           </div>
-
-          <ScrollFadeIn delay={0.7}>
-            <p
-              className="mx-auto mt-8 max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              From custom enterprise software and mobile apps to event management
-              systems and digital marketing - we deliver complete digital
-              solutions designed to simplify operations, improve engagement, and
-              drive measurable results.
-            </p>
-          </ScrollFadeIn>
         </div>
-      </section>
+      </PageHero>
 
       {/* ================================================================= */}
       {/* SERVICE CARD DECK */}
