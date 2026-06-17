@@ -47,15 +47,9 @@ const contactInfo = [
     copyable: true,
   },
   {
-    label: 'Phone',
-    value: '+91 99201 30855',
-    href: 'tel:+919920130855',
-    copyable: true,
-  },
-  {
-    label: 'WhatsApp',
-    value: '+91 99201 30855',
-    href: 'https://wa.me/919920130855',
+    label: 'Calls & WhatsApp',
+    value: '+91 93721 30855',
+    href: 'tel:+919372130855',
     copyable: true,
   },
   {
@@ -89,6 +83,10 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [selectErrors, setSelectErrors] = useState<{
+    budget?: string;
+    projectType?: string;
+  }>({});
 
   const formFieldsRef = useRef<HTMLDivElement>(null);
 
@@ -109,6 +107,7 @@ export default function ContactPage() {
   const handleSelectChange = useCallback(
     (field: string) => (value: string) => {
       setFormState((prev) => ({ ...prev, [field]: value }));
+      setSelectErrors((prev) => ({ ...prev, [field]: undefined }));
     },
     []
   );
@@ -126,6 +125,21 @@ export default function ContactPage() {
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+
+      // The custom Select isn't a native form control, so validate it manually.
+      // (The Input/Textarea fields are enforced by native `required`.)
+      const nextErrors = {
+        budget: formState.budget ? undefined : 'Please select a budget range.',
+        projectType: formState.projectType
+          ? undefined
+          : 'Please select a project type.',
+      };
+      if (nextErrors.budget || nextErrors.projectType) {
+        setSelectErrors(nextErrors);
+        return;
+      }
+      setSelectErrors({});
+
       setIsSubmitting(true);
       setSubmitStatus('idle');
 
@@ -178,7 +192,7 @@ export default function ContactPage() {
             <div ref={formFieldsRef} className="space-y-10">
               <fieldset className="space-y-10 border-0 p-0">
                 <legend className="mb-6 font-mono text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
-                  Who you are
+                  About Yourself
                 </legend>
                 <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
                   <Input
@@ -198,15 +212,17 @@ export default function ContactPage() {
 
                 <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
                   <Input
-                    label="Phone (optional)"
+                    label="Phone"
                     type="tel"
                     value={formState.phone}
                     onChange={handleInputChange('phone')}
+                    required
                   />
                   <Input
-                    label="Company / Organisation (optional)"
+                    label="Company / Organisation"
                     value={formState.company}
                     onChange={handleInputChange('company')}
+                    required
                   />
                 </div>
               </fieldset>
@@ -217,16 +233,18 @@ export default function ContactPage() {
                 </legend>
                 <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
                   <Select
-                    label="Budget Range (optional)"
+                    label="Budget Range"
                     options={budgetOptions}
                     value={formState.budget}
                     onChange={handleSelectChange('budget')}
+                    error={selectErrors.budget}
                   />
                   <Select
-                    label="Project Type (optional)"
+                    label="Project Type"
                     options={projectTypeOptions}
                     value={formState.projectType}
                     onChange={handleSelectChange('projectType')}
+                    error={selectErrors.projectType}
                   />
                 </div>
 

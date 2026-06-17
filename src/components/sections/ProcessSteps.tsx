@@ -276,7 +276,7 @@ export function ProcessSteps() {
       {/* ── Bottom bar: rail + step counter ─────────────────────── */}
       <div className="flex-none px-[var(--container-padding)] pb-10 pt-5 md:pb-12">
         {/* Progress rail */}
-        <div className="relative mb-4 flex h-8 items-center">
+        <div className="relative flex h-8 items-center">
           {/* Static track line */}
           <div
             aria-hidden
@@ -309,24 +309,6 @@ export function ProcessSteps() {
                 {step.number}
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Counter: "01 / 04" + thin progress bar */}
-        <div className="flex items-center gap-4">
-          <span
-            className="font-[family-name:var(--font-mono)] text-[length:var(--text-sm)] tabular-nums text-[var(--color-text-primary)]"
-          >
-            {String(activeStep + 1).padStart(2, '0')}
-            <span className="text-[var(--color-text-tertiary)]">
-              {' / '}{String(steps.length).padStart(2, '0')}
-            </span>
-          </span>
-          <div className="h-[1.5px] flex-1 rounded-full bg-[var(--color-border)]">
-            <div
-              className="h-full rounded-full bg-[var(--color-accent-primary)] transition-[width] duration-500 ease-out"
-              style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
-            />
           </div>
         </div>
       </div>

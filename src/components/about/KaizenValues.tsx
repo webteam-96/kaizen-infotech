@@ -1,0 +1,213 @@
+"use client";
+
+import { useRef, useState, useCallback } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+  useReducedMotion,
+  type PanInfo,
+} from "framer-motion";
+import { Eye, RefreshCw, Layers, Target, TrendingUp } from "lucide-react";
+
+type Value = { title: string; body: string; icon: React.ReactNode };
+
+const VALUES: Value[] = [
+  {
+    title: "Transparency & Accountability",
+    body: "We communicate honestly about timelines, challenges, and constraints. Clients know exactly what we are building and why.",
+    icon: <Eye className="h-6 w-6" />,
+  },
+  {
+    title: "Continuous Improvement",
+    body: "We improve through feedback, retrospectives, and learning. From sprint reviews to post-launch support, getting better is built into our process.",
+    icon: <RefreshCw className="h-6 w-6" />,
+  },
+  {
+    title: "Scalable & Future-Ready Architecture",
+    body: "Systems we deliver are designed to scale with your growth, integrate with future tools, and adapt as your needs evolve.",
+    icon: <Layers className="h-6 w-6" />,
+  },
+  {
+    title: "Business-First Design",
+    body: "We build around real operational workflows — not generic templates. Practical adoption and measurable impact are the standards we hold every solution to.",
+    icon: <Target className="h-6 w-6" />,
+  },
+  {
+    title: "Long-Term Value Over Quick Fixes",
+    body: "We build for the long run. Every solution is architected to serve your organisation for years, not just months. We avoid shortcuts that create technical debt.",
+    icon: <TrendingUp className="h-6 w-6" />,
+  },
+];
+
+const SWIPE_DISTANCE = 70;
+const SWIPE_VELOCITY = 350;
+// Top padding so pinned content clears a fixed navbar. Tune to your navbar height.
+const NAV_OFFSET = "pt-24";
+
+export default function KaizenValues() {
+  const prefersReduced = useReducedMotion();
+  const [[index, direction], setIndex] = useState<[number, number]>([0, 0]);
+
+  const paginate = useCallback((dir: number) => {
+    setIndex(([cur]) => {
+      const next = cur + dir;
+      if (next < 0 || next > VALUES.length - 1) return [cur, dir];
+      return [next, dir];
+    });
+  }, []);
+
+  const goTo = useCallback((i: number) => {
+    setIndex(([cur]) => [i, i > cur ? 1 : -1]);
+  }, []);
+
+  // ---- Scroll-driven sequencing ----
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+  const progressToIndex = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [0, VALUES.length - 1]
+  );
+
+  useMotionValueEvent(progressToIndex, "change", (v) => {
+    if (prefersReduced) return;
+    const rounded = Math.min(VALUES.length - 1, Math.max(0, Math.round(v)));
+    setIndex(([cur]) =>
+      rounded === cur ? [cur, 0] : [rounded, rounded > cur ? 1 : -1]
+    );
+  });
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight") paginate(1);
+    if (e.key === "ArrowLeft") paginate(-1);
+  };
+
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    const { offset, velocity } = info;
+    if (offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY) paginate(1);
+    else if (offset.x > SWIPE_DISTANCE || velocity.x > SWIPE_VELOCITY) paginate(-1);
+  };
+
+  // ---- Reduced-motion fallback ----
+  if (prefersReduced) {
+    return (
+      <section className="mx-auto max-w-6xl px-6 py-24">
+        <Header />
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {VALUES.map((v) => (
+            <div key={v.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-8">
+              <div className="mb-5 inline-flex rounded-xl bg-sky-100 p-3 text-sky-600">{v.icon}</div>
+              <h3 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-slate-900">{v.title}</h3>
+              <p className="mt-3 text-lg leading-relaxed text-slate-600">{v.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <div
+      ref={sectionRef}
+      style={{ height: `${VALUES.length * 90 + 60}vh` }}
+      className="relative"
+    >
+      <div
+        className={`sticky top-0 flex h-screen flex-col items-center justify-center overflow-hidden bg-white ${NAV_OFFSET}`}
+      >
+        <Header />
+
+        <div
+          tabIndex={0}
+          role="group"
+          aria-roledescription="card carousel"
+          aria-label="Our values. Use arrow keys, drag, or scroll to navigate."
+          onKeyDown={onKeyDown}
+          className="relative mt-8 flex w-full max-w-lg items-center justify-center outline-none"
+        >
+          {/* Background deck cards — upright, never hold text */}
+          {[2, 1].map((depth) => {
+            if (index + depth > VALUES.length - 1) return null;
+            return (
+              <div
+                key={`peek-${depth}`}
+                aria-hidden
+                className="absolute inset-x-4 top-3 h-full rounded-3xl border border-slate-200 bg-slate-50"
+                style={{
+                  transform: `translateY(${depth * 14}px) scale(${1 - depth * 0.05})`,
+                  opacity: 1 - depth * 0.4,
+                  zIndex: 10 - depth,
+                }}
+              />
+            );
+          })}
+
+          {/* Active card — fixed height so every card is uniform regardless of copy length */}
+          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+            <motion.div
+              key={index}
+              custom={direction}
+              className="relative flex h-[460px] w-full cursor-grab flex-col rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
+              style={{ zIndex: 20 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.6}
+              onDragEnd={onDragEnd}
+              whileDrag={{ scale: 1.02 }}
+              variants={{
+                enter: (d: number) => ({ x: d > 0 ? 320 : -320, rotate: d > 0 ? 6 : -6, opacity: 0 }),
+                center: { x: 0, rotate: 0, opacity: 1 },
+                exit: (d: number) => ({ x: d > 0 ? -320 : 320, rotate: d > 0 ? -6 : 6, opacity: 0 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            >
+              <div className="mb-5 inline-flex w-fit rounded-2xl bg-sky-100 p-3 text-sky-600">
+                {VALUES[index].icon}
+              </div>
+              {/* break-words + balanced wrapping fixes the mid-word "Accountabilit-y" break */}
+              <h3 className="font-[family-name:var(--font-heading)] text-2xl font-semibold leading-tight tracking-tight text-slate-900 [text-wrap:balance] break-words">
+                {VALUES[index].title}
+              </h3>
+              <p className="mt-4 text-lg leading-relaxed text-slate-600">
+                {VALUES[index].body}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Controls — progress dots */}
+        <div className="mt-8 flex items-center justify-center gap-2">
+          {VALUES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Go to value ${i + 1}`}
+              aria-current={i === index}
+              className={`h-2 rounded-full transition-all ${
+                i === index ? "w-6 bg-sky-500" : "w-2 bg-slate-300 hover:bg-slate-400"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Header() {
+  return (
+    <div className="text-center">
+      <span className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-500">Our Values</span>
+      <h2 className="mt-2 font-[family-name:var(--font-heading)] text-4xl font-bold text-slate-900 sm:text-5xl">The Kaizen Way</h2>
+    </div>
+  );
+}

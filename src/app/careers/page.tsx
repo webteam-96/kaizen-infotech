@@ -112,7 +112,7 @@ export default function CareersPage() {
 
           <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map((benefit) => (
-              <Card key={benefit.title} tilt glow className="p-8">
+              <Card key={benefit.title} tilt glow className="h-full p-8">
                 <div className="relative z-10">
                   <span
                     className="mb-4 block text-[length:var(--h-eyebrow)] font-medium text-[var(--color-accent-primary)]"

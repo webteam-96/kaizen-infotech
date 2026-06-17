@@ -1,7 +1,6 @@
 import { CountdownLoader } from '@/components/sections/CountdownLoader';
 import { RubiksCubeExperience } from '@/components/sections/RubiksCubeExperience';
 import { BrandPromise } from '@/components/sections/BrandPromise';
-import { LogoMarquee } from '@/components/sections/LogoMarquee';
 import { ServicesScroll } from '@/components/sections/ServicesScroll';
 import { StatsGrid } from '@/components/sections/StatsGrid';
 import { FeaturedWork } from '@/components/sections/FeaturedWork';
@@ -17,7 +16,6 @@ export default function HomePage() {
       <CountdownLoader />
       <RubiksCubeExperience />
       <BrandPromise />
-      <LogoMarquee />
       <ServicesScroll />
       <StatsGrid />
       <FeaturedWork />

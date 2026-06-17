@@ -2,10 +2,10 @@ export const SITE_CONFIG = {
   name: 'Kaizen Infotech Solutions',
   tagline: 'Custom Software & Digital Solutions That Drive Business Efficiency',
   url: 'https://kaizeninfotech.com',
-  email: 'info@kaizeninfotech.com',
+  email: 'dhini.s@kaizeninfotech.com',
   contactEmail: 'connect@kaizeninfotech.com',
-  phone: '+91 99201 30855',
-  whatsapp: '+91 99201 30855',
+  phone: '+91 93721 30855',
+  whatsapp: '+91 93721 30855',
   address:
     'Centrum Business Square, A 406, Road No. 16, Nehru Nagar, Wagle Industrial Estate, Thane West, Thane, Maharashtra 400604',
 };

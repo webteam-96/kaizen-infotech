@@ -189,7 +189,7 @@ export function FeaturedWork() {
       {/* Scroll area — drives the animation */}
       <div ref={sectionRef} style={{ height: `${N * 100}vh` }} className="relative">
         {/* Sticky viewport */}
-        <div className="sticky top-0 flex min-h-[720px] h-[80vh] items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
+        <div className="sticky top-0 flex flex-col min-h-[760px] h-[80vh] items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
           {/* Card stack */}
           <div
             ref={stackRef}
@@ -232,7 +232,7 @@ export function FeaturedWork() {
                   {/* Content side */}
                   <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
                     <h3
-                      className="mb-4 text-[length:var(--h-card)] font-medium leading-[1.15] tracking-tight text-[var(--color-text-primary)]"
+                      className="mb-5 text-[length:var(--h-sub)] md:text-[length:var(--text-lg)] font-semibold leading-[1.2] tracking-tight text-[var(--color-text-primary)]"
                       style={{
                         fontFamily: 'var(--font-card-heading), var(--font-display)',
                         letterSpacing: '-0.02em',
@@ -242,12 +242,12 @@ export function FeaturedWork() {
                     </h3>
 
                     {/* Category pill */}
-                    <div className="mb-4">
+                    <div className="mb-5">
                       <span
                         className={cn(
                           'inline-block rounded-[var(--radius-full)] px-3 py-1',
                           'bg-[var(--color-accent-primary)]/10 text-[var(--color-accent-primary)]',
-                          'text-[length:var(--text-xs)] font-medium uppercase tracking-wider'
+                          'text-[length:var(--text-sm)] font-semibold uppercase tracking-wider'
                         )}
                         style={{ fontFamily: 'var(--font-heading)' }}
                       >
@@ -256,7 +256,7 @@ export function FeaturedWork() {
                     </div>
 
                     <p
-                      className="mb-8 line-clamp-3 max-w-[340px] text-[length:var(--text-sm)] leading-[1.7] text-[var(--color-text-secondary)]"
+                      className="mb-9 line-clamp-3 max-w-[440px] text-[length:var(--text-base)] leading-[1.65] text-[var(--color-text-secondary)]"
                       style={{ fontFamily: 'var(--font-body)' }}
                     >
                       {project.description}
@@ -267,7 +267,7 @@ export function FeaturedWork() {
                       className={cn(
                         'group/link inline-flex w-fit items-center gap-2',
                         'border-b-[1.5px] border-[var(--color-text-primary)] pb-1',
-                        'text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.06em]',
+                        'text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.06em]',
                         'text-[var(--color-text-primary)] transition-[gap] duration-300',
                         'hover:gap-3'
                       )}
@@ -275,8 +275,8 @@ export function FeaturedWork() {
                     >
                       View Case Study
                       <svg
-                        width="14"
-                        height="14"
+                        width="16"
+                        height="16"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -294,10 +294,11 @@ export function FeaturedWork() {
             ))}
           </div>
 
-          {/* View All CTA */}
+          {/* View All CTA — sits a fixed 28px below the card on every screen size
+              (flow sibling inside the flex-col viewport, not pinned to the bottom edge). */}
           <div
             className={cn(
-              'absolute bottom-6 left-1/2 z-20 -translate-x-1/2 transition-all duration-700',
+              'mt-7 z-20 transition-all duration-700',
               showCta
                 ? 'translate-y-0 opacity-100'
                 : 'pointer-events-none translate-y-3 opacity-0'

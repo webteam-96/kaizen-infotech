@@ -195,7 +195,10 @@ export function RubiksCubeExperience() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(innerWidth, innerHeight);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    // Cap DPR lower on phones/iPad-portrait: a full-viewport MSAA canvas at DPR 2–3
+    // alongside the separate Spline WebGL context is a heavy GPU load that causes
+    // janky/stuck scrolling on mobile. 1.5 keeps it crisp enough at a fraction of the cost.
+    renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth <= 768 ? 1.5 : 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.4;
     container.appendChild(renderer.domElement);
@@ -315,11 +318,23 @@ export function RubiksCubeExperience() {
     }
 
     for (let i = 0; i < cubies.length; i++) {
+      // Scatter direction from solved position, gently biased away from the card.
       const dir = solvedState[i].p.clone().normalize();
       if (dir.length() < 0.01) dir.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
-      const dist = 5 + Math.random() * 5;
-      cubies[i].userData.explodePos = dir.multiplyScalar(dist).add(
-        new THREE.Vector3((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3)
+      dir.x *= 1.25; // mild left/right widening (was 1.9)
+      dir.y *= 1.15; // mild top/bottom widening (was 1.6)
+      dir.z *= 0.6;  // stay near the card's depth plane
+      // Keep cubes within the visible frustum: use the original, proven-visible range.
+      dir.normalize();
+      const dist = 5 + Math.random() * 3; // 5–8 units (was 8–12, which flew off-screen)
+      const scattered = dir.multiplyScalar(dist);
+      // Soft clearance so nothing lands on the card — small minimums, not large clamps.
+      const MIN_X = 3.2; // horizontal clearance from center (was 6.5)
+      const MIN_Y = 2.2; // vertical clearance from center (was 4.0)
+      if (Math.abs(scattered.x) < MIN_X) scattered.x = (scattered.x < 0 ? -1 : 1) * MIN_X;
+      if (Math.abs(scattered.y) < MIN_Y) scattered.y = (scattered.y < 0 ? -1 : 1) * MIN_Y;
+      cubies[i].userData.explodePos = scattered.add(
+        new THREE.Vector3((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.2)
       );
       cubies[i].userData.explodeRot = new THREE.Euler(
         (Math.random() - 0.5) * Math.PI * 6,
@@ -334,7 +349,27 @@ export function RubiksCubeExperience() {
 
     /* ═══ Opening assembly: monitor + scattered cube starts ═══ */
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isMobile = innerWidth < 768;
+    const isMobile = innerWidth <= 768; // include 768 (iPad portrait) in the stacked mobile layout
+    // Touch devices: the full-screen Spline canvas captures touch gestures for its
+    // 3D orbit and preventDefault()s them, which blocks page scrolling through the
+    // pinned intro. We make the Spline non-interactive on touch (it's decorative
+    // there — no hover) so swipes scroll the page. Desktop keeps it interactive.
+    const isTouch =
+      window.matchMedia('(hover: none), (pointer: coarse)').matches ||
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0;
+
+    // "Compact" = phones (isMobile, <=768) PLUS iPad-portrait (769–1024 held
+    // portrait). On these the intro hero drops the two-column desktop layout:
+    // the Spline monitor goes full-width / centred (and is enlarged + raised via
+    // CSS) while the hook copy drops to the bottom (also via CSS). The cube
+    // narrative + screen-rect mapping keep using isMobile, so only the intro
+    // visual is affected here — limiting blast radius on iPad-portrait.
+    const isPortraitTablet =
+      innerWidth > 768 &&
+      innerWidth <= 1024 &&
+      window.matchMedia('(orientation: portrait)').matches;
+    const compact = isMobile || isPortraitTablet;
 
     const WHITE = new THREE.Color(0xffffff);
     const tmpCol = new THREE.Color();
@@ -390,11 +425,21 @@ export function RubiksCubeExperience() {
       // Two-column layout: Spline lives in the right 50% on desktop, full width on mobile.
       // Reserve navbar room at the top so the monitor never touches the menu.
       const navbarReserve = 130;
-      const colWidth = isMobile ? innerWidth : innerWidth * 0.6;
+      const colWidth = compact ? innerWidth : innerWidth * 0.6;
       const availW = colWidth * 0.92;
       const availH = (innerHeight - navbarReserve) * 0.92;
       const s = Math.min(1.18, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
       splineFitRef.current.style.transform = `scale(${s})`;
+
+      // Responsive container padding: the 120px/60px desktop two-column offset
+      // shoves the monitor off-centre (and partly off-screen) on phones/tablets.
+      // Apply it only above 1024px; centre the scene with zero padding below.
+      // Recomputed here so it tracks the 1024px boundary on resize too.
+      if (splineRef.current) {
+        const desktop = innerWidth > 1024;
+        splineRef.current.style.paddingLeft = desktop ? '120px' : '0px';
+        splineRef.current.style.paddingTop = desktop ? '60px' : '0px';
+      }
     }
 
     // Anchor the hook card, size the Spline layer + set the zoom origin at the screen.
@@ -405,8 +450,11 @@ export function RubiksCubeExperience() {
       introCardRef.current.style.transform = isMobile ? 'translate(-50%, -50%)' : 'translateY(-50%)';
     }
     if (splineRef.current) {
-      // Two-column layout: card on left 40%, monitor on right 60%.
-      splineRef.current.style.width = isMobile ? '100%' : '60%';
+      // Two-column layout on desktop (monitor right 60%); full-width & centred
+      // on phones + iPad-portrait so the enlarged monitor becomes the hero.
+      splineRef.current.style.width = compact ? '100%' : '60%';
+      // Let touch gestures pass through to the page so the intro can be scrolled.
+      splineRef.current.style.pointerEvents = isTouch ? 'none' : 'auto';
     }
     fitSpline();
     computeScreenRect();
@@ -491,7 +539,15 @@ export function RubiksCubeExperience() {
       //    when we read getBoundingClientRect below.
       if (splineRef.current) {
         splineRef.current.style.display = 'flex';
-        splineRef.current.style.opacity = String(1 - splineFade);
+        // Fade the computer fully out as the cubes appear.
+        // Mobile + iPad portrait now match desktop (floor 0) instead of clamping at 0.85.
+        // iPad landscape (768–1024 not portrait) keeps a subtle floor so it doesn't go fully empty.
+        // (updateIntroExit still display:none's it past the intro, so it never bleeds into later sections.)
+        const isPortraitMobileOrTablet = isMobile || isPortraitTablet;
+        const fadeFloor = isPortraitMobileOrTablet
+          ? 0
+          : (innerWidth <= 1024 ? 0.06 : 0);
+        splineRef.current.style.opacity = String(Math.max(1 - splineFade, fadeFloor));
       }
       // Lens-blur the cube canvas while cubies are emerging — sells "we just
       // passed through the surface; eyes are still re-focusing."
@@ -503,7 +559,7 @@ export function RubiksCubeExperience() {
       }
       if (splineFitRef.current) {
         const navbarReserve = 130;
-        const colWidth = isMobile ? innerWidth : innerWidth * 0.6;
+        const colWidth = compact ? innerWidth : innerWidth * 0.6;
         const availW2 = colWidth * 0.92;
         const availH2 = (innerHeight - navbarReserve) * 0.92;
         const baseScale = Math.min(1.18, availW2 / SPLINE_DESIGN_W, availH2 / SPLINE_DESIGN_H);
@@ -607,7 +663,10 @@ export function RubiksCubeExperience() {
 
       cubeGroup.position.set(0, 0, 0);
       discGroup.position.set(0, 0, 0);
+      cubeGroup.scale.setScalar(1); // intro builds the cube at full scale
       smoothCubeX = 0;
+      smoothCubeY = 0;
+      smoothCubeScale = 1;
       baseRotY = (1 - introT) * 0.6;
       cubeGroup.rotation.set(
         THREE.MathUtils.lerp(0.25, 0.35, introT),
@@ -646,7 +705,9 @@ export function RubiksCubeExperience() {
         streaksRef.current.style.transform = `scale(${(1 + streakPulse * 0.25).toFixed(3)})`;
       }
       if (diveVignetteRef.current) {
-        diveVignetteRef.current.style.opacity = (vignettePulse * 0.35).toFixed(3);
+        // Lighter dark vignette on phones so the colored cubes read clearly
+        // instead of going near-black during the dive.
+        diveVignetteRef.current.style.opacity = (vignettePulse * 0.35 * (isMobile ? 0.45 : 1)).toFixed(3);
         // Tunnel darkening centres on the CRT screen during the dive, then eases
         // to viewport centre as the cube takes over.
         diveVignetteRef.current.style.background =
@@ -783,7 +844,19 @@ export function RubiksCubeExperience() {
 
     /* ═══ Cube target X position ═══ */
     const SHIFT = 2.2;
+    // Phones / iPad-portrait (<=768) stack the cube and card VERTICALLY instead of
+    // the desktop left/right split. SHIFT_Y is the world-space vertical offset that
+    // drops the cube into the bottom half (−Y) or lifts it to the top half (+Y).
+    const SHIFT_Y = 1.35;
+    // On phones/iPad-portrait the cube shares the screen with a card (stacked), so
+    // shrink it a touch to guarantee clean separation in every phase. Smoothed so
+    // the intro->main handoff (which builds the cube at scale 1) never pops.
+    // (The cube canvas is no longer CSS-scaled on mobile, so this is the cube's
+    // only mobile downscale — sized for clean separation from the stacked card.)
+    const MOBILE_CUBE_SCALE = 0.55;
     let smoothCubeX = 0;
+    let smoothCubeY = 0;
+    let smoothCubeScale = 1;
     let baseRotY = 0;
     // Frame-rate independent smoothing helper.
     // `tau` is the time-constant in seconds (≈ time to reach 63%).
@@ -801,12 +874,29 @@ export function RubiksCubeExperience() {
     //   card-s4 (left)  → cube RIGHT  from 0.570
     //   card-s6 (center) → cube CENTER from 0.700
     function cubeTargetX(p: number) {
+      if (isMobile) return 0; // phones/iPad-portrait stack vertically (see cubeTargetY)
       if (p < 0.040) return 0;
       if (p < 0.225) return -SHIFT;
       if (p < 0.400) return SHIFT;
       if (p < 0.570) return -SHIFT;
       if (p < 0.700) return SHIFT;
       return 0;
+    }
+
+    // Phones / iPad-portrait only: vertical counterpart to cubeTargetX. The cube
+    // sits in the half OPPOSITE the card, mapping the card's left/right side to
+    // top/bottom — 'right' sections (s1,s3) → card top / cube bottom (−Y → down);
+    // 'left' sections (s2,s4) → cube top / card bottom (+Y → up). As you scroll the
+    // sides alternate, so the cube and card smoothly interchange halves. Center
+    // sections (s6+) keep the cube centred.
+    function cubeTargetY(p: number) {
+      if (!isMobile) return 0;
+      if (p < 0.040) return 0;        // hero
+      if (p < 0.225) return -SHIFT_Y; // s1 (right card) → cube bottom
+      if (p < 0.400) return SHIFT_Y;  // s2 (left card)  → cube top
+      if (p < 0.570) return -SHIFT_Y; // s3 (right card) → cube bottom
+      if (p < 0.700) return SHIFT_Y;  // s4 (left card)  → cube top
+      return 0;                        // s6+ center
     }
 
     /* ═══ Animation phases ═══ */
@@ -997,11 +1087,18 @@ export function RubiksCubeExperience() {
       }
 
       const targetX = cubeTargetX(p);
-      // Smooth cube X with ~0.35s time-constant (frame-rate independent).
+      const targetY = cubeTargetY(p);
+      // Smooth cube X/Y with ~0.35s time-constant (frame-rate independent).
       // dt is updated by the ticker; fall back to 16.67ms if unavailable.
       smoothCubeX = smoothLerp(smoothCubeX, targetX, 0.35, lastDt);
+      smoothCubeY = smoothLerp(smoothCubeY, targetY, 0.35, lastDt);
       cubeGroup.position.x = smoothCubeX;
       discGroup.position.x = smoothCubeX;
+      cubeGroup.position.y = smoothCubeY;
+      discGroup.position.y = smoothCubeY;
+      // Mobile cube downscale (smoothed) for clean card/cube separation.
+      smoothCubeScale = smoothLerp(smoothCubeScale, isMobile ? MOBILE_CUBE_SCALE : 1, 0.3, lastDt);
+      cubeGroup.scale.setScalar(smoothCubeScale);
 
       if (p <= P.hero) phaseHero(lerp01(p, 0, P.hero));
       else if (p <= P.s1) phaseScramble(lerp01(p, P.hero, P.s1));
@@ -1023,7 +1120,15 @@ export function RubiksCubeExperience() {
         const el = cardEls[cfg.id];
         if (!el) return;
 
-        const sideOffset = cfg.side === 'left' ? -60 : cfg.side === 'right' ? 60 : 0;
+        // Phones / iPad-portrait: left/right cards stack vertically opposite the
+        // cube. 'right' section → card in the TOP half; 'left' section → card in
+        // the BOTTOM half. No horizontal slide; the card enters vertically only.
+        const stacked = isMobile && (cfg.side === 'left' || cfg.side === 'right');
+        const vAnchor = stacked
+          ? (cfg.side === 'right' ? -1 : 1) * innerHeight * 0.24
+          : 0;
+
+        const sideOffset = stacked ? 0 : (cfg.side === 'left' ? -60 : cfg.side === 'right' ? 60 : 0);
         let opacity = 0, ty = 80, tx = sideOffset, rx = 3, sc = 0.97;
 
         if (p < cfg.eIn) {
@@ -1044,6 +1149,9 @@ export function RubiksCubeExperience() {
         el.style.opacity = String(opacity);
         if (cfg.side === 'center') {
           el.style.transform = `translate(-50%, -50%) translateY(${ty}px) perspective(800px) rotateX(${rx}deg) scale(${sc})`;
+        } else if (stacked) {
+          // Vertically anchored to the top/bottom half; centred horizontally by CSS.
+          el.style.transform = `translateY(calc(-50% + ${ty + vAnchor}px)) perspective(800px) rotateX(${rx}deg) scale(${sc})`;
         } else {
           el.style.transform = `translateY(calc(-50% + ${ty}px)) translateX(${tx}px) perspective(800px) rotateX(${rx}deg) scale(${sc})`;
         }
@@ -1196,7 +1304,16 @@ export function RubiksCubeExperience() {
     <div ref={containerRef} className="relative" style={{ background: BG_COLOR }}>
       {/* All fixed elements wrapped in a single layer for visibility control */}
       <div ref={fixedLayerRef} className="transition-opacity duration-300" style={{ willChange: 'opacity' }}>
-        {/* Continuous video backdrop — sits behind every layer, including Spline. */}
+        {/* Continuous video backdrop — sits behind every layer, including Spline.
+            Full-bleed cover at EVERY device size. The width/height are set inline
+            (not via h-full/w-full) on purpose: the global reset
+            `img, video, svg { max-width:100%; height:auto }` is UNLAYERED, so in
+            Tailwind v4 it overrides the `@layer utilities` h-full — and because a
+            <video> is a replaced element, height:auto collapses it to its
+            intrinsic 16:9 band (a thin strip with empty space above/below on
+            portrait). Inline styles beat the unlayered reset, giving the element a
+            true full-viewport box so object-cover scales the video up to always
+            fill phones / iPad-portrait (and every other size) with no gaps. */}
         <video
           ref={backdropVideoRef}
           autoPlay
@@ -1204,8 +1321,8 @@ export function RubiksCubeExperience() {
           loop
           playsInline
           aria-hidden
-          className="pointer-events-none fixed inset-0 z-[-1] h-full w-full object-cover"
-          style={{ opacity: 0 }}
+          className="pointer-events-none fixed inset-0 z-[-1] object-cover"
+          style={{ opacity: 0, width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center' }}
         >
           <source src="/videos/backdrop-rubix.mp4" type="video/mp4" />
         </video>
@@ -1250,6 +1367,25 @@ export function RubiksCubeExperience() {
                   width: '34%', height: '11%', background: BG_COLOR, pointerEvents: 'none',
                 }}
               />
+              {/* CRT terminal boot line — old-PC welcome text on the monitor
+                  screen. Positioned at the measured CRT screen rect (converted to
+                  the zoom layer's 1320-wide box), so it sits on the screen, zooms
+                  IN during the dive, and fades with the monitor (it inherits
+                  splineRef's scroll-driven opacity). Cursor blinks via CSS. */}
+              <div
+                aria-hidden
+                className="rc-crt-screen"
+                style={{
+                  position: 'absolute',
+                  left: '35.45%', top: '20.1%', width: '24.27%', height: '32.2%',
+                  pointerEvents: 'none',
+                }}
+              >
+                <span className="rc-crt-line">
+                  Welcome to Kaizen Infotech Solutions
+                  <span className="rc-crt-cursor">&#9608;</span>
+                </span>
+              </div>
             </div>
           </div>
           </div>

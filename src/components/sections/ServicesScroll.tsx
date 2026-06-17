@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
 import { useReducedMotion } from '@/hooks';
@@ -82,11 +82,18 @@ const P2 = 0.25; // spread ends
 const P3 = 0.80; // carousel ends
 const P4 = 0.95; // fade-out ends
 
-// Card dimensions — must stay in sync with ServiceCard's md: Tailwind classes.
-// CARD_GAP scaled proportionally from 520 at 680px → 580 at 760px width.
-const CARD_WIDTH  = 760;
-const CARD_HEIGHT = 760;
-const CARD_GAP    = 580;
+// Desktop card geometry. On phones / iPad-portrait (<820px) these shrink to a
+// measured, viewport-fitted size (see the `metrics` state below) so the SAME
+// spotlight carousel runs on small screens. The gap:width ratio (620 / 800 =
+// 0.775) is preserved at every size, so spotlight spacing looks identical.
+const DESKTOP_W   = 800;
+const DESKTOP_H   = 860;
+const DESKTOP_GAP = 620;
+const GAP_RATIO   = DESKTOP_GAP / DESKTOP_W; // 0.775
+
+// Largest card width we allow on a phone / iPad-portrait, so the deck never
+// fills the whole viewport edge-to-edge on a big tablet held in portrait.
+const COMPACT_MAX_W = 680;
 
 // ---------------------------------------------------------------------------
 // ServicesScroll
@@ -99,8 +106,64 @@ export function ServicesScroll() {
   const counterRef  = useRef<HTMLSpanElement>(null);
   const dotsRef     = useRef<HTMLDivElement>(null);
   const hintRef     = useRef<HTMLDivElement>(null);
+  const probeRef    = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
+
+  // Responsive deck geometry. Desktop defaults; below 820px these are replaced
+  // by a viewport-fitted width + a *measured* content height (so cards never
+  // clip on a phone) + a proportional gap. The GSAP carousel re-inits whenever
+  // `metrics` changes (resize / breakpoint cross) via its dependency array.
+  const [metrics, setMetrics] = useState({ w: DESKTOP_W, h: DESKTOP_H, gap: DESKTOP_GAP });
+
+  useEffect(() => {
+    const measure = () => {
+      const vw = window.innerWidth;
+
+      // Desktop / tablet-landscape: pin to the exact original geometry so the
+      // >=820px experience stays pixel-identical.
+      if (vw >= 820) {
+        setMetrics((m) =>
+          m.w === DESKTOP_W && m.h === DESKTOP_H && m.gap === DESKTOP_GAP
+            ? m
+            : { w: DESKTOP_W, h: DESKTOP_H, gap: DESKTOP_GAP },
+        );
+        return;
+      }
+
+      // Phone / iPad-portrait: ~86% of the viewport (capped), proportional gap.
+      const w   = Math.min(Math.round(vw * 0.86), COMPACT_MAX_W);
+      const gap = Math.round(w * GAP_RATIO);
+
+      // Measure the tallest card at this width from the off-screen probe so the
+      // fixed deck box is tall enough for the longest description — no clipping.
+      let h = Math.round(w * 1.25); // sensible fallback before the probe paints
+      const probe = probeRef.current;
+      if (probe) {
+        probe.style.width = `${w}px`;
+        let max = 0;
+        for (let i = 0; i < probe.children.length; i++) {
+          const ch = (probe.children[i] as HTMLElement).getBoundingClientRect().height;
+          if (ch > max) max = ch;
+        }
+        if (max > 0) h = Math.ceil(max);
+      }
+
+      setMetrics((m) => (m.w === w && m.h === h && m.gap === gap ? m : { w, h, gap }));
+    };
+
+    measure();
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   const prefersReducedMotion = useReducedMotion();
   registerGSAPPlugins();
@@ -108,8 +171,23 @@ export function ServicesScroll() {
   useGSAP(
     () => {
       if (!sectionRef.current || !deckRef.current) return;
-      // Skip GSAP on mobile — native vertical layout handles it.
-      if (typeof window !== 'undefined' && window.innerWidth < 768) return;
+
+      // Responsive spotlight spacing. Desktop stays 620; phones & iPad-portrait
+      // get the measured, viewport-fitted gap so the SAME carousel animation
+      // runs at every width (re-inits via the `metrics` dependency on resize).
+      const CARD_GAP = metrics.gap;
+
+      // Only the TRUE desktop view (wide, landscape) is pinned at half-scale to
+      // match its previous look, per request. Phones AND iPad-portrait keep the
+      // full-size animated cards. iPad-portrait renders on the 800-wide desktop
+      // deck (metrics.w === 800) yet must still animate, so detect it by
+      // orientation and exclude it from the revert.
+      const portraitTablet =
+        window.innerWidth > 768 &&
+        window.innerWidth <= 1024 &&
+        window.matchMedia('(orientation: portrait)').matches;
+      const desktopView = metrics.w === DESKTOP_W && !portraitTablet;
+      const DESKTOP_CARD_SCALE = 0.5;
 
       const section = sectionRef.current;
       const deck    = deckRef.current;
@@ -125,18 +203,30 @@ export function ServicesScroll() {
         r: -2 + i * 1,
       }));
 
-      const setters = cards.map((card) => ({
-        x:         gsap.quickSetter(card, 'x', 'px')       as (v: number) => void,
-        y:         gsap.quickSetter(card, 'y', 'px')       as (v: number) => void,
-        rotation:  gsap.quickSetter(card, 'rotation', 'deg') as (v: number) => void,
-        scale:     gsap.quickSetter(card, 'scale')          as (v: number) => void,
-        opacity:   gsap.quickSetter(card, 'opacity')        as (v: number) => void,
-        boxShadow: gsap.quickSetter(card, 'boxShadow')      as (v: string) => void,
-      }));
+      const setters = cards.map((card) => {
+        // NB: the 'scale' shorthand quickSetter is a no-op here (x/y/rotation work,
+        // but 'scale' never updates the transform — cards stayed pinned at 0.5).
+        // Driving scaleX + scaleY directly works, so wrap them behind `scale(v)`.
+        const sx = gsap.quickSetter(card, 'scaleX') as (v: number) => void;
+        const sy = gsap.quickSetter(card, 'scaleY') as (v: number) => void;
+        return {
+          x:         gsap.quickSetter(card, 'x', 'px')       as (v: number) => void,
+          y:         gsap.quickSetter(card, 'y', 'px')       as (v: number) => void,
+          rotation:  gsap.quickSetter(card, 'rotation', 'deg') as (v: number) => void,
+          // Phones + iPad-portrait animate scale (cards render full-size); the
+          // true desktop view stays pinned at half-scale (its previous look).
+          scale:     (v: number) => { const s = desktopView ? DESKTOP_CARD_SCALE : v; sx(s); sy(s); },
+          opacity:   gsap.quickSetter(card, 'opacity')        as (v: number) => void,
+          boxShadow: gsap.quickSetter(card, 'boxShadow')      as (v: string) => void,
+        };
+      });
 
       // Force each card onto its own GPU compositor layer, which prevents
       // sub-pixel text shimmer at scale(0.5) during the popup phase.
-      gsap.set(cards, { z: 0, force3D: true });
+      // GSAP owns the transform from the start (initial popup state: half-scale,
+      // dropped 60px). This must be set here — not via a React inline `transform`
+      // — so the per-frame quickSetters (incl. scale) can actually drive it.
+      gsap.set(cards, { scale: 0.5, y: 60, z: 0, force3D: true });
 
       // ── DOM helpers (bypass React state for 60fps perf) ──────────────────
 
@@ -334,7 +424,7 @@ export function ServicesScroll() {
 
       render(0);
     },
-    { scope: sectionRef, dependencies: [prefersReducedMotion] },
+    { scope: sectionRef, dependencies: [prefersReducedMotion, metrics] },
   );
 
   // CSS transition applied to each .deck-card.
@@ -346,55 +436,33 @@ export function ServicesScroll() {
   return (
     <div data-section-index={2}>
 
-      {/* ── MOBILE: vertical card stack (no pin, no GSAP) ───────────── */}
-      <div className="block bg-[var(--color-bg-primary)] md:hidden">
-        <div className="px-[var(--container-padding)] py-20">
-          <div className="mb-12">
-            <span
-              className="text-xs font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Our Services
-            </span>
-            <h2 className="mt-2 font-display text-3xl tracking-tight text-[var(--color-text-primary)]">
-              End-to-End Technology Services
-            </h2>
+      {/* Off-screen probe — measures the natural card height at the current
+          mobile width so the pinned deck box is tall enough to avoid clipping.
+          Hidden on desktop (where geometry is the fixed 800×860). */}
+      <div
+        ref={probeRef}
+        aria-hidden
+        className="pointer-events-none invisible absolute left-[-9999px] top-0 min-[820px]:hidden"
+        style={{ width: metrics.w }}
+      >
+        {services.map((service, i) => (
+          <div key={service.id}>
+            <ServiceCard
+              icon={serviceIcons[i] || serviceIcons[0]}
+              title={service.title}
+              description={service.description}
+              isActive={false}
+            />
           </div>
-          <div className="flex flex-col gap-8">
-            {services.map((service, i) => (
-              <div
-                key={service.id}
-                tabIndex={0}
-                className={cn(
-                  'rounded-[var(--radius-lg)] outline-none',
-                  'focus-visible:ring-4 focus-visible:ring-[var(--color-accent-primary)]',
-                  'focus-visible:ring-offset-2',
-                )}
-              >
-                <ServiceCard
-                  icon={serviceIcons[i] || serviceIcons[0]}
-                  title={service.title}
-                  description={service.description}
-                  isActive={false}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="mt-10">
-            <Link
-              href="/services"
-              className="focus-ring text-sm font-medium text-[var(--color-accent-primary)]"
-            >
-              View All Services →
-            </Link>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* ── DESKTOP: pinned card deck (md and above) ────────────────── */}
+      {/* ── Pinned spotlight carousel — runs at EVERY width ───── */}
+      {/* Desktop keeps 800×860/620; phones & iPad-portrait use the measured,
+          viewport-fitted `metrics` so the identical animation fits the screen. */}
       <section
         ref={sectionRef}
-        className="relative hidden md:block"
+        className="relative block"
         style={{ height: '600vh' }}
       >
         {/*
@@ -406,7 +474,7 @@ export function ServicesScroll() {
           style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
         >
           {/* Header */}
-          <div className="absolute left-0 right-0 top-8 z-10 flex items-start justify-between px-[var(--container-padding)]">
+          <div className="absolute left-0 right-0 top-20 z-10 flex items-start justify-between px-[var(--container-padding)] min-[820px]:top-8">
             <div>
               <div className="flex items-baseline gap-4">
                 <span
@@ -447,7 +515,7 @@ export function ServicesScroll() {
           <div
             ref={deckRef}
             className="relative"
-            style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
+            style={{ width: metrics.w, height: metrics.h }}
           >
             {services.map((service, i) => (
               <div
@@ -465,7 +533,10 @@ export function ServicesScroll() {
                 aria-label={`${service.title}: ${service.description.slice(0, 80)}`}
                 style={{
                   opacity:            0,
-                  transform:          'scale(0.5) translateY(60px) translateZ(0)',
+                  // Initial transform is set by GSAP (gsap.set below), NOT here.
+                  // Keeping a `transform` string in React's inline style made React
+                  // own the property, which left GSAP's per-frame `scale` quickSetter
+                  // unable to update it — the cards stayed pinned at scale(0.5).
                   transformOrigin:    'center center',
                   transition:         deckCardTransition,
                   willChange:         'transform, opacity',
@@ -497,15 +568,6 @@ export function ServicesScroll() {
                 }}
               />
             ))}
-          </div>
-
-          {/* Vertical progress track */}
-          <div className="absolute right-6 top-1/2 z-10 h-40 w-0.5 -translate-y-1/2 rounded-full bg-[var(--color-border)]">
-            <div
-              ref={progressRef}
-              className="h-full w-full rounded-full bg-[var(--color-accent-primary)] will-change-transform"
-              style={{ transform: 'scaleY(0)', transformOrigin: 'top center' }}
-            />
           </div>
 
           {/* Scroll hint */}

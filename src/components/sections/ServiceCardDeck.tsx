@@ -10,9 +10,9 @@ import { cn } from '@/lib/utils/cn';
 // ─────────────────────────────────────────────────────────────────────────────
 // Layout constants
 // ─────────────────────────────────────────────────────────────────────────────
-const W = 280;   // card width  (px)
-const H = 380;   // card height (px)
-const G = 24;    // grid gap    (px)
+const W = 320;   // card width  (px) — 3-card row = 1016px, fits 1024 with no horizontal clip
+const H = 590;   // card height (px) — uniform, sized to the LONGEST card's content (≈574px) + margin
+const G = 28;    // gap between cards within a row (px)
 
 // Stack offsets — matches reference animation
 const STACK: { x: number; y: number; r: number }[] = [
@@ -23,14 +23,11 @@ const STACK: { x: number; y: number; r: number }[] = [
   { x: 8,  y: -12, r: 3    },
 ];
 
-// Grid: 3 top + 2 bottom, centered around deck origin
-const GRID: { x: number; y: number }[] = [
-  { x: -(W + G),          y: -(H / 2 + G / 2) }, // top-left
-  { x: 0,                 y: -(H / 2 + G / 2) }, // top-center
-  { x:  (W + G),          y: -(H / 2 + G / 2) }, // top-right
-  { x: -(W / 2 + G / 2),  y:  (H / 2 + G / 2) }, // bottom-left
-  { x:  (W / 2 + G / 2),  y:  (H / 2 + G / 2) }, // bottom-right
-];
+// The five cards reveal as TWO rows, one at a time, each centred in the
+// viewport. Row 1 = first three cards, Row 2 = last two. Positions are the
+// per-card X offset from centre when that row is the focused, centred row.
+const ROW1_X = (i: number) => (i - 1) * (W + G);          // 3 cards: −(W+G), 0, +(W+G)
+const ROW2_X = (i: number) => (i - 3 - 0.5) * (W + G);    // 2 cards: −½(W+G), +½(W+G)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icon components
@@ -76,9 +73,12 @@ export function ServiceCardDeck() {
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
     if (cards.length === 0) return;
 
+    // Distance that pushes a card fully past the top/bottom edge of the viewport
+    // (deck is centred), used to send a row off-screen / bring it back.
+    const offY = (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 + H / 2 + 48;
+
     // ── Initial state ─────────────────────────────────────────────────────────
     // Cards start invisible (opacity 0), scaled down, below their stack position.
-    // z-index ensures proper layering on light backgrounds (top card covers lower).
     cards.forEach((card, i) => {
       const s = STACK[i];
       gsap.set(card, {
@@ -101,56 +101,56 @@ export function ServiceCardDeck() {
       },
     });
 
-    // ── Phase 1 (tl 0–1): stack pops up ─────────────────────────────────────
-    // Opacity is clamped to the first ~15% of the phase so cards are readable
-    // at every static scroll position (no long semi-transparent ghost states);
-    // the y/scale rise carries the transition feel for the rest of the phase.
+    // ── Phase 1 (tl 0–1): the stack pops up at centre ───────────────────────
     cards.forEach((card, i) => {
       const s = STACK[i];
+      tl.to(card, { opacity: 1, ease: 'power1.out', duration: 0.15 }, 0);
       tl.to(card, {
-        opacity: 1,
-        ease: 'power1.out',
-        duration: 0.15,
-      }, 0);
-      tl.to(card, {
-        x: s.x,
-        y: s.y,
-        rotation: s.r,
-        scale: 1,
-        ease: 'power2.inOut',
-        duration: 1,
+        x: s.x, y: s.y, rotation: s.r, scale: 1,
+        ease: 'power2.inOut', duration: 1,
       }, 0);
     });
-
-    // Glow phase 1
     if (glowRef.current) {
       tl.fromTo(glowRef.current,
         { opacity: 0.2 },
-        { opacity: 0.8, duration: 1, ease: 'power2.inOut' },
-        0,
-      );
+        { opacity: 0.8, duration: 1, ease: 'power2.inOut' }, 0);
     }
 
-    // ── Phase 2 (tl 1–2.7): cards spread to grid ───────────────────────────
+    // ── Phase 2 (tl 1–2): ROW 1 fans out (centred); ROW 2 drops DOWN ─────────
+    // The first three cards spread into a centred horizontal row. The last two
+    // slide straight down, off the bottom edge, waiting their turn.
     cards.forEach((card, i) => {
-      const g = GRID[i];
-      tl.to(card, {
-        x: g.x,
-        y: g.y,
-        rotation: 0,
-        scale: 0.88,
-        opacity: 1,
-        ease: 'power3.inOut',
-        duration: 1.5,
-      }, 1 + i * 0.04);
+      if (i < 3) {
+        tl.to(card, {
+          x: ROW1_X(i), y: 0, rotation: 0, scale: 1, opacity: 1,
+          ease: 'power3.inOut', duration: 1,
+        }, 1 + i * 0.05);
+      } else {
+        tl.to(card, {
+          x: 0, y: offY, rotation: 0, scale: 0.72, opacity: 1,
+          ease: 'power2.inOut', duration: 1,
+        }, 1);
+      }
     });
 
-    // Glow phase 2
+    // ── Phase 3 (tl 2–3): ROW 1 exits UP; ROW 2 rises into the centred row ──
+    cards.forEach((card, i) => {
+      if (i < 3) {
+        tl.to(card, {
+          y: -offY, opacity: 0, ease: 'power2.inOut', duration: 1,
+        }, 2);
+      } else {
+        tl.to(card, {
+          x: ROW2_X(i), y: 0, rotation: 0, scale: 1, opacity: 1,
+          ease: 'power3.inOut', duration: 1,
+        }, 2 + (i - 3) * 0.06);
+      }
+    });
+
+    // Glow keeps a soft presence through both reveals.
     if (glowRef.current) {
-      tl.to(glowRef.current,
-        { opacity: 0.3, scale: 1.3, duration: 1.5, ease: 'power2.inOut' },
-        1,
-      );
+      tl.to(glowRef.current, { opacity: 0.45, scale: 1.25, duration: 1, ease: 'power2.inOut' }, 1);
+      tl.to(glowRef.current, { opacity: 0.6, duration: 1, ease: 'power2.inOut' }, 2);
     }
   }, { scope: containerRef, dependencies: [] });
 
@@ -161,7 +161,7 @@ export function ServiceCardDeck() {
       <div
         ref={containerRef}
         className="relative hidden lg:block"
-        style={{ height: '500vh' }}
+        style={{ height: '600vh' }}
       >
         <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
 
@@ -194,57 +194,40 @@ export function ServiceCardDeck() {
                   opacity: 0,
                 }}
                 className={cn(
-                  'flex flex-col rounded-[var(--radius-xl)] p-5',
+                  'flex flex-col rounded-[var(--radius-xl)] p-7',
                   'border border-[var(--color-border)]',
                   'bg-[var(--color-bg-secondary)]',
                   'shadow-[0_8px_32px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.04)]',
                 )}
               >
                 {/* Icon */}
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
                   <ServiceIcon name={service.icon} />
                 </div>
 
                 {/* Title */}
                 <h3
-                  className="mb-2.5 line-clamp-2 text-[length:var(--text-base)] font-semibold leading-snug text-[var(--color-text-primary)]"
+                  className="mb-3 text-[length:var(--text-lg)] font-semibold leading-snug text-[var(--color-text-primary)]"
                   style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
                 >
                   {service.title}
                 </h3>
 
-                {/* Description */}
+                {/* Description — full copy (no clamp); card height fits it */}
                 <p
-                  className="mb-4 line-clamp-3 flex-1 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]"
+                  className="mb-5 flex-1 text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
                   style={{ fontFamily: 'var(--font-body)' }}
                 >
                   {service.description}
                 </p>
-
-                {/* Tech tags */}
-                <div className="mb-4 flex flex-wrap gap-1.5">
-                  {service.technologies.slice(0, 3).map((tech) => (
-                    <span
-                      key={tech}
-                      className={cn(
-                        'inline-block rounded-[var(--radius-full)] px-2.5 py-0.5',
-                        'border border-[var(--color-border)] bg-[var(--color-surface-glass)]',
-                        'text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]',
-                      )}
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
 
                 {/* Learn more */}
                 <Link
                   href={`/services/${service.slug}`}
                   className={cn(
                     'flex items-center justify-between',
-                    'border-t border-[var(--color-border)] pt-3',
-                    'text-[length:var(--text-xs)] font-medium uppercase tracking-wider',
+                    'border-t border-[var(--color-border)] pt-4',
+                    'text-[length:var(--text-sm)] font-medium uppercase tracking-wider',
                     'text-[var(--color-text-tertiary)] transition-colors duration-200',
                     'hover:text-[var(--color-accent-primary)]',
                   )}

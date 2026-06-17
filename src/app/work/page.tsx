@@ -84,6 +84,7 @@ export default function WorkPage() {
               client={project.client}
               category={project.category}
               year={project.year}
+              description={project.description}
               image={project.image}
               slug={project.slug}
               index={idx}

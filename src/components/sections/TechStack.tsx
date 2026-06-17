@@ -1,157 +1,318 @@
 'use client';
+/* eslint-disable @next/next/no-img-element -- brand logos are remote SVGs from the Simple Icons CDN; next/image would require SVG-domain config for no benefit here. */
 
-import { useRef } from 'react';
-import { useGSAP } from '@gsap/react';
-import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
-import { ANIMATION_CONFIG } from '@/lib/animations/config';
-import { FloatingElement } from '@/components/animation/FloatingElement';
+import {
+  useRef,
+  useEffect,
+  type CSSProperties,
+  type ReactNode,
+  type PointerEvent as RPointerEvent,
+} from 'react';
+import { motion, useMotionValue, useAnimationFrame, useTransform } from 'framer-motion';
 import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { TextReveal } from '@/components/animation/TextReveal';
-import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { useReducedMotion } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
 
-const technologies = [
-  { name: 'ASP.NET', color: '#512BD4' },
-  { name: 'HTML', color: '#E34F26' },
-  { name: 'CSS', color: '#1572B6' },
-  { name: 'JavaScript', color: '#F7DF1E' },
-  { name: 'MySQL', color: '#4479A1' },
-  { name: 'SQL Server', color: '#CC2927' },
-  { name: 'Android', color: '#3DDC84' },
-  { name: 'iOS', color: '#333333' },
-  { name: 'APIs', color: '#FF6C37' },
-  { name: 'Payment Gateways', color: '#00D632' },
-  { name: 'WhatsApp', color: '#25D366' },
-  { name: 'Email Systems', color: '#4285F4' },
+// ---------------------------------------------------------------------------
+// Inline glyphs for technologies that have no brand logo on the CDN.
+// They use currentColor so they fade from neutral grey → tint on hover.
+// ---------------------------------------------------------------------------
+
+const IconSparkles = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className="h-full w-full">
+    <path d="M12 2l1.7 5L19 8.6l-5.3 1.6L12 15l-1.7-4.8L5 8.6l5.3-1.6z" />
+    <path d="M18.5 13.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" />
+  </svg>
+);
+
+const IconRAG = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden className="h-full w-full">
+    <path d="M12 3 3 7.5 12 12l9-4.5z" />
+    <path d="M3 12l9 4.5L21 12" />
+    <path d="M3 16.5 12 21l9-4.5" />
+  </svg>
+);
+
+const IconML = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden className="h-full w-full">
+    <circle cx="5" cy="6" r="2.1" />
+    <circle cx="5" cy="18" r="2.1" />
+    <circle cx="19" cy="12" r="2.1" />
+    <path d="M7 6.8l10 4M7 17.2l10-4" strokeLinecap="round" />
+  </svg>
+);
+
+const IconAgent = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-full w-full">
+    <rect x="4" y="8" width="16" height="11" rx="2.6" />
+    <path d="M12 3v3M2.5 13v2M21.5 13v2" />
+    <circle cx="9.2" cy="13.2" r="1.1" fill="currentColor" stroke="none" />
+    <circle cx="14.8" cy="13.2" r="1.1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+const Monogram = (text: string) => (
+  <span className="text-[18px] font-bold leading-none tracking-tight">{text}</span>
+);
+
+// ---------------------------------------------------------------------------
+// Tech list — `slug` loads the official logo from cdn.simpleicons.org;
+// `node` is a custom glyph; `tint` is the colour revealed on hover.
+// ---------------------------------------------------------------------------
+
+interface Tech {
+  name: string;
+  slug?: string;
+  node?: ReactNode;
+  tint?: string;
+}
+
+const TECHS: Tech[] = [
+  { name: 'React JS', slug: 'react' },
+  { name: 'Next JS', slug: 'nextdotjs' },
+  { name: 'Vue JS', slug: 'vuedotjs' },
+  { name: '.NET Core', slug: 'dotnet' },
+  { name: 'MySQL', slug: 'mysql' },
+  { name: 'PostgreSQL', slug: 'postgresql' },
+  { name: 'MongoDB', slug: 'mongodb' },
+  { name: 'Node JS', slug: 'nodedotjs' },
+  { name: 'Python', slug: 'python' },
+  { name: 'Android', slug: 'android' },
+  { name: 'iOS', slug: 'ios' },
+  { name: 'Flutter', slug: 'flutter' },
+  { name: 'React Native', slug: 'react' },
+  { name: 'HTML / CSS', slug: 'html5' },
+  { name: 'WhatsApp', slug: 'whatsapp' },
+  { name: 'Razorpay', slug: 'razorpay' },
+  { name: 'Instamojo', node: Monogram('im'), tint: '#EF5350' },
+  { name: 'Cashfree', node: Monogram('Cf'), tint: '#5367FF' },
+  { name: 'Express API', slug: 'express' },
+  { name: 'Tailwind CSS', slug: 'tailwindcss' },
+  { name: 'AI Technologies', node: IconSparkles, tint: '#8B5CF6' },
+  { name: 'RAG Systems', node: IconRAG, tint: '#0EA5E9' },
+  { name: 'ML Systems', node: IconML, tint: '#10B981' },
+  { name: 'Agentic Coding', node: IconAgent, tint: '#F59E0B' },
 ];
 
-export function TechStack() {
-  const gridRef = useRef<HTMLDivElement>(null);
-  const sectionRef = useRef<HTMLElement>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = useReducedMotion();
+const ROW_TOP = TECHS.slice(0, 12);
+const ROW_BOTTOM = TECHS.slice(12);
+const BASE_VELOCITY = 42; // px per second
 
-  useStaggeredScrollReveal(gridRef, {
-    from: { opacity: 0, scale: 0.8, rotation: -5 },
-    to: { opacity: 1, scale: 1, rotation: 0 },
-    stagger: { each: 0.08, from: 'random' },
+// ---------------------------------------------------------------------------
+// Single logo chip — B&W by default, full colour + lift on hover.
+// ---------------------------------------------------------------------------
+
+function Chip({ tech }: { tech: Tech }) {
+  return (
+    <div
+      className={cn(
+        'group mr-5 flex shrink-0 select-none items-center gap-4 rounded-full',
+        'border border-[var(--color-border)] bg-white px-8 py-5',
+        'shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition duration-300',
+        'hover:-translate-y-0.5 hover:border-[var(--color-border-hover)]',
+        'hover:shadow-[0_10px_28px_rgba(0,0,0,0.10)]'
+      )}
+      style={{ '--tint': tech.tint ?? 'var(--color-accent-primary)' } as CSSProperties}
+    >
+      <span className="flex h-11 w-11 items-center justify-center">
+        {tech.slug ? (
+          <img
+            src={`https://cdn.simpleicons.org/${tech.slug}`}
+            alt=""
+            width={44}
+            height={44}
+            loading="lazy"
+            draggable={false}
+            className="h-11 w-11 object-contain opacity-60 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+          />
+        ) : (
+          <span className="flex h-11 w-11 items-center justify-center text-[#9aa3af] transition-colors duration-300 group-hover:text-[var(--tint)]">
+            {tech.node}
+          </span>
+        )}
+      </span>
+      <span
+        className="whitespace-nowrap text-[length:var(--text-base)] font-medium text-[var(--color-text-tertiary)] transition-colors duration-300 group-hover:text-[var(--color-text-primary)]"
+        style={{ fontFamily: 'var(--font-heading)' }}
+      >
+        {tech.name}
+      </span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Marquee mechanics: seamless loop + drag-to-scrub + flick momentum +
+// ease-to-slow on hover. One transform per row → cheap and smooth.
+// ---------------------------------------------------------------------------
+
+function useMarquee(baseVelocity: number) {
+  const baseX = useMotionValue(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const periodRef = useRef(1); // width of one set of items (track is rendered twice)
+  const dragVel = useRef(0);
+  const dragging = useRef(false);
+  const last = useRef({ x: 0, t: 0 });
+  const speed = useRef(1);
+  const targetSpeed = useRef(1);
+
+  useEffect(() => {
+    const measure = () => {
+      if (trackRef.current) periodRef.current = trackRef.current.scrollWidth / 2 || 1;
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (trackRef.current) ro.observe(trackRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Map any accumulated offset into a single [-period, 0) window → seamless wrap.
+  const x = useTransform(baseX, (v) => {
+    const w = periodRef.current || 1;
+    const m = ((v % w) + w) % w;
+    return `${m - w}px`;
   });
 
-  registerGSAPPlugins();
+  useAnimationFrame((_, delta) => {
+    const dt = Math.min(delta, 50) / 1000; // clamp tab-switch gaps
+    speed.current += (targetSpeed.current - speed.current) * 0.08; // smooth hover slow-down
+    let move = baseVelocity * speed.current * dt;
+    if (!dragging.current) {
+      move += dragVel.current * dt; // flick momentum
+      dragVel.current *= 0.93; // decay back to the base speed
+      if (Math.abs(dragVel.current) < 1) dragVel.current = 0;
+    }
+    baseX.set(baseX.get() + move);
+  });
 
-  // Horizontal progress bar that fills as section scrolls
-  useGSAP(
-    () => {
-      if (!progressBarRef.current || !sectionRef.current) return;
+  const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
+    dragging.current = true;
+    dragVel.current = 0;
+    last.current = { x: e.clientX, t: e.timeStamp };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e: RPointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - last.current.x;
+    const dtMs = Math.max(8, e.timeStamp - last.current.t);
+    baseX.set(baseX.get() + dx); // 1:1 finger tracking
+    dragVel.current = (dx / dtMs) * 1000; // px/s → carried as momentum on release
+    last.current = { x: e.clientX, t: e.timeStamp };
+  };
+  const endDrag = (e: RPointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+  };
+  const onPointerEnter = (e: RPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse') targetSpeed.current = 0.18;
+  };
+  const onPointerLeave = (e: RPointerEvent<HTMLDivElement>) => {
+    targetSpeed.current = 1;
+    endDrag(e);
+  };
 
-      if (prefersReducedMotion) {
-        gsap.set(progressBarRef.current, { scaleX: 1 });
-        return;
-      }
-
-      gsap.fromTo(
-        progressBarRef.current,
-        { scaleX: 0 },
-        {
-          scaleX: 1,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: ANIMATION_CONFIG.scrollTrigger.start,
-            end: ANIMATION_CONFIG.scrollTrigger.end,
-            scrub: ANIMATION_CONFIG.scrub.smooth,
-          },
-        }
-      );
+  return {
+    trackRef,
+    x,
+    handlers: {
+      onPointerDown,
+      onPointerMove,
+      onPointerUp: endDrag,
+      onPointerCancel: endDrag,
+      onPointerEnter,
+      onPointerLeave,
     },
-    { dependencies: [prefersReducedMotion] }
+  };
+}
+
+function MarqueeRow({ items, baseVelocity }: { items: Tech[]; baseVelocity: number }) {
+  const { trackRef, x, handlers } = useMarquee(baseVelocity);
+  return (
+    <div
+      {...handlers}
+      aria-hidden
+      className="cursor-grab overflow-hidden py-4 active:cursor-grabbing"
+      style={{
+        touchAction: 'pan-y',
+        WebkitMaskImage: 'linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%)',
+        maskImage: 'linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%)',
+      }}
+    >
+      <motion.div ref={trackRef} className="flex w-max px-2" style={{ x }}>
+        {[...items, ...items].map((t, i) => (
+          <Chip key={`${t.name}-${i}`} tech={t} />
+        ))}
+      </motion.div>
+    </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Section
+// ---------------------------------------------------------------------------
+
+function Header() {
+  return (
+    <div className="mb-12 text-center">
+      <ScrollFadeIn direction="up">
+        <span
+          className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+          style={{ fontFamily: 'var(--font-heading)' }}
+        >
+          What Powers Us
+        </span>
+      </ScrollFadeIn>
+      <TextReveal
+        as="h2"
+        splitBy="words"
+        className={cn(
+          'mt-3 font-[family-name:var(--font-display)]',
+          'text-[length:var(--h-section)] leading-tight tracking-tight',
+          'text-[var(--color-text-primary)]'
+        )}
+      >
+        Reliable and proven technologies
+      </TextReveal>
+      <p className="mx-auto mt-4 max-w-[42ch] text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
+        Hover a logo to bring it to life — drag a row to scrub.
+      </p>
+    </div>
+  );
+}
+
+export function TechStack() {
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <section
-      ref={sectionRef}
       data-section-index={7}
-      className="relative bg-[var(--color-bg-primary)] py-[var(--space-section)]"
+      className="relative overflow-hidden bg-[var(--color-bg-secondary)] py-[var(--space-section)]"
     >
       <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
-        {/* Section header */}
-        <div className="mb-16 text-center">
-          <ScrollFadeIn direction="up">
-            <span
-              className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              What Powers Us
-            </span>
-          </ScrollFadeIn>
-          <TextReveal
-            as="h2"
-            splitBy="words"
-            className={cn(
-              'mt-3 font-[family-name:var(--font-display)]',
-              'text-[length:var(--h-section)] leading-tight tracking-tight',
-              'text-[var(--color-text-primary)]'
-            )}
-          >
-            Reliable and proven technologies
-          </TextReveal>
-        </div>
+        <Header />
+      </div>
 
-        {/* Tech grid */}
-        <div ref={gridRef} className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {technologies.map((tech, i) => (
-            <FloatingElement
-              key={tech.name}
-              amplitude={4 + (i % 3) * 2}
-              duration={3 + (i % 4) * 0.5}
-              delay={i * 0.2}
-            >
-              <div
-                className={cn(
-                  'group flex flex-col items-center justify-center gap-3 rounded-[var(--radius-lg)] p-6',
-                  'border border-[var(--color-border)] bg-[var(--color-bg-tertiary)]',
-                  'transition-all duration-300',
-                  'hover:scale-110 hover:border-[var(--color-border-hover)]',
-                  'hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)]'
-                )}
-              >
-                {/* Tech initial as logo placeholder */}
-                <div
-                  className={cn(
-                    'flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)]',
-                    'text-[length:var(--text-xl)] font-bold',
-                    'transition-transform duration-300 group-hover:scale-110'
-                  )}
-                  style={{
-                    color: tech.color,
-                    backgroundColor: `${tech.color}15`,
-                  }}
-                >
-                  {tech.name.charAt(0)}
-                </div>
+      {/* Screen-reader list (the visual marquee is aria-hidden) */}
+      <ul className="sr-only">
+        {TECHS.map((t) => (
+          <li key={t.name}>{t.name}</li>
+        ))}
+      </ul>
 
-                {/* Name */}
-                <span
-                  className="text-center text-[length:var(--text-sm)] font-medium text-[var(--color-text-secondary)] transition-colors duration-300 group-hover:text-[var(--color-text-primary)]"
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  {tech.name}
-                </span>
-              </div>
-            </FloatingElement>
+      {prefersReducedMotion ? (
+        <div className="mx-auto flex max-w-[var(--container-max)] flex-wrap justify-center gap-4 px-[var(--container-padding)]">
+          {TECHS.map((t) => (
+            <Chip key={t.name} tech={t} />
           ))}
         </div>
-      </div>
-
-      {/* Horizontal progress bar */}
-      <div className="absolute bottom-0 left-0 h-px w-full bg-[var(--color-border)]">
-        <div
-          ref={progressBarRef}
-          className="h-full w-full origin-left bg-[var(--color-accent-primary)]"
-          style={{ transform: 'scaleX(0)' }}
-        />
-      </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          <MarqueeRow items={ROW_TOP} baseVelocity={-BASE_VELOCITY} />
+          <MarqueeRow items={ROW_BOTTOM} baseVelocity={BASE_VELOCITY} />
+        </div>
+      )}
     </section>
   );
 }
