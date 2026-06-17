@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { useReducedMotion } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
 
@@ -15,7 +16,7 @@ interface FloatingElementProps {
 export function FloatingElement({
   children,
   amplitude = 10,
-  duration = 3,
+  duration = ANIMATION_CONFIG.duration.ambient,
   delay = 0,
   className,
 }: FloatingElementProps) {

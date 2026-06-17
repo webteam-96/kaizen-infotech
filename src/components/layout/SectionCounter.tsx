@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useScrollStore } from '@/lib/store/scroll-store';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 function getSectionCount() {
   if (typeof document === 'undefined') return 0;
@@ -18,6 +19,7 @@ export default function SectionCounter() {
   const [nextIndex, setNextIndex] = useState(0);
   const [flip, setFlip] = useState(false);
   const [direction, setDirection] = useState<'up' | 'down'>('down');
+  const prefersReducedMotion = useReducedMotion();
 
   // Derived state: detect section change and trigger flip animation
   const [prevActiveSection, setPrevActiveSection] = useState(activeSection);
@@ -26,7 +28,20 @@ export default function SectionCounter() {
     setPrevActiveSection(activeSection);
     setDirection(goingDown ? 'down' : 'up');
     setNextIndex(activeSection);
-    setFlip(true);
+    if (prefersReducedMotion) {
+      // Reduced motion: update the displayed number instantly — no flip state.
+      setDisplayIndex(activeSection);
+      setFlip(false);
+    } else {
+      setFlip(true);
+    }
+  }
+
+  // Reduced motion turning on mid-flip: settle to the target number instantly
+  // (render-phase derived state, same pattern as the section-change block above).
+  if (prefersReducedMotion && flip) {
+    setDisplayIndex(nextIndex);
+    setFlip(false);
   }
 
   // Observe sections for active tracking
@@ -138,7 +153,9 @@ export default function SectionCounter() {
         <span
           style={{
             display: 'block',
-            transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            transition: prefersReducedMotion
+              ? 'none'
+              : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             transform: outgoingTransform,
             color: 'var(--color-accent-primary)',
           }}
@@ -154,9 +171,10 @@ export default function SectionCounter() {
             left: 0,
             width: '100%',
             textAlign: 'right',
-            transition: flip
-              ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-              : 'none',
+            transition:
+              flip && !prefersReducedMotion
+                ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                : 'none',
             transform: incomingTransform,
             color: 'var(--color-accent-primary)',
           }}

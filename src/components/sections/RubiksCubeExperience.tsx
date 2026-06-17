@@ -30,23 +30,26 @@ const P = { hero: 0.04, s1: 0.12, s2: 0.26, s3: 0.48, s4: 0.60, s5: 0.68, s6: 0.
    The intro occupies the first INTRO_END of the *raw* scroll progress. Everything
    after it is the original narrative, re-mapped onto [0..1] so none of the existing
    phase/card constants above need to change. Spacer height grows to give the intro
-   real scroll room: ~180vh intro + ~1600vh narrative = 1780vh total. */
+   real scroll room: ~180vh intro + ~970vh narrative = 1150vh total. */
 const INTRO_VH = 180;
-const MAIN_VH = 1600;
-const SPACER_VH = INTRO_VH + MAIN_VH; // 1780
-const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.101
-const AMBIENT_DESKTOP = 120;
-const AMBIENT_MOBILE = 50;
+const MAIN_VH = 970;
+const SPACER_VH = INTRO_VH + MAIN_VH; // 1150
+const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.157
 
-/* ── Small-cube burst window (raw scroll progress) ──
-   At the burst peak the ambient InstancedMesh is driven to full opacity and
-   ~2.5x scale so the cubes read clearly. Outside the window everything reverts
-   to its calm-scroll values, so the rest of the timeline is unaffected. */
-const BURST_START = 0.32;
-const BURST_PEAK  = 0.37;
-const BURST_END   = 0.46;
-const BURST_BASE_OPACITY = 0.5;  // calm-scroll cap (matches pre-burst formula)
-const BURST_SCALE_BOOST  = 1.5;  // burstScale = 1 + burst * this  → 2.5x at peak
+/* ── Scroll warp ──
+   The dispersal tail (narrative t ≥ P.s7, where pieces scatter and the viewport
+   is near-empty) gets only half its proportional scroll share. Piecewise-linear
+   map from scroll fraction → original narrative timeline, so every phase/card
+   constant below stays untouched. */
+const TAIL_START = 0.83; // = P.s7
+const TAIL_WEIGHT = 0.5;
+const WARP_TOTAL = TAIL_START + (1 - TAIL_START) * TAIL_WEIGHT; // 0.915
+const WARP_KNEE = TAIL_START / WARP_TOTAL; // ≈ 0.907
+function warpMainP(s: number) {
+  return s <= WARP_KNEE
+    ? s * WARP_TOTAL
+    : TAIL_START + ((s - WARP_KNEE) / (1 - WARP_KNEE)) * (1 - TAIL_START);
+}
 
 /* ── Side labels ── */
 const SIDE_LABELS = [
@@ -136,6 +139,7 @@ export function RubiksCubeExperience() {
   const scanlineRef = useRef<HTMLDivElement>(null);
   const diveVignetteRef = useRef<HTMLDivElement>(null);
   const streaksRef = useRef<HTMLDivElement>(null);
+  const backdropVideoRef = useRef<HTMLVideoElement>(null);
   const [mounted, setMounted] = useState(false);
   const loaderComplete = useLoaderStore((s) => s.isComplete);
 
@@ -191,7 +195,10 @@ export function RubiksCubeExperience() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(innerWidth, innerHeight);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    // Cap DPR lower on phones/iPad-portrait: a full-viewport MSAA canvas at DPR 2–3
+    // alongside the separate Spline WebGL context is a heavy GPU load that causes
+    // janky/stuck scrolling on mobile. 1.5 keeps it crisp enough at a fraction of the cost.
+    renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth <= 768 ? 1.5 : 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.4;
     container.appendChild(renderer.domElement);
@@ -243,10 +250,10 @@ export function RubiksCubeExperience() {
           cubies.push(c);
           cubeGroup.add(c);
         }
-    // The cube cloud + ambient cubes live under introStage so the opening act can
-    // "dock" them inside the on-screen monitor and release them to full-frame as
-    // the camera flies through the screen. introStage is identity during the main
-    // narrative, so all existing phase maths run unchanged in world space.
+    // The cube pieces live under introStage so the opening act can "dock" them
+    // inside the on-screen monitor and release them to full-frame as the camera
+    // flies through the screen. introStage is identity during the main narrative,
+    // so all existing phase maths run unchanged in world space.
     const introStage = new THREE.Group();
     introStage.add(cubeGroup);
     scene.add(introStage);
@@ -311,11 +318,23 @@ export function RubiksCubeExperience() {
     }
 
     for (let i = 0; i < cubies.length; i++) {
+      // Scatter direction from solved position, gently biased away from the card.
       const dir = solvedState[i].p.clone().normalize();
       if (dir.length() < 0.01) dir.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
-      const dist = 5 + Math.random() * 5;
-      cubies[i].userData.explodePos = dir.multiplyScalar(dist).add(
-        new THREE.Vector3((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3)
+      dir.x *= 1.25; // mild left/right widening (was 1.9)
+      dir.y *= 1.15; // mild top/bottom widening (was 1.6)
+      dir.z *= 0.6;  // stay near the card's depth plane
+      // Keep cubes within the visible frustum: use the original, proven-visible range.
+      dir.normalize();
+      const dist = 5 + Math.random() * 3; // 5–8 units (was 8–12, which flew off-screen)
+      const scattered = dir.multiplyScalar(dist);
+      // Soft clearance so nothing lands on the card — small minimums, not large clamps.
+      const MIN_X = 3.2; // horizontal clearance from center (was 6.5)
+      const MIN_Y = 2.2; // vertical clearance from center (was 4.0)
+      if (Math.abs(scattered.x) < MIN_X) scattered.x = (scattered.x < 0 ? -1 : 1) * MIN_X;
+      if (Math.abs(scattered.y) < MIN_Y) scattered.y = (scattered.y < 0 ? -1 : 1) * MIN_Y;
+      cubies[i].userData.explodePos = scattered.add(
+        new THREE.Vector3((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.2)
       );
       cubies[i].userData.explodeRot = new THREE.Euler(
         (Math.random() - 0.5) * Math.PI * 6,
@@ -328,9 +347,29 @@ export function RubiksCubeExperience() {
       (c.material as THREE.MeshStandardMaterial[]).map(m => m.color.clone())
     );
 
-    /* ═══ Opening assembly: monitor + scattered starts + ambient cloud ═══ */
+    /* ═══ Opening assembly: monitor + scattered cube starts ═══ */
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isMobile = innerWidth < 768;
+    const isMobile = innerWidth <= 768; // include 768 (iPad portrait) in the stacked mobile layout
+    // Touch devices: the full-screen Spline canvas captures touch gestures for its
+    // 3D orbit and preventDefault()s them, which blocks page scrolling through the
+    // pinned intro. We make the Spline non-interactive on touch (it's decorative
+    // there — no hover) so swipes scroll the page. Desktop keeps it interactive.
+    const isTouch =
+      window.matchMedia('(hover: none), (pointer: coarse)').matches ||
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0;
+
+    // "Compact" = phones (isMobile, <=768) PLUS iPad-portrait (769–1024 held
+    // portrait). On these the intro hero drops the two-column desktop layout:
+    // the Spline monitor goes full-width / centred (and is enlarged + raised via
+    // CSS) while the hook copy drops to the bottom (also via CSS). The cube
+    // narrative + screen-rect mapping keep using isMobile, so only the intro
+    // visual is affected here — limiting blast radius on iPad-portrait.
+    const isPortraitTablet =
+      innerWidth > 768 &&
+      innerWidth <= 1024 &&
+      window.matchMedia('(orientation: portrait)').matches;
+    const compact = isMobile || isPortraitTablet;
 
     const WHITE = new THREE.Color(0xffffff);
     const tmpCol = new THREE.Color();
@@ -386,11 +425,21 @@ export function RubiksCubeExperience() {
       // Two-column layout: Spline lives in the right 50% on desktop, full width on mobile.
       // Reserve navbar room at the top so the monitor never touches the menu.
       const navbarReserve = 130;
-      const colWidth = isMobile ? innerWidth : innerWidth * 0.6;
+      const colWidth = compact ? innerWidth : innerWidth * 0.6;
       const availW = colWidth * 0.92;
       const availH = (innerHeight - navbarReserve) * 0.92;
       const s = Math.min(1.18, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
       splineFitRef.current.style.transform = `scale(${s})`;
+
+      // Responsive container padding: the 120px/60px desktop two-column offset
+      // shoves the monitor off-centre (and partly off-screen) on phones/tablets.
+      // Apply it only above 1024px; centre the scene with zero padding below.
+      // Recomputed here so it tracks the 1024px boundary on resize too.
+      if (splineRef.current) {
+        const desktop = innerWidth > 1024;
+        splineRef.current.style.paddingLeft = desktop ? '120px' : '0px';
+        splineRef.current.style.paddingTop = desktop ? '60px' : '0px';
+      }
     }
 
     // Anchor the hook card, size the Spline layer + set the zoom origin at the screen.
@@ -401,8 +450,11 @@ export function RubiksCubeExperience() {
       introCardRef.current.style.transform = isMobile ? 'translate(-50%, -50%)' : 'translateY(-50%)';
     }
     if (splineRef.current) {
-      // Two-column layout: card on left 40%, monitor on right 60%.
-      splineRef.current.style.width = isMobile ? '100%' : '60%';
+      // Two-column layout on desktop (monitor right 60%); full-width & centred
+      // on phones + iPad-portrait so the enlarged monitor becomes the hero.
+      splineRef.current.style.width = compact ? '100%' : '60%';
+      // Let touch gestures pass through to the page so the intro can be scrolled.
+      splineRef.current.style.pointerEvents = isTouch ? 'none' : 'auto';
     }
     fitSpline();
     computeScreenRect();
@@ -436,117 +488,7 @@ export function RubiksCubeExperience() {
       ).normalize();
     }
 
-    // Ambient background cube cloud — one InstancedMesh = one draw call.
-    const ambientCount = innerWidth < 768 ? AMBIENT_MOBILE : AMBIENT_DESKTOP;
-    const ambientGeo = createRoundedBox(0.22, 0.22, 0.22, 0.05, 3);
-    const ambientMat = new THREE.MeshStandardMaterial({
-      roughness: 0.35, metalness: 0.15, transparent: true, opacity: 0, fog: false,
-    });
-    const ambientMesh = new THREE.InstancedMesh(ambientGeo, ambientMat, ambientCount);
-    ambientMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    ambientMesh.visible = false;
-    // Rubik face palette — matches the main 26-cubie cubies so the ambient cloud
-    // reads as "the same kind of cube, smaller, floating in the periphery".
-    const ambientPalette = [0xcc2200, 0xff6600, 0xffd000, 0xffffff, 0x0055cc, 0x00aa44]
-      .map(c => new THREE.Color(c));
-    interface AmbientCfg {
-      base: THREE.Vector3; scale: number; phase: number; speed: number;
-      amp: number; drift: THREE.Vector3; rotAxis: THREE.Vector3; rotSpeed: number;
-      // trigger = 0 → Tier A (always visible);
-      // trigger > 0 → Tier B (fades/scales in as scrollP crosses the trigger).
-      trigger: number;
-    }
-    const ambient: AmbientCfg[] = [];
-    const ambientTargets: THREE.Color[] = []; // colourful target per cube (starts white)
-    const am = new THREE.Matrix4();
-    const aq = new THREE.Quaternion();
-    const av = new THREE.Vector3();
-    const asc = new THREE.Vector3();
-    // Collision-free placement. All cubes live BEHIND the origin (z = -6 to -22)
-    // so they read as small distant background, never in the foreground covering
-    // the computer or the assembled cube. Camera is at z=4.5, so these are
-    // 10.5–26.5 world units away — small in screen space.
-    const AMBIENT_MIN_DIST = 0.55;
-    const AMBIENT_XY_SPREAD = new THREE.Vector3(16.0, 11.0, 0);
-    const AMBIENT_Z_NEAR = -6;
-    const AMBIENT_Z_FAR  = -22;
-    const tierA_count = Math.floor(ambientCount / 2);
-    const placed: THREE.Vector3[] = [];
-    for (let i = 0; i < ambientCount; i++) {
-      const pos: THREE.Vector3 = new THREE.Vector3();
-      for (let att = 0; att < 200; att++) {
-        pos.set(
-          (Math.random() - 0.5) * AMBIENT_XY_SPREAD.x,
-          (Math.random() - 0.5) * AMBIENT_XY_SPREAD.y,
-          AMBIENT_Z_NEAR + Math.random() * (AMBIENT_Z_FAR - AMBIENT_Z_NEAR),
-        );
-        if (placed.every(p => p.distanceTo(pos) >= AMBIENT_MIN_DIST)) break;
-      }
-      placed.push(pos.clone());
-      const isTierA = i < tierA_count;
-      const bIdx = i - tierA_count;
-      const trigger = isTierA
-        ? 0
-        : 0.05 + (bIdx / Math.max(1, ambientCount - tierA_count - 1)) * 0.80 + (Math.random() - 0.5) * 0.04;
-      ambient.push({
-        base: pos.clone(),
-        // Smaller cubes — user wants "small". Effective render size = scale * 0.22 base.
-        scale: 0.25 + Math.random() * 0.55,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.4 + Math.random() * 0.7,
-        amp: 0.25 + Math.random() * 0.5,
-        drift: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
-        rotAxis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
-        rotSpeed: 0.3 + Math.random() * 0.6,
-        trigger,
-      });
-      ambientTargets.push(ambientPalette[Math.floor(Math.random() * ambientPalette.length)]);
-      ambientMesh.setColorAt(i, ambientTargets[i]);
-    }
-    if (ambientMesh.instanceColor) ambientMesh.instanceColor.needsUpdate = true;
-    introStage.add(ambientMesh);
-
     /* ── Intro render functions ── */
-    function updateAmbient(t: number, scrollP: number) {
-      // Small background cube cloud. INVISIBLE while the visitor is still on the
-      // computer (Phase 1 + start of Phase 2). Reveal begins only after the
-      // screen-zoom of Phase 2 completes — i.e. once the computer has faded into
-      // the screen. From there, opacity caps at 0.5 (user wants 50%).
-      //   Tier A (trigger=0): visible at scale a.scale once the gate opens.
-      //   Tier B (trigger>0): scale 0 → a.scale as scrollP crosses the per-cube
-      //                      trigger value (over a 0.10 reveal window).
-      // Gate range (raw scroll): 0.075 → 0.090 corresponds to introT 0.75 → 0.90
-      // — i.e. AFTER the pass-through into the screen. Before that the cloud is
-      // fully hidden so the portal traversal itself reads clean.
-      const gate = lerp01(scrollP, 0.075, 0.090);
-      // Triangle window: 0 at BURST_START / 2*PEAK-START (=0.42), 1 at PEAK.
-      const burst = Math.max(0, Math.min(1,
-        1 - Math.abs(scrollP - BURST_PEAK) / (BURST_PEAK - BURST_START)
-      ));
-      // Force visibility throughout the burst window even if the gate hasn't opened.
-      ambientMesh.visible = gate > 0.001 || burst > 0;
-      const appear = Math.min(1, t / 0.8);
-      const baseOpacity = appear * BURST_BASE_OPACITY * gate;
-      ambientMat.opacity = THREE.MathUtils.lerp(baseOpacity, 1.0, burst);
-      const burstScale = 1 + burst * BURST_SCALE_BOOST;
-      for (let i = 0; i < ambient.length; i++) {
-        const a = ambient[i];
-        const fl = prefersReduced ? 0 : Math.sin(t * a.speed + a.phase) * a.amp;
-        av.copy(a.base).addScaledVector(a.drift, fl);
-        if (prefersReduced) aq.identity();
-        else aq.setFromAxisAngle(a.rotAxis, t * a.rotSpeed + a.phase);
-        // Reveal factor: 1 for Tier A, scroll-driven for Tier B.
-        const reveal = a.trigger > 0
-          ? easeOutCubic(lerp01(scrollP, a.trigger, a.trigger + 0.10))
-          : 1;
-        const s = a.scale * reveal * burstScale;
-        asc.set(s, s, s);
-        am.compose(av, aq, asc);
-        ambientMesh.setMatrixAt(i, am);
-      }
-      ambientMesh.instanceMatrix.needsUpdate = true;
-    }
-
     function updateIntro(introT: number, t: number) {
       // Portal-style scroll narrative:
       //   Phase 1 — Approach        (0.00 → 0.40): computer slides + grows to viewport centre; card fades.
@@ -597,7 +539,15 @@ export function RubiksCubeExperience() {
       //    when we read getBoundingClientRect below.
       if (splineRef.current) {
         splineRef.current.style.display = 'flex';
-        splineRef.current.style.opacity = String(1 - splineFade);
+        // Fade the computer fully out as the cubes appear.
+        // Mobile + iPad portrait now match desktop (floor 0) instead of clamping at 0.85.
+        // iPad landscape (768–1024 not portrait) keeps a subtle floor so it doesn't go fully empty.
+        // (updateIntroExit still display:none's it past the intro, so it never bleeds into later sections.)
+        const isPortraitMobileOrTablet = isMobile || isPortraitTablet;
+        const fadeFloor = isPortraitMobileOrTablet
+          ? 0
+          : (innerWidth <= 1024 ? 0.06 : 0);
+        splineRef.current.style.opacity = String(Math.max(1 - splineFade, fadeFloor));
       }
       // Lens-blur the cube canvas while cubies are emerging — sells "we just
       // passed through the surface; eyes are still re-focusing."
@@ -609,7 +559,7 @@ export function RubiksCubeExperience() {
       }
       if (splineFitRef.current) {
         const navbarReserve = 130;
-        const colWidth = isMobile ? innerWidth : innerWidth * 0.6;
+        const colWidth = compact ? innerWidth : innerWidth * 0.6;
         const availW2 = colWidth * 0.92;
         const availH2 = (innerHeight - navbarReserve) * 0.92;
         const baseScale = Math.min(1.18, availW2 / SPLINE_DESIGN_W, availH2 / SPLINE_DESIGN_H);
@@ -713,7 +663,10 @@ export function RubiksCubeExperience() {
 
       cubeGroup.position.set(0, 0, 0);
       discGroup.position.set(0, 0, 0);
+      cubeGroup.scale.setScalar(1); // intro builds the cube at full scale
       smoothCubeX = 0;
+      smoothCubeY = 0;
+      smoothCubeScale = 1;
       baseRotY = (1 - introT) * 0.6;
       cubeGroup.rotation.set(
         THREE.MathUtils.lerp(0.25, 0.35, introT),
@@ -752,7 +705,9 @@ export function RubiksCubeExperience() {
         streaksRef.current.style.transform = `scale(${(1 + streakPulse * 0.25).toFixed(3)})`;
       }
       if (diveVignetteRef.current) {
-        diveVignetteRef.current.style.opacity = (vignettePulse * 0.35).toFixed(3);
+        // Lighter dark vignette on phones so the colored cubes read clearly
+        // instead of going near-black during the dive.
+        diveVignetteRef.current.style.opacity = (vignettePulse * 0.35 * (isMobile ? 0.45 : 1)).toFixed(3);
         // Tunnel darkening centres on the CRT screen during the dive, then eases
         // to viewport centre as the cube takes over.
         diveVignetteRef.current.style.background =
@@ -767,8 +722,6 @@ export function RubiksCubeExperience() {
         d.scale.setScalar(0.001);
       }
       pMat.opacity = 0;
-
-      updateAmbient(t, introT * INTRO_END); // map introT back to raw scroll progress
 
       // Hook card: dissolves during the approach (eased holds visible longer,
       // then drops out fast) and drifts up on a slightly tighter window.
@@ -873,14 +826,15 @@ export function RubiksCubeExperience() {
     scene.add(new THREE.Points(pGeo, pMat));
 
     function updateParticles(gp: number) {
-      if (gp > 0.66 && gp < 0.77) {
-        const t = (gp - 0.66) / 0.11;
+      if (gp >= P.s6 && gp <= P.s7) {
+        const t = Math.min(1, (gp - P.s6) / (P.s7 - P.s6));
         pMat.opacity = Math.sin(t * Math.PI) * 0.7;
+        const et = easeOutExpo(t);
         const arr = pGeo.attributes.position.array as Float32Array;
         for (let i = 0; i < pCount; i++) {
-          arr[i * 3] = pVelocities[i].x * t;
-          arr[i * 3 + 1] = pVelocities[i].y * t;
-          arr[i * 3 + 2] = pVelocities[i].z * t;
+          arr[i * 3]     = pVelocities[i].x * et;
+          arr[i * 3 + 1] = pVelocities[i].y * et;
+          arr[i * 3 + 2] = pVelocities[i].z * et;
         }
         pGeo.attributes.position.needsUpdate = true;
       } else {
@@ -890,7 +844,19 @@ export function RubiksCubeExperience() {
 
     /* ═══ Cube target X position ═══ */
     const SHIFT = 2.2;
+    // Phones / iPad-portrait (<=768) stack the cube and card VERTICALLY instead of
+    // the desktop left/right split. SHIFT_Y is the world-space vertical offset that
+    // drops the cube into the bottom half (−Y) or lifts it to the top half (+Y).
+    const SHIFT_Y = 1.35;
+    // On phones/iPad-portrait the cube shares the screen with a card (stacked), so
+    // shrink it a touch to guarantee clean separation in every phase. Smoothed so
+    // the intro->main handoff (which builds the cube at scale 1) never pops.
+    // (The cube canvas is no longer CSS-scaled on mobile, so this is the cube's
+    // only mobile downscale — sized for clean separation from the stacked card.)
+    const MOBILE_CUBE_SCALE = 0.55;
     let smoothCubeX = 0;
+    let smoothCubeY = 0;
+    let smoothCubeScale = 1;
     let baseRotY = 0;
     // Frame-rate independent smoothing helper.
     // `tau` is the time-constant in seconds (≈ time to reach 63%).
@@ -908,12 +874,29 @@ export function RubiksCubeExperience() {
     //   card-s4 (left)  → cube RIGHT  from 0.570
     //   card-s6 (center) → cube CENTER from 0.700
     function cubeTargetX(p: number) {
+      if (isMobile) return 0; // phones/iPad-portrait stack vertically (see cubeTargetY)
       if (p < 0.040) return 0;
       if (p < 0.225) return -SHIFT;
       if (p < 0.400) return SHIFT;
       if (p < 0.570) return -SHIFT;
       if (p < 0.700) return SHIFT;
       return 0;
+    }
+
+    // Phones / iPad-portrait only: vertical counterpart to cubeTargetX. The cube
+    // sits in the half OPPOSITE the card, mapping the card's left/right side to
+    // top/bottom — 'right' sections (s1,s3) → card top / cube bottom (−Y → down);
+    // 'left' sections (s2,s4) → cube top / card bottom (+Y → up). As you scroll the
+    // sides alternate, so the cube and card smoothly interchange halves. Center
+    // sections (s6+) keep the cube centred.
+    function cubeTargetY(p: number) {
+      if (!isMobile) return 0;
+      if (p < 0.040) return 0;        // hero
+      if (p < 0.225) return -SHIFT_Y; // s1 (right card) → cube bottom
+      if (p < 0.400) return SHIFT_Y;  // s2 (left card)  → cube top
+      if (p < 0.570) return -SHIFT_Y; // s3 (right card) → cube bottom
+      if (p < 0.700) return SHIFT_Y;  // s4 (left card)  → cube top
+      return 0;                        // s6+ center
     }
 
     /* ═══ Animation phases ═══ */
@@ -1104,11 +1087,18 @@ export function RubiksCubeExperience() {
       }
 
       const targetX = cubeTargetX(p);
-      // Smooth cube X with ~0.35s time-constant (frame-rate independent).
+      const targetY = cubeTargetY(p);
+      // Smooth cube X/Y with ~0.35s time-constant (frame-rate independent).
       // dt is updated by the ticker; fall back to 16.67ms if unavailable.
       smoothCubeX = smoothLerp(smoothCubeX, targetX, 0.35, lastDt);
+      smoothCubeY = smoothLerp(smoothCubeY, targetY, 0.35, lastDt);
       cubeGroup.position.x = smoothCubeX;
       discGroup.position.x = smoothCubeX;
+      cubeGroup.position.y = smoothCubeY;
+      discGroup.position.y = smoothCubeY;
+      // Mobile cube downscale (smoothed) for clean card/cube separation.
+      smoothCubeScale = smoothLerp(smoothCubeScale, isMobile ? MOBILE_CUBE_SCALE : 1, 0.3, lastDt);
+      cubeGroup.scale.setScalar(smoothCubeScale);
 
       if (p <= P.hero) phaseHero(lerp01(p, 0, P.hero));
       else if (p <= P.s1) phaseScramble(lerp01(p, P.hero, P.s1));
@@ -1130,7 +1120,15 @@ export function RubiksCubeExperience() {
         const el = cardEls[cfg.id];
         if (!el) return;
 
-        const sideOffset = cfg.side === 'left' ? -60 : cfg.side === 'right' ? 60 : 0;
+        // Phones / iPad-portrait: left/right cards stack vertically opposite the
+        // cube. 'right' section → card in the TOP half; 'left' section → card in
+        // the BOTTOM half. No horizontal slide; the card enters vertically only.
+        const stacked = isMobile && (cfg.side === 'left' || cfg.side === 'right');
+        const vAnchor = stacked
+          ? (cfg.side === 'right' ? -1 : 1) * innerHeight * 0.24
+          : 0;
+
+        const sideOffset = stacked ? 0 : (cfg.side === 'left' ? -60 : cfg.side === 'right' ? 60 : 0);
         let opacity = 0, ty = 80, tx = sideOffset, rx = 3, sc = 0.97;
 
         if (p < cfg.eIn) {
@@ -1151,6 +1149,9 @@ export function RubiksCubeExperience() {
         el.style.opacity = String(opacity);
         if (cfg.side === 'center') {
           el.style.transform = `translate(-50%, -50%) translateY(${ty}px) perspective(800px) rotateX(${rx}deg) scale(${sc})`;
+        } else if (stacked) {
+          // Vertically anchored to the top/bottom half; centred horizontally by CSS.
+          el.style.transform = `translateY(calc(-50% + ${ty + vAnchor}px)) perspective(800px) rotateX(${rx}deg) scale(${sc})`;
         } else {
           el.style.transform = `translateY(calc(-50% + ${ty}px)) translateX(${tx}px) perspective(800px) rotateX(${rx}deg) scale(${sc})`;
         }
@@ -1239,6 +1240,13 @@ export function RubiksCubeExperience() {
       smoothProgress = smoothLerp(smoothProgress, scrollState.progress, 0.45, lastDt);
       const rawP = smoothProgress;
 
+      // Backdrop video: hidden during intro, fades to 30% once cubes are visible.
+      if (backdropVideoRef.current) {
+        backdropVideoRef.current.style.opacity = String(
+          lerp01(rawP, INTRO_END, INTRO_END + 0.03) * 0.3
+        );
+      }
+
       if (rawP < INTRO_END) {
         // Opening act: floating cubes assemble while the hook line holds center.
         updateIntro(rawP / INTRO_END, elapsed);
@@ -1247,8 +1255,7 @@ export function RubiksCubeExperience() {
         // Original narrative — re-mapped onto [0..1] so all phase/card maths
         // below are untouched.
         updateIntroExit();
-        updateAmbient(elapsed, rawP); // keep the background cube cloud animating + revealing Tier B in main phase
-        const mainP = (rawP - INTRO_END) / (1 - INTRO_END);
+        const mainP = warpMainP((rawP - INTRO_END) / (1 - INTRO_END));
         updateCube(mainP);
         updateParticles(mainP);
         updateCards(mainP);
@@ -1272,10 +1279,18 @@ export function RubiksCubeExperience() {
       gsap.ticker.remove(tick);
       window.removeEventListener('resize', onResize);
       scrollTrigger.kill();
-      ambientMesh.dispose();
-      ambientGeo.dispose();
-      ambientMat.dispose();
+      // Dispose per-mount GPU resources (cubie/disc/particle geometries and
+      // materials are all created fresh in this effect) before clearing.
+      scene.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((m) => m.dispose());
+        }
+      });
       renderer.dispose();
+      renderer.forceContextLoss?.();
       scene.clear();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -1289,6 +1304,29 @@ export function RubiksCubeExperience() {
     <div ref={containerRef} className="relative" style={{ background: BG_COLOR }}>
       {/* All fixed elements wrapped in a single layer for visibility control */}
       <div ref={fixedLayerRef} className="transition-opacity duration-300" style={{ willChange: 'opacity' }}>
+        {/* Continuous video backdrop — sits behind every layer, including Spline.
+            Full-bleed cover at EVERY device size. The width/height are set inline
+            (not via h-full/w-full) on purpose: the global reset
+            `img, video, svg { max-width:100%; height:auto }` is UNLAYERED, so in
+            Tailwind v4 it overrides the `@layer utilities` h-full — and because a
+            <video> is a replaced element, height:auto collapses it to its
+            intrinsic 16:9 band (a thin strip with empty space above/below on
+            portrait). Inline styles beat the unlayered reset, giving the element a
+            true full-viewport box so object-cover scales the video up to always
+            fill phones / iPad-portrait (and every other size) with no gaps. */}
+        <video
+          ref={backdropVideoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[-1] object-cover"
+          style={{ opacity: 0, width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center' }}
+        >
+          <source src="/videos/backdrop-rubix.mp4" type="video/mp4" />
+        </video>
+
         {/* Spline desktop (opening act) — right side, behind the transparent cube canvas.
             Width is set per-device in the effect; opacity/scale are scroll-driven. */}
         <div
@@ -1329,6 +1367,25 @@ export function RubiksCubeExperience() {
                   width: '34%', height: '11%', background: BG_COLOR, pointerEvents: 'none',
                 }}
               />
+              {/* CRT terminal boot line — old-PC welcome text on the monitor
+                  screen. Positioned at the measured CRT screen rect (converted to
+                  the zoom layer's 1320-wide box), so it sits on the screen, zooms
+                  IN during the dive, and fades with the monitor (it inherits
+                  splineRef's scroll-driven opacity). Cursor blinks via CSS. */}
+              <div
+                aria-hidden
+                className="rc-crt-screen"
+                style={{
+                  position: 'absolute',
+                  left: '35.45%', top: '20.1%', width: '24.27%', height: '32.2%',
+                  pointerEvents: 'none',
+                }}
+              >
+                <span className="rc-crt-line">
+                  Welcome to Kaizen Infotech Solutions
+                  <span className="rc-crt-cursor">&#9608;</span>
+                </span>
+              </div>
             </div>
           </div>
           </div>
@@ -1475,8 +1532,7 @@ export function RubiksCubeExperience() {
           {/* S8: CTA */}
           <div data-card="card-s8" className="rc-glass-card rc-side-center rc-card-s8 rc-wide" style={{ opacity: 0 }}>
             <div className="rc-service-title rc-stagger" data-stg="s8-0">Let&apos;s Solve It &mdash; <em>The Right Way</em></div>
-            <div className="rc-service-desc rc-stagger" data-stg="s8-1">If your organization feels like a scrambled cube, you don&apos;t need more random moves. You need the right strategy. Let&apos;s turn complexity into clarity &mdash; one intelligent move at a time.</div>
-            <div className="rc-cta-row rc-stagger" data-stg="s8-2">
+            <div className="rc-cta-row rc-stagger" data-stg="s8-1">
               <a href="/services" className="rc-cta-btn rc-cta-primary">Explore Our Services</a>
               <a href="/contact" className="rc-cta-btn rc-cta-secondary">Talk to Our Experts</a>
             </div>

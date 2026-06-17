@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
+import { registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
 import { useLoaderStore } from '@/store/loaderStore';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 /* ── Thread/Knot/Swing Countdown: 5 → 1 ── */
 const NUMS = [5, 4, 3, 2, 1];
@@ -14,6 +15,7 @@ export function CountdownLoader() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const doneRef = useRef(false);
   const setComplete = useLoaderStore((s) => s.setComplete);
+  const prefersReducedMotion = useReducedMotion();
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
@@ -51,6 +53,8 @@ export function CountdownLoader() {
 
     if (!firstVisit) {
       // Skip immediately: keep overlay hidden and unblock the page
+      const overlay = overlayRef.current;
+      if (overlay) overlay.style.display = 'none';
       setComplete();
       return;
     }
@@ -59,6 +63,39 @@ export function CountdownLoader() {
     const overlay = overlayRef.current;
     if (overlay) overlay.style.display = 'flex';
     document.body.classList.add('loader-active');
+
+    // ── Reduced motion: skip the digit countdown entirely. Show the overlay
+    // briefly, fade it out (opacity only — no slide), then run the SAME
+    // completion path as the normal flow (setComplete + ScrollTrigger.refresh).
+    // NOTE: read matchMedia live instead of the useReducedMotion() render value.
+    // During hydration the hook's first value is the SSR fallback (false), and
+    // putting it in this effect's deps would re-run the one-shot countdown
+    // effect mid-flight — both paths must be decided once, at effect time.
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    if (reducedMotion) {
+      const fadeTimer = setTimeout(() => {
+        if (doneRef.current) return;
+        doneRef.current = true;
+        if (overlay) {
+          overlay.style.transition = 'opacity 0.2s ease';
+          overlay.style.opacity = '0';
+          overlay.style.pointerEvents = 'none';
+        }
+        document.body.classList.remove('loader-active');
+      }, 300);
+      const doneTimer = setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+        setComplete();
+        ScrollTrigger.refresh();
+      }, 520);
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(doneTimer);
+        document.body.classList.remove('loader-active');
+      };
+    }
 
     let idx = 0;
     let cancelled = false;
@@ -95,7 +132,7 @@ export function CountdownLoader() {
       clearTimeout(startTimer);
       document.body.classList.remove('loader-active');
     };
-  }, [finish]);
+  }, [finish, setComplete]);
 
   /* Skip handler */
   const handleSkip = useCallback(() => {
@@ -103,14 +140,24 @@ export function CountdownLoader() {
     doneRef.current = true;
     const overlay = overlayRef.current;
     if (!overlay) return;
-    overlay.classList.add('rc-cd-fade-out');
+    if (prefersReducedMotion) {
+      // No slide animation — opacity-only fade.
+      overlay.style.transition = 'opacity 0.2s ease';
+      overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+    } else {
+      overlay.classList.add('rc-cd-fade-out');
+    }
     document.body.classList.remove('loader-active');
-    setTimeout(() => {
-      overlay.style.display = 'none';
-      setComplete();
-      ScrollTrigger.refresh();
-    }, 500);
-  }, [setComplete]);
+    setTimeout(
+      () => {
+        overlay.style.display = 'none';
+        setComplete();
+        ScrollTrigger.refresh();
+      },
+      prefersReducedMotion ? 220 : 500
+    );
+  }, [setComplete, prefersReducedMotion]);
 
   return (
     <div

@@ -17,6 +17,7 @@ export interface StickyProjectCardProps {
   client: string;
   category: string;
   year: string;
+  description: string;
   image: string;
   slug: string;
   index: number;
@@ -29,6 +30,7 @@ export function StickyProjectCard({
   client,
   category,
   year,
+  description,
   image,
   slug,
   index,
@@ -81,11 +83,14 @@ export function StickyProjectCard({
         height: `${100 - 2 * VERT_MARGIN}vh`,
         top: `${VERT_MARGIN}vh`,
         background: 'var(--color-bg-secondary)',
+        // Emphasis shadow below the card — blue-tinted to match the overlay
+        boxShadow:
+          '0 40px 70px -25px rgba(13,71,161,0.45), 0 18px 30px -18px rgba(0,0,0,0.30)',
       }}
     >
       <Link
         href={`/work/${slug}`}
-        className="relative block h-full w-full"
+        className="focus-ring relative block h-full w-full"
         aria-label={`View project: ${title}`}
       >
         {/* Project image — object-contain so mockups/screenshots aren't cropped */}
@@ -103,19 +108,19 @@ export function StickyProjectCard({
           />
         </motion.div>
 
-        {/* Dark gradient at bottom so text stays legible */}
+        {/* Blue gradient at bottom so text stays legible (brand blue, not black) */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-inverse)]/75 via-[var(--color-bg-inverse)]/15 to-transparent"
+          className="absolute inset-0 bg-gradient-to-t from-[rgba(13,71,161,0.88)] via-[rgba(21,101,192,0.34)] to-transparent"
         />
 
         {/* Category pill — top left */}
         <div className="absolute left-6 top-6 md:left-10 md:top-8">
           <span
             className={cn(
-              'inline-block rounded-[var(--radius-full)] px-3 py-1',
+              'inline-block rounded-[var(--radius-full)] px-4 py-1.5',
               'bg-[var(--color-accent-primary)]/10 text-[var(--color-accent-primary)]',
-              'text-[length:var(--text-xs)] font-medium uppercase tracking-wider'
+              'text-[length:var(--text-sm)] font-medium uppercase tracking-wider'
             )}
             style={{ fontFamily: 'var(--font-heading)' }}
           >
@@ -123,33 +128,39 @@ export function StickyProjectCard({
           </span>
         </div>
 
-        {/* Title + client + CTA — bottom */}
-        <div className="absolute inset-x-0 bottom-0 p-6 md:p-10">
+        {/* Title + client + description + CTA — bottom */}
+        <div className="absolute inset-x-0 bottom-0 p-8 md:p-12">
           <h3
-            className="mb-1 text-[length:var(--h-card)] font-bold leading-tight text-[var(--color-text-inverse)]"
+            className="mb-2 text-[length:var(--h-sub)] font-bold leading-tight text-[var(--color-text-inverse)]"
             style={{ fontFamily: 'var(--font-card-heading), var(--font-display)', letterSpacing: '-0.02em' }}
           >
             {title}
           </h3>
           <p
-            className="mb-5 text-[length:var(--text-sm)] text-[var(--color-text-inverse)]/60"
+            className="mb-4 text-[length:var(--text-base)] text-[var(--color-text-inverse)]/70"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {client}
           </p>
+          <p
+            className="mb-7 line-clamp-3 max-w-2xl text-[length:var(--text-base)] md:text-[length:var(--text-lg)] leading-relaxed text-[var(--color-text-inverse)]/85"
+            style={{ fontFamily: 'var(--font-body)' }}
+          >
+            {description}
+          </p>
           <span
             className={cn(
-              'inline-flex items-center gap-2',
-              'border-b border-[var(--color-text-inverse)]/30 pb-0.5',
-              'text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.06em]',
-              'text-[var(--color-text-inverse)]/70'
+              'inline-flex items-center gap-2.5',
+              'border-b-[1.5px] border-[var(--color-text-inverse)]/40 pb-1',
+              'text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.06em]',
+              'text-[var(--color-text-inverse)]/85'
             )}
             style={{ fontFamily: 'var(--font-body)' }}
           >
             View Case Study
             <svg
-              width="12"
-              height="12"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

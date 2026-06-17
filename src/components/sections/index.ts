@@ -8,3 +8,5 @@ export { Testimonials } from './Testimonials';
 export { TechStack } from './TechStack';
 export { TeamGrid } from './TeamGrid';
 export { CTASection } from './CTASection';
+export { PageHero } from './PageHero';
+export { LogoMarquee } from './LogoMarquee';

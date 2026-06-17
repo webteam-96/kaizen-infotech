@@ -46,25 +46,26 @@ export const footerLinkGroups: FooterLinkGroup[] = [
 ];
 
 // Social media links
+// TODO(client): replace '#' with real profile URLs — links with '#' are hidden in the UI.
 export const socialLinks: SocialLink[] = [
   {
     platform: 'LinkedIn',
-    href: 'https://linkedin.com/company/kaizen-infotech',
+    href: '#',
     icon: 'Linkedin',
   },
   {
     platform: 'Instagram',
-    href: 'https://instagram.com/kaizeninfotech',
+    href: '#',
     icon: 'Instagram',
   },
   {
     platform: 'Facebook',
-    href: 'https://facebook.com/kaizeninfotech',
+    href: '#',
     icon: 'Facebook',
   },
   {
     platform: 'Twitter',
-    href: 'https://twitter.com/kaizeninfotech',
+    href: '#',
     icon: 'Twitter',
   },
 ];

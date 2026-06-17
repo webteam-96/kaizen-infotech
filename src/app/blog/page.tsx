@@ -3,9 +3,9 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { TextReveal } from '@/components/animation/TextReveal';
 import { FadeIn } from '@/components/animation/FadeIn';
-
+import { PageHero } from '@/components/sections/PageHero';
+import { BlogCover } from '@/components/ui/BlogCover';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
@@ -53,27 +53,13 @@ export default function BlogPage() {
   return (
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* Hero Section */}
-      <section className="px-6 pb-16 pt-32 md:px-12 lg:px-24">
-        <div className="mx-auto max-w-7xl">
-          <TextReveal
-            as="h1"
-            splitBy="words"
-            className="mb-6 text-[length:var(--h-page)] font-bold leading-[1.05] text-[var(--color-text-primary)]"
-          >
-            Insights &amp; Perspectives — Technology, Business &amp; Digital Transformation
-          </TextReveal>
-          <FadeIn delay={0.3}>
-            <p
-              className="max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              Practical thinking on enterprise software, government digital
-              transformation, mobile development, event technology, and digital
-              marketing — written by the team that builds it.
-            </p>
-          </FadeIn>
-        </div>
-      </section>
+      <PageHero
+        kicker="Insights & Perspectives"
+        title="Technology, Business & Digital Transformation"
+        accentWords={['Digital', 'Transformation']}
+        description="Practical thinking on enterprise software, government digital transformation, mobile development, event technology, and digital marketing — written by the team that builds it."
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Blog' }]}
+      />
 
       {/* Category Filter */}
       <section className="px-6 pb-12 md:px-12 lg:px-24">
@@ -133,14 +119,14 @@ export default function BlogPage() {
                 >
                   <Card tilt={false} glow className="overflow-hidden p-0">
                     <div className="grid grid-cols-1 md:grid-cols-2">
-                      {/* Image placeholder */}
-                      <div
-                        className="aspect-[16/10] md:aspect-auto"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, var(--color-bg-secondary), var(--color-accent-primary)/10)',
-                        }}
-                      />
+                      {/* Cover art */}
+                      <div className="relative aspect-[16/10] md:aspect-auto">
+                        <BlogCover
+                          slug={featuredPost.slug}
+                          category={featuredPost.category}
+                          className="absolute inset-0"
+                        />
+                      </div>
 
                       <div className="relative z-10 flex flex-col justify-center p-8 md:p-12">
                         <div className="mb-4 flex items-center gap-3">
@@ -204,14 +190,14 @@ export default function BlogPage() {
                     className="group"
                   >
                     <Card tilt={false} glow className="h-full overflow-hidden p-0">
-                      {/* Image placeholder */}
-                      <div
-                        className="aspect-[16/10]"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, var(--color-bg-secondary), var(--color-accent-primary)/8)',
-                        }}
-                      />
+                      {/* Cover art */}
+                      <div className="relative aspect-[16/10]">
+                        <BlogCover
+                          slug={post.slug}
+                          category={post.category}
+                          className="absolute inset-0"
+                        />
+                      </div>
 
                       <div className="relative z-10 p-6">
                         <div className="mb-3 flex items-center gap-3">
@@ -300,15 +286,27 @@ export default function BlogPage() {
             </form>
             <AnimatePresence>
               {newsletterStatus === 'success' && (
-                <motion.p
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="mt-4 text-[length:var(--text-sm)] text-[var(--color-accent-secondary)]"
-                  style={{ fontFamily: 'var(--font-body)' }}
+                  className="mt-4"
                 >
-                  Thank you! You will receive our next article in your inbox.
-                </motion.p>
+                  <p
+                    className="text-[length:var(--text-sm)] text-[var(--color-accent-secondary)]"
+                    style={{ fontFamily: 'var(--font-body)' }}
+                  >
+                    Thank you! You will receive our next article in your inbox.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setNewsletterStatus('idle')}
+                    className="focus-ring mt-2 text-[length:var(--text-xs)] text-[var(--color-text-tertiary)] underline underline-offset-2 transition-colors hover:text-[var(--color-text-primary)]"
+                    style={{ fontFamily: 'var(--font-body)' }}
+                  >
+                    Subscribe another email
+                  </button>
+                </motion.div>
               )}
             </AnimatePresence>
           </FadeIn>

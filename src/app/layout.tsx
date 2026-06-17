@@ -5,6 +5,7 @@ import { Providers } from './providers';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import ScrollProgress from '@/components/layout/ScrollProgress';
+import CustomScrollbar from '@/components/layout/CustomScrollbar';
 
 const jost = Jost({
   subsets: ['latin'],
@@ -80,7 +81,6 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} antialiased`}
-        style={{ fontFamily: 'var(--font-body)' }}
       >
         <Providers>
           <a
@@ -90,6 +90,7 @@ export default function RootLayout({
             Skip to main content
           </a>
           <ScrollProgress />
+          <CustomScrollbar />
           <Navbar />
           <div id="main-content">{children}</div>
           <Footer />

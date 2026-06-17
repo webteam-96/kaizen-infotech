@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { FadeIn } from '@/components/animation/FadeIn';
+import { BlogCover } from '@/components/ui/BlogCover';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -93,6 +94,21 @@ export default function BlogPostClient({
                   {post.author.role}
                 </p>
               </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* Cover banner */}
+      <section className="px-6 pb-12 md:px-12 lg:px-24">
+        <div className="mx-auto max-w-3xl">
+          <FadeIn delay={0.35}>
+            <div className="relative aspect-[21/9] overflow-hidden rounded-[var(--radius-lg)]">
+              <BlogCover
+                slug={post.slug}
+                category={post.category}
+                className="absolute inset-0"
+              />
             </div>
           </FadeIn>
         </div>

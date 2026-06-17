@@ -174,15 +174,18 @@ export default function ServiceDetailClient({
         <div className="relative z-10 mx-auto w-full max-w-5xl">
           {/* Breadcrumb */}
           <FadeIn>
-            <nav className="mb-8 flex items-center gap-2 text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
+            <nav
+              aria-label="Breadcrumb"
+              className="mb-8 flex items-center gap-2 text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]"
+            >
               <Link
                 href="/services"
-                className="transition-colors hover:text-[var(--color-text-primary)]"
+                className="focus-ring transition-colors hover:text-[var(--color-text-primary)]"
               >
                 Services
               </Link>
-              <span>/</span>
-              <span className="text-[var(--color-text-secondary)]">
+              <span aria-hidden>/</span>
+              <span aria-current="page" className="text-[var(--color-text-secondary)]">
                 {service.title}
               </span>
             </nav>
@@ -371,7 +374,7 @@ export default function ServiceDetailClient({
               <Link
                 key={related.id}
                 href={`/services/${related.slug}`}
-                className="group block"
+                className="focus-ring group block"
               >
                 <motion.div
                   className={cn(
@@ -423,11 +426,11 @@ export default function ServiceDetailClient({
       {/* ================================================================= */}
       {/* CTA */}
       {/* ================================================================= */}
-      <section className="relative px-6 py-32">
+      <section className="section-ink relative px-6 py-32">
         <div className="mx-auto max-w-3xl text-center">
           <FadeIn>
             <h2
-              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--text-on-ink)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Ready to Get Started?
@@ -435,7 +438,7 @@ export default function ServiceDetailClient({
           </FadeIn>
           <FadeIn delay={0.15}>
             <p
-              className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--text-on-ink-muted)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Tell us about your project and we will put together a tailored plan
@@ -447,7 +450,7 @@ export default function ServiceDetailClient({
               <Button variant="primary" size="lg" href="/contact">
                 Contact Us
               </Button>
-              <Button variant="secondary" size="lg" href="/services">
+              <Button variant="secondary" size="lg" href="/services" className="on-ink-secondary">
                 All Services
               </Button>
             </div>

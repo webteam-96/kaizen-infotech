@@ -34,6 +34,9 @@ export function TextReveal({
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useReducedMotion();
+  // Stable dependency key: only re-split/re-animate when the actual text
+  // changes — not on every parent render with a non-primitive child.
+  const textKey = typeof children === 'string' ? children : undefined;
 
   registerGSAPPlugins();
 
@@ -102,7 +105,7 @@ export function TextReveal({
         result.revert();
       };
     },
-    { scope: containerRef, dependencies: [splitBy, stagger, duration, delay, scrub, once, prefersReducedMotion, children] }
+    { scope: containerRef, dependencies: [splitBy, stagger, duration, delay, scrub, once, prefersReducedMotion, textKey] }
   );
 
   return (

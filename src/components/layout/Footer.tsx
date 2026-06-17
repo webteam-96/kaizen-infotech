@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGSAP } from '@gsap/react';
@@ -8,36 +8,22 @@ import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { useReducedMotion } from '@/hooks';
+import { footerLinkGroups, socialLinks } from '@/content/navigation';
 
-
-const footerLinks = {
-  quickLinks: [
-    { label: 'Home', href: '/' },
-    { label: 'About', href: '/about' },
-    { label: 'Work', href: '/work' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Contact', href: '/contact' },
-  ],
-  services: [
-    { label: 'Custom Software', href: '/services/custom-software-development' },
-    { label: 'Mobile Apps', href: '/services/mobile-app-development' },
-    { label: 'Event Management', href: '/services/event-registration-management' },
-    { label: 'Web Portals', href: '/services/enterprise-web-portals' },
-    { label: 'Digital Marketing', href: '/services/digital-marketing-services' },
-  ],
-  social: [
-    { label: 'LinkedIn', href: '#', icon: 'linkedin' },
-    { label: 'Twitter', href: '#', icon: 'twitter' },
-    { label: 'Instagram', href: '#', icon: 'instagram' },
-    { label: 'Facebook', href: '#', icon: 'facebook' },
-  ],
-};
+type NewsletterStatus = 'idle' | 'pending' | 'success' | 'error';
 
 export function Footer() {
   const contentRef = useRef<HTMLDivElement>(null);
   const topBorderRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prefersReducedMotion = useReducedMotion();
+
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<NewsletterStatus>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Social links with placeholder '#' hrefs are hidden until real URLs land.
+  const visibleSocials = socialLinks.filter((s) => s.href && s.href !== '#');
 
   useStaggeredScrollReveal(contentRef, {
     from: { opacity: 0, y: 20 },
@@ -78,9 +64,9 @@ export function Footer() {
 
       gsap.fromTo(
         inputRef.current,
-        { borderColor: 'var(--color-border)' },
+        { borderColor: 'rgba(245, 248, 252, 0.14)' },
         {
-          borderColor: 'var(--color-accent-primary)',
+          borderColor: 'var(--accent-on-ink)',
           duration: 0.6,
           ease: ANIMATION_CONFIG.ease.smooth,
           yoyo: true,
@@ -96,12 +82,41 @@ export function Footer() {
     { dependencies: [prefersReducedMotion] }
   );
 
+  async function handleNewsletterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes('@')) {
+      setStatus('error');
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+    setStatus('pending');
+    setErrorMessage('');
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      if (res.ok) {
+        setStatus('success');
+        setEmail('');
+      } else {
+        setStatus('error');
+        setErrorMessage('Something went wrong. Please try again.');
+      }
+    } catch {
+      setStatus('error');
+      setErrorMessage('Something went wrong. Please try again.');
+    }
+  }
+
   return (
-    <footer className="relative bg-[var(--color-bg-primary)]">
+    <footer className="section-ink relative">
       {/* Animated top border */}
       <div
         ref={topBorderRef}
-        className="h-px w-full origin-left bg-[var(--color-border)]"
+        className="h-px w-full origin-left bg-[rgba(245,248,252,0.14)]"
         style={{ transform: prefersReducedMotion ? undefined : 'scaleX(0)' }}
       />
 
@@ -112,8 +127,8 @@ export function Footer() {
         {/* Top Section */}
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           {/* Brand Column */}
-          <div className="lg:col-span-4">
-            <Link href="/" className="inline-block">
+          <div className="lg:col-span-3">
+            <Link href="/" className="focus-ring inline-block rounded-lg bg-white p-2">
               <Image
                 src="/images/logos/kaizen-logo.png"
                 alt="Kaizen Infotech Solutions"
@@ -122,125 +137,120 @@ export function Footer() {
                 className="h-10 w-auto"
               />
             </Link>
-            <p className="mt-4 max-w-sm text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
-              Kaizen Infotech Solutions Pvt. Ltd. is a Mumbai-based custom software company
-              with over 10 years of experience delivering scalable digital platforms for
-              government organisations, enterprises, NGOs, and community networks. From custom
-              ERP systems and mobile apps to event management platforms and digital marketing,
-              we build technology that works.
-            </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="lg:col-span-2">
-            <h3 className="mb-4 font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
-              Quick Links
-            </h3>
-            <ul className="space-y-3">
-              {footerLinks.quickLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)] transition-colors duration-300 hover:text-[var(--color-text-primary)]"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Services */}
-          <div className="lg:col-span-3">
-            <h3 className="mb-4 font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
-              Services
-            </h3>
-            <ul className="space-y-3">
-              {footerLinks.services.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-[length:var(--text-sm)] text-[var(--color-text-secondary)] transition-colors duration-300 hover:text-[var(--color-text-primary)]"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Link Groups */}
+          {footerLinkGroups.map((group) => (
+            <div key={group.title} className="lg:col-span-2">
+              <h3 className="mb-4 font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-wider text-[var(--text-on-ink)]">
+                {group.title}
+              </h3>
+              <ul className="space-y-3">
+                {group.links.map((link) => (
+                  <li key={`${link.label}-${link.href}`}>
+                    <Link
+                      href={link.href}
+                      className="focus-ring text-[length:var(--text-sm)] text-[var(--text-on-ink-muted)] transition-colors duration-300 hover:text-[var(--accent-on-ink)]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           {/* Newsletter + Contact */}
           <div className="lg:col-span-3">
-            <h3 className="mb-4 font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-wider text-[var(--color-text-primary)]">
+            <h3 className="mb-4 font-[family-name:var(--font-heading)] text-sm font-semibold uppercase tracking-wider text-[var(--text-on-ink)]">
               Stay Updated
             </h3>
-            <p className="mb-4 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+            <p className="mb-4 text-[length:var(--text-sm)] text-[var(--text-on-ink-muted)]">
               Subscribe for technology insights, project stories, and digital transformation
               tips from the Kaizen team.
             </p>
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="flex gap-2"
-            >
+            <form onSubmit={handleNewsletterSubmit} noValidate className="flex gap-2">
               <input
                 ref={inputRef}
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-base text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] transition-all duration-300 focus:border-[var(--color-accent-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent-primary)]/30"
+                className="focus-ring min-w-0 flex-1 rounded-lg border border-[rgba(245,248,252,0.14)] bg-[var(--surface-ink-soft)] px-4 py-2.5 text-base text-[var(--text-on-ink)] placeholder:text-[var(--text-on-ink-muted)] transition-all duration-300 focus:border-[var(--accent-on-ink)]"
                 aria-label="Email for newsletter"
               />
               <button
                 type="submit"
-                className="flex-shrink-0 rounded-lg bg-[var(--color-accent-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-inverse)] transition-all duration-300 hover:brightness-110"
+                disabled={status === 'pending'}
+                className="focus-ring flex-shrink-0 rounded-lg bg-[var(--color-accent-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-inverse)] transition-all duration-300 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label="Subscribe to newsletter"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+                {status === 'pending' ? (
+                  'Subscribing…'
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                )}
               </button>
             </form>
+            {status === 'success' && (
+              <p
+                role="status"
+                className="mt-3 text-[length:var(--text-sm)] text-[var(--accent-on-ink)]"
+              >
+                You&rsquo;re subscribed.
+              </p>
+            )}
+            {status === 'error' && (
+              <p role="alert" className="mt-3 text-[length:var(--text-sm)] text-red-300">
+                {errorMessage}
+              </p>
+            )}
 
-            <div className="mt-6 space-y-2 text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]">
-              <p>info@kaizeninfotech.com</p>
-              <p>+91 99201 30855</p>
+            <div className="mt-6 space-y-2 text-[length:var(--text-xs)] text-[var(--text-on-ink-muted)]">
+              <p>dhini.s@kaizeninfotech.com</p>
+              <p>+91 93721 30855</p>
               <p>Thane West, Thane, Maharashtra 400604</p>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[var(--color-border)] pt-8 md:flex-row">
-          <p className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]">
+        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[rgba(245,248,252,0.14)] pt-8 md:flex-row">
+          <p className="text-[length:var(--text-xs)] text-[var(--text-on-ink-muted)]">
             &copy; {new Date().getFullYear()} Kaizen Infotech Solutions Pvt. Ltd. All rights
             reserved.
           </p>
 
-          {/* Social Icons */}
-          <div className="flex items-center gap-4">
-            {footerLinks.social.map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-110 hover:border-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]"
-                aria-label={social.label}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <SocialIcon name={social.icon} />
-              </a>
-            ))}
-          </div>
+          {/* Social Icons — entries with placeholder '#' hrefs are hidden */}
+          {visibleSocials.length > 0 && (
+            <div className="flex items-center gap-4">
+              {visibleSocials.map((social) => (
+                <a
+                  key={social.platform}
+                  href={social.href}
+                  className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(245,248,252,0.14)] text-[var(--text-on-ink-muted)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-110 hover:border-[var(--accent-on-ink)] hover:text-[var(--accent-on-ink)]"
+                  aria-label={social.platform}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <SocialIcon name={social.icon} />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </footer>
@@ -271,5 +281,5 @@ function SocialIcon({ name }: { name: string }) {
     ),
   };
 
-  return <>{icons[name] || null}</>;
+  return <>{icons[name.toLowerCase()] || null}</>;
 }

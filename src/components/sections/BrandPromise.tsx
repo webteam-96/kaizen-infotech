@@ -27,82 +27,50 @@ export function BrandPromise() {
         <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)] text-center">
           <div className="space-y-4">
             {lines.map((line, lineIndex) => {
-              // Each line reveals across a third of progress
               const lineStart = lineIndex / lines.length;
               const lineEnd = (lineIndex + 1) / lines.length;
               const lineProgress = Math.max(
                 0,
                 Math.min(1, (progress - lineStart) / (lineEnd - lineStart))
               );
+              const isRevealed = lineProgress > 0.3;
 
-              const words = line.text.split(' ');
+              // Split text around the verb so we can highlight it inline
+              // without animating it independently.
+              const verbIdx = line.text.indexOf(line.verb);
+              const before = line.text.slice(0, verbIdx);
+              const after = line.text.slice(verbIdx + line.verb.length);
 
               return (
                 <p
                   key={lineIndex}
                   className={cn(
                     'font-[family-name:var(--font-display)]',
-                    'text-[clamp(1.75rem,4.5vw,3.5rem)] leading-[1.2] tracking-tight'
+                    'text-[clamp(1.75rem,4.5vw,3.5rem)] leading-[1.2] tracking-tight',
+                    'transition-all duration-300',
+                    isRevealed
+                      ? 'opacity-100 translate-y-0'
+                      : 'opacity-15 translate-y-2'
                   )}
                 >
-                  {words.map((word, wordIndex) => {
-                    const wordStart = wordIndex / words.length;
-                    const wordEnd = (wordIndex + 1) / words.length;
-                    const wordProgress = Math.max(
-                      0,
-                      Math.min(
-                        1,
-                        (lineProgress - wordStart) / (wordEnd - wordStart)
-                      )
-                    );
-
-                    const isVerb = word === line.verb;
-                    const isRevealed = wordProgress > 0.3;
-
-                    return (
-                      <span
-                        key={wordIndex}
-                        className={cn(
-                          'inline-block transition-all duration-300',
-                          isRevealed
-                            ? 'opacity-100 translate-y-0'
-                            : 'opacity-15 translate-y-2'
-                        )}
-                      >
-                        {isVerb ? (
-                          <span className="relative inline-block">
-                            <span
-                              className={cn(
-                                'relative z-10',
-                                isRevealed
-                                  ? 'text-[var(--color-accent-primary)]'
-                                  : 'text-[var(--color-text-primary)]'
-                              )}
-                              style={{
-                                transition: 'color 0.4s ease',
-                              }}
-                            >
-                              {word}
-                            </span>
-                            {/* Accent underline wipe */}
-                            <span
-                              className="absolute bottom-0 left-0 h-[3px] bg-[var(--color-accent-primary)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                              style={{
-                                width: isRevealed ? '100%' : '0%',
-                              }}
-                            />
-                          </span>
-                        ) : (
-                          <span className="text-[var(--color-text-primary)]">
-                            {word}
-                          </span>
-                        )}
-                        {wordIndex < words.length - 1 && (
-                          <span>&nbsp;</span>
-                        )}
-                      </span>
-                    );
-                  })}
+                  <span className="text-[var(--color-text-primary)]">{before}</span>
+                  <span className="relative inline-block">
+                    <span
+                      className="relative z-10"
+                      style={{
+                        color: isRevealed ? 'var(--color-accent-primary)' : 'var(--color-text-primary)',
+                        transition: 'color 0.4s ease',
+                      }}
+                    >
+                      {line.verb}
+                    </span>
+                    {/* Accent underline wipe */}
+                    <span
+                      className="absolute bottom-0 left-0 h-[3px] bg-[var(--color-accent-primary)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      style={{ width: isRevealed ? '100%' : '0%' }}
+                    />
+                  </span>
+                  <span className="text-[var(--color-text-primary)]">{after}</span>
                 </p>
               );
             })}

@@ -48,10 +48,14 @@ export function ServiceCard({
     >
       <Card
         className={cn(
-          // Fixed size — no responsive breakpoints. Same dimensions on
-          // every viewport so the carousel maths in ServicesScroll stays
-          // in lockstep with the visual layout.
-          'flex w-[460px] h-[540px] cursor-pointer flex-col p-10',
+          // The card always FILLS its parent deck cell (w-full h-full). On
+          // phones / iPad-portrait that cell is a measured, viewport-fitted box
+          // sized by ServicesScroll; at >=820px the explicit 800×860 below pins
+          // it to the desktop geometry the carousel maths depends on.
+          // NB: no `sm:` step — in this Tailwind v4 setup `sm:` sorts AFTER an
+          // arbitrary `min-[820px]:` and would override it, leaving desktop at the
+          // tablet size. base -> min-[820px]: keeps the >=820 desktop box intact.
+          'flex w-full h-full cursor-pointer flex-col p-6 min-[820px]:w-[800px] min-[820px]:h-[860px] min-[820px]:p-14',
           'transition-shadow duration-300',
           isActive && 'shadow-[0_0_40px_var(--color-glow)]'
         )}
@@ -64,9 +68,9 @@ export function ServiceCard({
           {/* Icon */}
           <div
             className={cn(
-              'mb-6 flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)]',
+              'mb-5 min-[820px]:mb-8 flex h-14 w-14 min-[820px]:h-20 min-[820px]:w-20 items-center justify-center rounded-[var(--radius-md)]',
               'bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]',
-              'text-2xl'
+              'text-4xl'
             )}
           >
             {icon}
@@ -74,7 +78,7 @@ export function ServiceCard({
 
           {/* Title — single fixed size */}
           <h3
-            className="mb-3 text-2xl font-semibold leading-snug text-[var(--color-text-primary)]"
+            className="mb-3 min-[820px]:mb-5 text-xl min-[820px]:text-4xl font-semibold leading-snug text-[var(--color-text-primary)]"
             style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
           >
             {title}
@@ -82,37 +86,11 @@ export function ServiceCard({
 
           {/* Description — single fixed size */}
           <p
-            className="flex-1 text-base leading-relaxed text-[var(--color-text-secondary)]"
+            className="flex-1 text-base min-[820px]:text-2xl leading-relaxed text-[var(--color-text-primary)]"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {description}
           </p>
-        </div>
-
-        {/* CTA link */}
-        <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
-          <span
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-accent-primary)] transition-colors duration-200 group-hover:text-[var(--color-text-primary)]"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            Learn More
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="transition-transform duration-200 group-hover:translate-x-1"
-            >
-              <path
-                d="M3 8H13M13 8L9 4M13 8L9 12"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
         </div>
       </Card>
     </motion.div>

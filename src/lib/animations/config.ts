@@ -10,6 +10,7 @@ export const ANIMATION_CONFIG = {
     normal: 0.6,
     slow: 1.0,
     cinematic: 1.5,
+    ambient: 3,
   },
   ease: {
     smooth: 'power2.out',

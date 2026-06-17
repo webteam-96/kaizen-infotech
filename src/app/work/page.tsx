@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TextReveal } from '@/components/animation/TextReveal';
 import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
+import { PageHero } from '@/components/sections/PageHero';
 import { StickyProjectCard } from '@/components/ui/StickyProjectCard';
 import { Button } from '@/components/ui/Button';
 import { projects, projectCategories, type ProjectCategory } from '@/content/projects';
@@ -19,28 +19,13 @@ export default function WorkPage() {
   return (
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* ── Hero ── */}
-      <section className="px-6 pb-12 pt-32 md:px-12 lg:px-24">
-        <div className="mx-auto max-w-7xl">
-          <TextReveal
-            as="h1"
-            splitBy="words"
-            className="mb-6 text-[length:var(--h-page)] font-bold leading-[1.05] text-[var(--color-text-primary)]"
-          >
-            Real-World Digital Solutions Built for Impact
-          </TextReveal>
-          <ScrollFadeIn delay={0.3}>
-            <p
-              className="max-w-2xl text-[length:var(--h-sub)] leading-relaxed text-[var(--color-text-secondary)]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              Explore our portfolio of digital platforms delivered for government
-              organisations, enterprises, healthcare providers, and global
-              communities. Every project here represents a real problem, a
-              thoughtful solution, and a measurable outcome.
-            </p>
-          </ScrollFadeIn>
-        </div>
-      </section>
+      <PageHero
+        kicker="Our Work"
+        title="Real-World Digital Solutions Built for Impact"
+        accentWords={['Impact']}
+        description="Explore our portfolio of digital platforms delivered for government organisations, enterprises, healthcare providers, and global communities. Every project here represents a real problem, a thoughtful solution, and a measurable outcome."
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Work' }]}
+      />
 
       {/* ── Category Filter ── */}
       <section className="px-6 pb-10 md:px-12 lg:px-24">
@@ -52,7 +37,7 @@ export default function WorkPage() {
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`relative cursor-pointer rounded-[var(--radius-full)] px-5 py-2.5 text-[length:var(--text-sm)] font-medium transition-colors duration-300 ${
+                  className={`focus-ring relative cursor-pointer rounded-[var(--radius-full)] px-5 py-2.5 text-[length:var(--text-sm)] font-medium transition-colors duration-300 ${
                     activeCategory === category
                       ? 'text-[var(--color-text-inverse)]'
                       : 'border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
@@ -99,6 +84,7 @@ export default function WorkPage() {
               client={project.client}
               category={project.category}
               year={project.year}
+              description={project.description}
               image={project.image}
               slug={project.slug}
               index={idx}

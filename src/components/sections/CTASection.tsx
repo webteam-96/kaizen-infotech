@@ -75,7 +75,7 @@ export function CTASection() {
   return (
     <section
       data-section-index={9}
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]"
+      className="section-ink relative flex min-h-screen items-center justify-center overflow-hidden"
     >
       {/* Parallax orbs */}
       <div
@@ -124,7 +124,7 @@ export function CTASection() {
             'mx-auto max-w-3xl',
             'font-[family-name:var(--font-display)]',
             'text-[length:var(--h-section)] leading-[1.1] tracking-tight',
-            'text-[var(--color-text-primary)]'
+            'text-[var(--text-on-ink)]'
           )}
         >
           Ready to Digitise Your Operations?
@@ -135,7 +135,7 @@ export function CTASection() {
             className={cn(
               'mx-auto mt-6 max-w-xl',
               'text-[length:var(--text-lg)] leading-relaxed',
-              'text-[var(--color-text-secondary)]',
+              'text-[var(--text-on-ink-muted)]',
               'font-[family-name:var(--font-body)]'
             )}
           >

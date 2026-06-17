@@ -52,8 +52,7 @@ export function ProjectCard({
       ref={cardRef}
       className={cn(
         'group relative overflow-hidden rounded-[var(--radius-lg)]',
-        featured ? 'col-span-2 aspect-[16/10]' : 'col-span-1 aspect-[4/5]',
-        'cursor-none'
+        featured ? 'col-span-2 aspect-[16/10]' : 'col-span-1 aspect-[4/5]'
       )}
       data-cursor="view"
       initial={{ clipPath: 'inset(100% 0 0 0)' }}
