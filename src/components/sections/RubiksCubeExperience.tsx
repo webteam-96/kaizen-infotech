@@ -5,6 +5,9 @@ import * as THREE from 'three';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
 import { useLoaderStore } from '@/store/loaderStore';
+import { useReducedMotion } from '@/hooks';
+import { useLenis } from '@/components/layout/SmoothScroll';
+import type Lenis from 'lenis';
 import Spline from '@splinetool/react-spline';
 
 /* ══════════════════════════════════════════════════════════════
@@ -31,20 +34,26 @@ const P = { hero: 0.04, s1: 0.12, s2: 0.26, s3: 0.48, s4: 0.60, s5: 0.68, s6: 0.
    after it is the original narrative, re-mapped onto [0..1] so none of the existing
    phase/card constants above need to change. Spacer height grows to give the intro
    real scroll room: ~180vh intro + ~970vh narrative = 1150vh total. */
-const INTRO_VH = 180;
-const MAIN_VH = 970;
-const SPACER_VH = INTRO_VH + MAIN_VH; // 1150
-const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.157
+// Shortened from 180+970=1150vh. The narrative still plays in full — each phase
+// just maps to a shorter (more reasonable) scroll distance, dropping the page's
+// single biggest scroll-height contributor by ~half.
+const INTRO_VH = 120;
+const MAIN_VH = 600; // lengthened (was 480) so the narrative scrolls at a calmer,
+                     // more uniform speed — no card flies by, none drags.
+const SPACER_VH = INTRO_VH + MAIN_VH; // 720
+const INTRO_END = INTRO_VH / SPACER_VH; // ≈ 0.167
 
 /* ── Scroll warp ──
-   The dispersal tail (narrative t ≥ P.s7, where pieces scatter and the viewport
-   is near-empty) gets only half its proportional scroll share. Piecewise-linear
-   map from scroll fraction → original narrative timeline, so every phase/card
-   constant below stays untouched. */
-const TAIL_START = 0.83; // = P.s7
-const TAIL_WEIGHT = 0.5;
-const WARP_TOTAL = TAIL_START + (1 - TAIL_START) * TAIL_WEIGHT; // 0.915
-const WARP_KNEE = TAIL_START / WARP_TOTAL; // ≈ 0.907
+   The last three cards (s6, s7, s8 — narrative t ≥ TAIL_START) have the SMALLEST
+   native narrative spans, so without help they fly past on a fast scroll. This
+   warp gives that tail EXTRA scroll (TAIL_WEIGHT > 1 stretches it) so every late
+   card occupies roughly the same scroll distance as the earlier ones — uniform
+   pacing, nothing skipped. Piecewise-linear map from scroll fraction → original
+   narrative timeline, so every phase/card constant below stays untouched. */
+const TAIL_START = 0.68; // covers s6 (eIn 0.70) onward
+const TAIL_WEIGHT = 1.5; // stretch the tail (was 0.5, which compressed it)
+const WARP_TOTAL = TAIL_START + (1 - TAIL_START) * TAIL_WEIGHT; // 1.16
+const WARP_KNEE = TAIL_START / WARP_TOTAL; // ≈ 0.586
 function warpMainP(s: number) {
   return s <= WARP_KNEE
     ? s * WARP_TOTAL
@@ -72,9 +81,14 @@ const CARDS: CardCfg[] = [
   { id: 'card-s2', eIn: 0.225, eFull: 0.270, xS: 0.355, xE: 0.385, side: 'left',  stg: 's2', ss: 0.240, st: 0.015 },
   { id: 'card-s3', eIn: 0.400, eFull: 0.445, xS: 0.525, xE: 0.555, side: 'right', stg: 's3', ss: 0.415, st: 0.015 },
   { id: 'card-s4', eIn: 0.570, eFull: 0.615, xS: 0.680, xE: 0.695, side: 'left',  stg: 's4', ss: 0.585, st: 0.015 },
-  { id: 'card-s6', eIn: 0.700, eFull: 0.725, xS: 0.745, xE: 0.762, side: 'center', stg: 's6', ss: 0.710, st: 0.015 },
-  { id: 'card-s7', eIn: 0.770, eFull: 0.795, xS: 0.818, xE: 0.835, side: 'center', stg: 's7', ss: 0.780, st: 0.015 },
-  { id: 'card-s8', eIn: 0.870, eFull: 0.910, xS: 1.000, xE: 1.100, side: 'center', stg: 's8', ss: 0.890, st: 0.018 },
+  // s6/s7 are the last cards with the smallest native hold windows, so their
+  // full-opacity peaks are the first to be missed on a fast scroll. Holds widened
+  // to match the earlier cards (≈0.05–0.06) so each occupies comparable distance
+  // and reliably paints. Combined with the tail-expanding warp above, these now
+  // get more scroll room, not less. s8 entry (0.888) keeps a clean gap after s7.
+  { id: 'card-s6', eIn: 0.700, eFull: 0.724, xS: 0.786, xE: 0.800, side: 'center', stg: 's6', ss: 0.706, st: 0.015 },
+  { id: 'card-s7', eIn: 0.800, eFull: 0.822, xS: 0.872, xE: 0.884, side: 'center', stg: 's7', ss: 0.806, st: 0.015 },
+  { id: 'card-s8', eIn: 0.888, eFull: 0.918, xS: 1.000, xE: 1.100, side: 'center', stg: 's8', ss: 0.896, st: 0.018 },
 ];
 
 /* ── Rubik's Cube constants ── */
@@ -135,15 +149,72 @@ export function RubiksCubeExperience() {
   const splineFitRef = useRef<HTMLDivElement>(null);
   const splineFrameRef = useRef<HTMLDivElement>(null);
   const splineZoomRef = useRef<HTMLDivElement>(null);
+  // Captured Spline app instance (from onLoad) so the scene can be controlled
+  // imperatively later — e.g. splineAppRef.current?.emitEvent('start', 'code 2').
+  const splineAppRef = useRef<unknown>(null);
   // Travel-through effect overlays — opacity driven by updateIntro.
   const scanlineRef = useRef<HTMLDivElement>(null);
   const diveVignetteRef = useRef<HTMLDivElement>(null);
   const streaksRef = useRef<HTMLDivElement>(null);
   const backdropVideoRef = useRef<HTMLVideoElement>(null);
+  // Continuous "Landing Page Background" video behind the opening act (the hook
+  // card + Spline computer). Visible at full strength during the intro, fades
+  // out as the dive leaves the intro so it never bleeds into the cube narrative.
+  const introBgVideoRef = useRef<HTMLVideoElement>(null);
   const [mounted, setMounted] = useState(false);
+  // Lazy-mount guard for the Spline WebGL scene: only kept in the tree while the
+  // hero section is near the viewport, so its GPU/WebGL context is freed once the
+  // user scrolls past the hero (it's display:none'd after the intro anyway).
+  const [splineNearViewport, setSplineNearViewport] = useState(true);
+  // Blurred poster behind the Spline canvas: shown until the heavy 3D scene
+  // reports loaded, then faded out. This is the same "no blank flash" benefit the
+  // /next Spline gives via its server-rendered placeholder, but done inside this
+  // client component so the scroll dive (refs, onLoad, scissor math) is untouched.
+  const [splineLoaded, setSplineLoaded] = useState(false);
   const loaderComplete = useLoaderStore((s) => s.isComplete);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Live mirrors of values the long-lived useGSAP effect reads at interaction
+  // time (Enter/Space/tap → "play the dive like a video"). Stored in refs so the
+  // effect needn't list them as deps (which would tear down + rebuild the whole
+  // THREE.js scene whenever the Lenis instance or loader state changes).
+  const { lenis } = useLenis();
+  const lenisRef = useRef<Lenis | null>(null);
+  const loaderCompleteRef = useRef(false);
+  // True while the page is frozen at the top waiting for the user to press
+  // Enter/Space (or tap) to begin the dive. Set true by the useGSAP effect;
+  // released on the first trigger. Mirrored here so the Lenis instance can be
+  // stopped the moment it becomes available (it may mount after the effect).
+  const scrollLockedRef = useRef(false);
+  useEffect(() => {
+    lenisRef.current = lenis;
+    if (lenis && scrollLockedRef.current) lenis.stop();
+  }, [lenis]);
+  useEffect(() => { loaderCompleteRef.current = loaderComplete; }, [loaderComplete]);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Unmount the Spline scene when the hero section is well clear of the viewport
+  // (and re-mount when it returns). The hero is the first section, so in practice
+  // this frees the second WebGL context for the entire rest of the long page.
+  useEffect(() => {
+    if (!mounted || prefersReducedMotion) return;
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setSplineNearViewport(entry.isIntersecting);
+        // When the hero leaves the viewport the <Spline> unmounts (freeing its
+        // WebGL context). Reset the loaded flag so that when it re-enters and
+        // remounts, the poster shows again AND a fresh onLoad fires — which is
+        // what re-runs playIntro() and replays the CRT text each time.
+        if (!entry.isIntersecting) setSplineLoaded(false);
+      },
+      { rootMargin: '300px 0px 300px 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [mounted, prefersReducedMotion]);
 
   /* Hook-line entrance: rises bottom → center once the loader has cleared.
      Plays a single time; scroll-out is handled separately in the render loop. */
@@ -165,6 +236,9 @@ export function RubiksCubeExperience() {
   }, [mounted, loaderComplete]);
 
   useGSAP(() => {
+    // Reduced motion: skip the entire THREE.js + Spline scroll narrative. The
+    // component renders a static, fully-visible hero instead (see render below).
+    if (prefersReducedMotion) return;
     if (!mounted || !canvasContainerRef.current || !containerRef.current) return;
     registerGSAPPlugins();
 
@@ -195,10 +269,10 @@ export function RubiksCubeExperience() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(innerWidth, innerHeight);
-    // Cap DPR lower on phones/iPad-portrait: a full-viewport MSAA canvas at DPR 2–3
+    // Cap DPR at 1.5 on EVERY device: a full-viewport MSAA canvas at DPR 2–3
     // alongside the separate Spline WebGL context is a heavy GPU load that causes
-    // janky/stuck scrolling on mobile. 1.5 keeps it crisp enough at a fraction of the cost.
-    renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth <= 768 ? 1.5 : 2));
+    // janky/stuck scrolling. 1.5 keeps it crisp enough at a fraction of the cost.
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.4;
     container.appendChild(renderer.domElement);
@@ -417,19 +491,31 @@ export function RubiksCubeExperience() {
       zoomEl.style.transformOrigin = `${ox.toFixed(2)}% ${oy.toFixed(2)}%`;
     }
 
-    // Scale the fixed-size Spline canvas DOWN to fit the available space, so the
-    // whole monitor is always visible (never cropped) on any screen — bigger on
-    // large displays, shrunk to fit on short laptops. Allows slight upscale.
+    // Single source of truth for the monitor's fit-scale, used by both fitSpline
+    // (resize) and updateIntro (per frame) so they can never drift and pop at the
+    // intro→main handoff. The DESKTOP computer is enlarged (×SPLINE_ENLARGE) and
+    // allowed to overflow its column toward centre — the Spline frame has wide
+    // transparent margins, so the monitor pixels grow without colliding with the
+    // hook card — but it's still clamped to the available height so it is never
+    // cropped vertically. Compact (phones + iPad-portrait) keeps the prior fit
+    // untouched, so the card and stacked layout there are unchanged.
+    const SPLINE_ENLARGE = 1.32;
+    function computeSplineScale() {
+      const navbarReserve = compact ? 130 : 96;
+      const fill = compact ? 0.92 : 1.0;
+      const colWidth = compact ? innerWidth : innerWidth * 0.6;
+      const availW = colWidth * fill;
+      const availH = (innerHeight - navbarReserve) * fill;
+      let s = Math.min(compact ? 1.18 : 1.7, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
+      if (!compact) s = Math.min(s * SPLINE_ENLARGE, availH / SPLINE_DESIGN_H);
+      return s;
+    }
+
+    // Scale the fixed-size Spline canvas to fit the available space, so the whole
+    // monitor is always visible (never cropped vertically) on any screen.
     function fitSpline() {
       if (!splineFitRef.current) return;
-      // Two-column layout: Spline lives in the right 50% on desktop, full width on mobile.
-      // Reserve navbar room at the top so the monitor never touches the menu.
-      const navbarReserve = 130;
-      const colWidth = compact ? innerWidth : innerWidth * 0.6;
-      const availW = colWidth * 0.92;
-      const availH = (innerHeight - navbarReserve) * 0.92;
-      const s = Math.min(1.18, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
-      splineFitRef.current.style.transform = `scale(${s})`;
+      splineFitRef.current.style.transform = `scale(${computeSplineScale()})`;
 
       // Responsive container padding: the 120px/60px desktop two-column offset
       // shoves the monitor off-centre (and partly off-screen) on phones/tablets.
@@ -539,6 +625,16 @@ export function RubiksCubeExperience() {
       //    when we read getBoundingClientRect below.
       if (splineRef.current) {
         splineRef.current.style.display = 'flex';
+        // Re-arm will-change for the active intro animation (it's cleared in
+        // updateIntroExit once we leave the intro; restore on scroll-back-up).
+        if (splineRef.current.style.willChange !== 'opacity') {
+          splineRef.current.style.willChange = 'opacity';
+          if (splineFitRef.current) splineFitRef.current.style.willChange = 'transform';
+          if (splineZoomRef.current) splineZoomRef.current.style.willChange = 'transform';
+          if (scanlineRef.current) scanlineRef.current.style.willChange = 'opacity';
+          if (streaksRef.current) streaksRef.current.style.willChange = 'opacity, transform';
+          if (diveVignetteRef.current) diveVignetteRef.current.style.willChange = 'opacity';
+        }
         // Fade the computer fully out as the cubes appear.
         // Mobile + iPad portrait now match desktop (floor 0) instead of clamping at 0.85.
         // iPad landscape (768–1024 not portrait) keeps a subtle floor so it doesn't go fully empty.
@@ -558,16 +654,12 @@ export function RubiksCubeExperience() {
           : '';
       }
       if (splineFitRef.current) {
-        const navbarReserve = 130;
-        const colWidth = compact ? innerWidth : innerWidth * 0.6;
-        const availW2 = colWidth * 0.92;
-        const availH2 = (innerHeight - navbarReserve) * 0.92;
-        const baseScale = Math.min(1.18, availW2 / SPLINE_DESIGN_W, availH2 / SPLINE_DESIGN_H);
-        // Computer is STATIONARY. No slide, no grow. The dive happens purely via
-        // splineZoomRef's scale anchored at the CRT centre — so the CRT screen
-        // grows to fill the viewport while the rest of the monitor scales
-        // outward and off-screen. Cubies later emerge at the CRT's viewport
-        // position (handled by canvas-container translate, below).
+        // Same fit-scale as fitSpline() (shared helper) so the enlarged computer
+        // matches at the intro→main handoff. Computer is STATIONARY — no slide,
+        // no grow. The dive happens purely via splineZoomRef's scale anchored at
+        // the CRT centre, so the CRT screen grows to fill the viewport while the
+        // rest of the monitor scales outward and off-screen.
+        const baseScale = computeSplineScale();
         splineFitRef.current.style.transform = `scale(${baseScale.toFixed(4)})`;
       }
 
@@ -750,6 +842,15 @@ export function RubiksCubeExperience() {
       if (splineRef.current && splineRef.current.style.display !== 'none') {
         splineRef.current.style.opacity = '0';
         splineRef.current.style.display = 'none';
+        // These intro-only layers are no longer animating — drop their
+        // will-change so the compositor can release the promoted layers
+        // (a permanent will-change on full-screen fixed layers is costly).
+        splineRef.current.style.willChange = 'auto';
+        if (splineFitRef.current) splineFitRef.current.style.willChange = 'auto';
+        if (splineZoomRef.current) splineZoomRef.current.style.willChange = 'auto';
+        if (scanlineRef.current) scanlineRef.current.style.willChange = 'auto';
+        if (streaksRef.current) streaksRef.current.style.willChange = 'auto';
+        if (diveVignetteRef.current) diveVignetteRef.current.style.willChange = 'auto';
       }
       // Clear the cube-canvas lens blur from Phase 3/4 so main phase renders sharp.
       if (canvasContainerRef.current && canvasContainerRef.current.style.filter) {
@@ -1147,6 +1248,9 @@ export function RubiksCubeExperience() {
         }
 
         el.style.opacity = String(opacity);
+        // autoAlpha-style: a fully-faded card is taken out of the compositor and
+        // can never sit invisibly capturing space; anything visible is shown.
+        el.style.visibility = opacity < 0.01 ? 'hidden' : 'visible';
         if (cfg.side === 'center') {
           el.style.transform = `translate(-50%, -50%) translateY(${ty}px) perspective(800px) rotateX(${rx}deg) scale(${sc})`;
         } else if (stacked) {
@@ -1218,10 +1322,113 @@ export function RubiksCubeExperience() {
       trigger: rootEl.querySelector('[data-scroll-spacer]') as HTMLElement,
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 0,
+      // scrub:true reports the RAW (Lenis-smoothed) scroll position every frame —
+      // no extra second of ScrollTrigger easing on top. The single smoothing pass
+      // and the per-frame velocity clamp on the ticker below do all the work: that
+      // clamp is the constant-speed / anti-skip guard, keeping every card's
+      // opacity peak renderable no matter how fast the user flicks. Stacking
+      // scrub:1 on top of it was what made the motion feel laggy.
+      scrub: true,
+      invalidateOnRefresh: true,
       onUpdate: self => { scrollState.progress = self.progress; },
       onToggle: self => { isVisible = self.isActive || self.progress < 1; },
+      // Snapshot: after a refresh (resize / font swap / Spline load) re-seat the
+      // smoothed progress on the real scroll position so no card is left stranded
+      // at a partial opacity, and re-apply the correct frame immediately.
+      onRefresh: self => {
+        scrollState.progress = self.progress;
+        smoothProgress = self.progress;
+      },
     });
+
+    /* ── "Play like a video" trigger ──
+       At the very start (intro visible, still at the top) pressing Enter / Space
+       on desktop — or tapping the screen on touch devices — smoothly drives the
+       scroll forward through the opening dive until the Rubik's cube has formed,
+       so the journey plays like a video. It only animates the scroll position, so
+       the existing scroll-driven narrative runs exactly as if scrolled by hand,
+       and scrolling back up reverses it unchanged. */
+    const AUTOPLAY_TO = INTRO_END + 0.05; // land just past assembly, on the rotating cube
+    let autoplaying = false;
+
+    // ── Freeze the page at the top until the user begins ──
+    // The dive must ALWAYS be started by a key/tap — never by a plain scroll. So
+    // we lock the page at the very top on load and only release it once the dive
+    // has played. lenis.stop() is required (preventDefault alone won't stop it —
+    // Lenis reads the wheel delta itself); the native blockers cover touch + any
+    // window before Lenis is ready.
+    scrollLockedRef.current = true;
+    function blockWheel(e: WheelEvent) { if (scrollLockedRef.current) e.preventDefault(); }
+    function blockTouchMove(e: TouchEvent) { if (scrollLockedRef.current) e.preventDefault(); }
+    window.addEventListener('wheel', blockWheel, { passive: false });
+    window.addEventListener('touchmove', blockTouchMove, { passive: false });
+    if (lenisRef.current) lenisRef.current.stop();
+
+    function unlock() {
+      if (!scrollLockedRef.current) return;
+      scrollLockedRef.current = false;
+      window.removeEventListener('wheel', blockWheel);
+      window.removeEventListener('touchmove', blockTouchMove);
+      lenisRef.current?.start();
+    }
+
+    function playIntro() {
+      const lenisInstance = lenisRef.current;
+      if (!lenisInstance || autoplaying) return;
+      if (!loaderCompleteRef.current) return;   // wait for the loader to clear
+      if (scrollState.progress > 0.03) return;  // only from the very start
+      const span = scrollTrigger.end - scrollTrigger.start;
+      if (span <= 0) return;
+      const targetY = scrollTrigger.start + AUTOPLAY_TO * span;
+      autoplaying = true;
+      lenisInstance.scrollTo(targetY, {
+        duration: 3,
+        easing: easeInOutCubic,
+        force: true,  // scroll even though Lenis is stopped by the lock
+        lock: true,   // ignore wheel/touch nudges mid-play so it reads as one clean shot
+        onComplete: () => { autoplaying = false; unlock(); },
+      });
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      // While frozen, swallow the keys that would otherwise scroll the page so
+      // it truly can't move until the user begins.
+      if (scrollLockedRef.current &&
+          ['Space', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.code)) {
+        e.preventDefault();
+      }
+      if (e.key !== 'Enter' && e.key !== ' ' && e.code !== 'Space') return;
+      // Don't hijack the key when an interactive element (nav link, button, field)
+      // is focused — let its own default behaviour run.
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+          tag === 'BUTTON' || tag === 'A') return;
+      if (!loaderCompleteRef.current || scrollState.progress > 0.03) return;
+      e.preventDefault(); // stop Space/Enter from native page-scroll
+      playIntro();
+    }
+    window.addEventListener('keydown', onKeyDown);
+
+    // Touch devices: a tap (not a swipe) near the start plays the dive.
+    let touchX = 0, touchY = 0, touchMoved = false;
+    function onTouchStart(e: TouchEvent) {
+      const t = e.touches[0]; if (!t) return;
+      touchX = t.clientX; touchY = t.clientY; touchMoved = false;
+    }
+    function onTouchMove(e: TouchEvent) {
+      const t = e.touches[0]; if (!t) return;
+      if (Math.hypot(t.clientX - touchX, t.clientY - touchY) > 12) touchMoved = true;
+    }
+    function onTouchEnd() { if (!touchMoved) playIntro(); }
+    if (isTouch) {
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd, { passive: true });
+    }
+
+    // Reflect the new interaction in the hook cue.
+    const cueEl = introInnerRef.current?.querySelector('.rc-scroll-cue span');
+    if (cueEl) cueEl.textContent = isTouch ? 'Tap to begin' : 'Press Enter to begin';
 
     // GSAP ticker drives the loop (single source of truth, lockstep with
     // Lenis + ScrollTrigger). Pass the function reference so we can remove
@@ -1235,15 +1442,50 @@ export function RubiksCubeExperience() {
       // Skip the heavy three.js work entirely when the section is fully
       // out of view. Cards/UI/visibility checks are cheap so still run.
       updateFixedVisibility();
-      if (!isVisible) return;
+      // Keep advancing while the eased narrative is still catching up to the
+      // scroll position — even if the trigger just went inactive. Otherwise a
+      // fast scroll that outruns the smoothed progress would FREEZE the narrative
+      // mid-way, stranding the later cards (the old "cards skip to the next
+      // section" bug). Only go fully idle once it's both off-screen AND settled.
+      if (!isVisible && Math.abs(scrollState.progress - smoothProgress) < 0.002) return;
 
-      smoothProgress = smoothLerp(smoothProgress, scrollState.progress, 0.45, lastDt);
+      // Ease the smoothed progress toward the scroll position, THEN apply a loose
+      // per-frame velocity backstop. tau is short (0.16s) so deliberate scrolling
+      // tracks closely — crisp, not laggy — and spreads any jump over ~0.16s so a
+      // card window can't be crossed in a single frame (anti-skip). The cap
+      // (1.4/s) only catches truly violent flicks; it's deliberately well above
+      // realistic scroll speed so it never lags the narrative behind the scroll
+      // (a tight cap did, then the inactive-trigger gate froze the lagging tail —
+      // the old skip bug). The lengthened section + expanded tail keep every
+      // card's scroll window wide, so peaks paint across the full 20–60fps range.
+      {
+        const eased = smoothLerp(smoothProgress, scrollState.progress, 0.16, lastDt);
+        const maxStep = 1.4 * lastDt;
+        const delta = eased - smoothProgress;
+        smoothProgress =
+          Math.abs(delta) > maxStep
+            ? smoothProgress + Math.sign(delta) * maxStep
+            : eased;
+      }
       const rawP = smoothProgress;
 
       // Backdrop video: hidden during intro, fades to 30% once cubes are visible.
       if (backdropVideoRef.current) {
         backdropVideoRef.current.style.opacity = String(
           lerp01(rawP, INTRO_END, INTRO_END + 0.03) * 0.3
+        );
+      }
+      // Landing-page background video: full strength while the computer sits at
+      // rest, then fades out AS THE COMPUTER ZOOMS IN — the dive into the screen
+      // runs across introT ~0.32→0.70, so the backdrop recedes with it and is
+      // gone by the time the screen fills. Whether the dive is driven by scroll
+      // or by the Enter/Space "play like a video" autoplay, both feed the same
+      // scroll progress, so the fade follows either trigger. Reverses on
+      // scroll-up; pinned at 0 once past the intro.
+      if (introBgVideoRef.current) {
+        const introT = rawP / INTRO_END;
+        introBgVideoRef.current.style.opacity = String(
+          0.5 * Math.max(0, 1 - lerp01(introT, 0.30, 0.62))
         );
       }
 
@@ -1278,6 +1520,17 @@ export function RubiksCubeExperience() {
     return () => {
       gsap.ticker.remove(tick);
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('wheel', blockWheel);
+      window.removeEventListener('touchmove', blockTouchMove);
+      if (isTouch) {
+        window.removeEventListener('touchstart', onTouchStart);
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onTouchEnd);
+      }
+      // Never leave the page frozen if this section unmounts mid-lock.
+      scrollLockedRef.current = false;
+      lenisRef.current?.start();
       scrollTrigger.kill();
       // Dispose per-mount GPU resources (cubie/disc/particle geometries and
       // materials are all created fresh in this effect) before clearing.
@@ -1296,7 +1549,44 @@ export function RubiksCubeExperience() {
         container.removeChild(renderer.domElement);
       }
     };
-  }, { dependencies: [mounted], scope: containerRef });
+  }, { dependencies: [mounted, prefersReducedMotion], scope: containerRef });
+
+  // Reduced motion: a static, fully-visible stacked list of every message card —
+  // no pinning, no fake scroll height, no 3D, no scroll-driven opacity. Each card
+  // rests at opacity:1 (same safe resting state as the bento grid), so nothing can
+  // ever be skipped or dimmed.
+  if (prefersReducedMotion) {
+    return (
+      <section className="relative px-6 py-24 md:py-32" style={{ background: BG_COLOR }}>
+        <div className="mx-auto flex max-w-3xl flex-col gap-10">
+          <header className="text-center">
+            <p className="mb-4 font-[family-name:var(--font-body)] text-xs uppercase tracking-[0.3em] text-[var(--color-text-tertiary)]">
+              Kaizen Infotech Solutions
+            </p>
+            <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.25rem,6vw,4rem)] font-semibold leading-[1.06] tracking-tight text-[var(--color-text-primary)]">
+              Your Vision, <span className="text-[var(--color-accent-primary)]">Our Code</span>
+            </h1>
+          </header>
+          {[
+            'A scrambled Rubik’s Cube looks impossible at first — and so does your business.',
+            'Fixing everything at once only makes it worse. The right move, in the right sequence, changes everything.',
+            'We don’t force technology onto your operations. We understand your structure — then solve it, step by step.',
+            'No temporary fixes. What was complex becomes structured. What slowed you down begins to accelerate you.',
+            'Anyone can twist the cube. It takes expertise to solve it.',
+            'This is Kaizen. Built layer by layer — business-first thinking, scalable architecture, clean development, transparent execution.',
+            'Let’s Solve It — The Right Way.',
+          ].map((line, i) => (
+            <p
+              key={i}
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-6 text-lg leading-relaxed text-[var(--color-text-primary)] md:text-xl"
+            >
+              {line}
+            </p>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   if (!mounted) return <div style={{ height: `${SPACER_VH}vh`, background: BG_COLOR }} />;
 
@@ -1304,6 +1594,26 @@ export function RubiksCubeExperience() {
     <div ref={containerRef} className="relative" style={{ background: BG_COLOR }}>
       {/* All fixed elements wrapped in a single layer for visibility control */}
       <div ref={fixedLayerRef} className="transition-opacity duration-300" style={{ willChange: 'opacity' }}>
+        {/* Landing-page background video — continuous, full-bleed backdrop for the
+            opening act, sitting behind the Spline computer and the hook card.
+            objectFit:'cover' scales the 16:9 frame UP to fill the whole viewport at
+            every screen size (no letterbox gaps). Inline width/height/maxWidth beat
+            the unlayered `video{height:auto}` reset (same reason as the narrative
+            backdrop below). Capped at 50% opacity; the scroll-driven fade in the
+            tick scales within that ceiling. */}
+        <video
+          ref={introBgVideoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[-1]"
+          style={{ opacity: 0.5, width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center', background: BG_COLOR }}
+        >
+          <source src="/videos/landing-background.mp4" type="video/mp4" />
+        </video>
+
         {/* Continuous video backdrop — sits behind every layer, including Spline.
             Full-bleed cover at EVERY device size. The width/height are set inline
             (not via h-full/w-full) on purpose: the global reset
@@ -1343,22 +1653,95 @@ export function RubiksCubeExperience() {
             className="rc-spline-float"
             style={{ position: 'relative', width: SPLINE_DESIGN_W, height: SPLINE_DESIGN_H }}
           >
+            {/* Blurred poster placeholder — fills the same design-space box as the
+                Spline canvas, so it scales/positions 1:1 with it. Held until the
+                3D scene loads, then cross-fades out (the real monitor renders in
+                the exact same spot, so there's no pop). Inline width/height beat
+                the unlayered `img{height:auto}` reset (same trick as the video). */}
+            <img
+              src="/images/hero/spline-monitor-poster.jpg"
+              alt=""
+              aria-hidden
+              draggable={false}
+              style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: '100%', maxWidth: 'none',
+                objectFit: 'fill',
+                filter: 'blur(7px)',
+                transform: 'scale(1.04)',
+                opacity: splineLoaded ? 0 : 1,
+                transition: 'opacity 0.7s ease',
+                pointerEvents: 'none',
+                willChange: 'opacity',
+              }}
+            />
             {/* Zoom layer — scroll pushes IN toward the monitor screen (immersive).
                 transformOrigin is set to the screen centre in the effect. */}
             <div ref={splineZoomRef} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: -120, transformOrigin: '48% 36%', willChange: 'transform' }}>
-              <Spline
-                scene="https://prod.spline.design/bXo513RtAR9aENZB/scene.splinecode"
-                onLoad={(app: unknown) => {
-                  // Hide the pointing-hand prop, if this scene ships one (older scene did).
-                  try {
-                    const a = app as { findObjectByName?: (n: string) => { visible?: boolean } | undefined };
-                    const hand = a.findObjectByName?.('hand');
-                    if (hand) hand.visible = false;
-                  } catch {
-                    /* no-op */
-                  }
-                }}
-              />
+              {splineNearViewport && (
+                <Spline
+                  scene="https://prod.spline.design/bXo513RtAR9aENZB/scene.splinecode"
+                  onLoad={(app: unknown) => {
+                    // Keep a handle on the Spline app so the scene can be driven
+                    // imperatively (emit events, find objects) from anywhere.
+                    splineAppRef.current = app;
+
+                    // Re-trigger the CRT text typing animation imperatively — don't
+                    // rely solely on the passive load-time "Start" event, which fires
+                    // unreliably on the live site. emitEvent signature is
+                    // emitEvent(eventName, nameOrUuid); names can vary, so try a few
+                    // defensively and swallow misses.
+                    const splineApp = app as {
+                      emitEvent?: (event: string, nameOrUuid: string) => void;
+                      eventNames?: () => unknown;
+                      getAllObjects?: () => Array<{ name?: string }>;
+                    };
+                    const playIntro = () => {
+                      try {
+                        splineApp.emitEvent?.('start', 'code 2');
+                      } catch {
+                        // ignore if this event/object name doesn't exist
+                      }
+                      try {
+                        splineApp.emitEvent?.('start', 'code');
+                      } catch {
+                        /* ignore */
+                      }
+                      // TEMP diagnostics — read the real event/object names from the
+                      // browser console, then we'll remove this logging.
+                      console.log('[Spline] playIntro fired. app keys:', Object.keys(app as object));
+                      try {
+                        console.log('[Spline] eventNames:', splineApp.eventNames?.());
+                      } catch (e) {
+                        console.log('[Spline] eventNames() threw:', e);
+                      }
+                      // eventNames() is absent on this runtime build — enumerate the
+                      // scene's object names instead so the real target name (is it
+                      // exactly "code 2"?) can be confirmed from the console.
+                      try {
+                        console.log('[Spline] object names:', splineApp.getAllObjects?.().map((o) => o.name));
+                      } catch (e) {
+                        console.log('[Spline] getAllObjects() threw:', e);
+                      }
+                    };
+                    // Give the canvas a frame to finish its first paint, then play.
+                    requestAnimationFrame(() => requestAnimationFrame(playIntro));
+
+                    // Hide the pointing-hand prop, if this scene ships one (older scene did).
+                    try {
+                      const a = app as { findObjectByName?: (n: string) => { visible?: boolean } | undefined };
+                      const hand = a.findObjectByName?.('hand');
+                      if (hand) hand.visible = false;
+                    } catch {
+                      /* no-op */
+                    }
+                    // The heavy 3D scene paints late; recompute trigger positions.
+                    ScrollTrigger.refresh();
+                    // Fade the blurred poster out now that the real scene is up.
+                    setSplineLoaded(true);
+                  }}
+                />
+              )}
               {/* Mask the canvas-drawn "Built with Spline" watermark (bottom-right). */}
               <div
                 aria-hidden
@@ -1367,25 +1750,6 @@ export function RubiksCubeExperience() {
                   width: '34%', height: '11%', background: BG_COLOR, pointerEvents: 'none',
                 }}
               />
-              {/* CRT terminal boot line — old-PC welcome text on the monitor
-                  screen. Positioned at the measured CRT screen rect (converted to
-                  the zoom layer's 1320-wide box), so it sits on the screen, zooms
-                  IN during the dive, and fades with the monitor (it inherits
-                  splineRef's scroll-driven opacity). Cursor blinks via CSS. */}
-              <div
-                aria-hidden
-                className="rc-crt-screen"
-                style={{
-                  position: 'absolute',
-                  left: '35.45%', top: '20.1%', width: '24.27%', height: '32.2%',
-                  pointerEvents: 'none',
-                }}
-              >
-                <span className="rc-crt-line">
-                  Welcome to Kaizen Infotech Solutions
-                  <span className="rc-crt-cursor">&#9608;</span>
-                </span>
-              </div>
             </div>
           </div>
           </div>
@@ -1448,15 +1812,6 @@ export function RubiksCubeExperience() {
           }}
         />
 
-        {/* Side label */}
-        <div
-          ref={sideRef}
-          className="fixed right-6 top-1/2 z-10 -translate-y-1/2 rotate-90 whitespace-nowrap"
-          style={{ fontSize: '0.75rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.15)' }}
-        >
-          01 &mdash; The Scramble
-        </div>
-
         {/* Glass card layer */}
         <div className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
           {/* OPENING HOOK — left side, rises left-bottom → left-center, fades as we enter the screen */}
@@ -1479,17 +1834,14 @@ export function RubiksCubeExperience() {
 
           {/* S1: THE SCRAMBLE */}
           <div data-card="card-s1" className="rc-glass-card rc-side-right rc-card-hero" style={{ opacity: 0 }}>
-            <div className="rc-overline">&#x25c6; Kaizen</div>
             <h1 className="rc-headline rc-headline-hero">
               <span className="rc-stagger" data-stg="s1-0">A scrambled Rubik&apos;s Cube looks <em>impossible</em> at first &mdash;</span>
               <span className="rc-stagger" data-stg="s1-1">and so does your business.</span>
             </h1>
-            <div className="rc-scroll-cue"><span>Scroll</span><div className="rc-scroll-line" /></div>
           </div>
 
           {/* S2: THE FIRST MOVE */}
           <div data-card="card-s2" className="rc-glass-card rc-side-left rc-card-s2" style={{ opacity: 0 }}>
-            <div className="rc-overline">&#x25c6; Kaizen</div>
             <h2 className="rc-headline rc-headline-s2">
               <span className="rc-stagger" data-stg="s2-0">Fixing everything at once only makes it <em>worse.</em></span>
               <span className="rc-stagger" data-stg="s2-1">The right move, in the right sequence, changes everything.</span>
@@ -1498,7 +1850,6 @@ export function RubiksCubeExperience() {
 
           {/* S3: HOW WE APPLY KAIZEN */}
           <div data-card="card-s3" className="rc-glass-card rc-side-right rc-card-s3" style={{ opacity: 0 }}>
-            <div className="rc-overline">&#x25c6; Kaizen</div>
             <h2 className="rc-headline rc-headline-s3">
               <span className="rc-stagger" data-stg="s3-0">We don&apos;t force technology onto your operations.</span>
               <span className="rc-stagger" data-stg="s3-1">We <em>understand your structure</em> &mdash; then solve it, step by step.</span>
@@ -1507,7 +1858,6 @@ export function RubiksCubeExperience() {
 
           {/* S4: FROM CHAOS TO CLARITY */}
           <div data-card="card-s4" className="rc-glass-card rc-side-left rc-card-s4" style={{ opacity: 0 }}>
-            <div className="rc-overline">&#x25c6; Kaizen</div>
             <h2 className="rc-headline rc-headline-s4">
               <span className="rc-stagger" data-stg="s4-0">No temporary fixes. What was <em>complex becomes structured.</em></span>
               <span className="rc-stagger" data-stg="s4-1">What slowed you down begins to accelerate you.</span>
@@ -1532,10 +1882,6 @@ export function RubiksCubeExperience() {
           {/* S8: CTA */}
           <div data-card="card-s8" className="rc-glass-card rc-side-center rc-card-s8 rc-wide" style={{ opacity: 0 }}>
             <div className="rc-service-title rc-stagger" data-stg="s8-0">Let&apos;s Solve It &mdash; <em>The Right Way</em></div>
-            <div className="rc-cta-row rc-stagger" data-stg="s8-1">
-              <a href="/services" className="rc-cta-btn rc-cta-primary">Explore Our Services</a>
-              <a href="/contact" className="rc-cta-btn rc-cta-secondary">Talk to Our Experts</a>
-            </div>
           </div>
         </div>
       </div>

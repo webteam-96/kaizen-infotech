@@ -68,6 +68,7 @@ export function ScrollFadeIn({
             duration: ANIMATION_CONFIG.duration.fast,
             ease: ANIMATION_CONFIG.ease.smooth,
             stagger: stagger ? ANIMATION_CONFIG.stagger.fast : 0,
+            immediateRender: false,
             scrollTrigger: {
               trigger: containerRef.current,
               start,
@@ -95,6 +96,10 @@ export function ScrollFadeIn({
           delay: scrub ? 0 : delay,
           ease: ANIMATION_CONFIG.ease.snappy,
           stagger: stagger || 0,
+          // Non-scrub reveals: don't apply the {opacity:0} from-state at load,
+          // so if the trigger misfires on fast scroll the element stays visible.
+          // Scrub tweens map opacity to scroll position and are self-correcting.
+          immediateRender: scrub ? undefined : false,
           scrollTrigger: {
             trigger: containerRef.current,
             start,

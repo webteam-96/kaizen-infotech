@@ -114,12 +114,6 @@ export default function CareersPage() {
             {benefits.map((benefit) => (
               <Card key={benefit.title} tilt glow className="h-full p-8">
                 <div className="relative z-10">
-                  <span
-                    className="mb-4 block text-[length:var(--h-eyebrow)] font-medium text-[var(--color-accent-primary)]"
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                  >
-                    {benefit.icon}
-                  </span>
                   <h3
                     className="mb-3 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
                     style={{ fontFamily: 'var(--font-heading)' }}
@@ -144,7 +138,7 @@ export default function CareersPage() {
         <div className="mx-auto max-w-4xl">
           <FadeIn>
             <h2
-              className="mb-12 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
+              className="mb-12 text-[length:var(--h-section)] font-extrabold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Open Positions

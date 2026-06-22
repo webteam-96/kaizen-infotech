@@ -56,6 +56,7 @@ export function useStaggeredScrollReveal(
             duration: ANIMATION_CONFIG.duration.fast,
             ease: ANIMATION_CONFIG.ease.smooth,
             stagger: typeof stagger === 'number' ? Math.min(stagger, 0.05) : 0.05,
+            immediateRender: false,
             scrollTrigger: {
               trigger: ref.current,
               start,
@@ -74,6 +75,11 @@ export function useStaggeredScrollReveal(
           duration: ANIMATION_CONFIG.duration.normal,
           ease: ANIMATION_CONFIG.ease.snappy,
           stagger,
+          // Non-scrub reveals: keep children at their CSS default (visible)
+          // until the trigger fires, so a missed trigger on fast scroll never
+          // leaves them stuck at the {opacity:0} from-state. Scrub tweens map
+          // to scroll position and are self-correcting, so leave those alone.
+          immediateRender: scrub ? undefined : false,
           scrollTrigger: {
             trigger: ref.current,
             start,

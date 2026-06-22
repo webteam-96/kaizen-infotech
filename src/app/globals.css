@@ -54,11 +54,11 @@
   /* ── STANDARDIZED HEADING SCALE (use these tokens for ALL headings site-wide) ── */
   --h-hero:    clamp(2rem,     1.60rem + 1.15vw, 3.25rem);    /* 32 → 52 px  landing hero h1 (homepage only) */
   --h-page:    clamp(1.75rem,  1.42rem + 0.93vw, 2.75rem);    /* 28 → 44 px  inner-page hero h1 */
-  --h-section: clamp(1.375rem, 1.25rem + 0.35vw, 1.75rem);    /* 22 → 28 px  section heading h2 */
+  --h-section: clamp(2.125rem, 1.85rem + 0.8vw, 2.75rem);     /* 34 → 44 px  section heading h2 (bumped) */
   --h-card:    clamp(1.125rem, 1.04rem + 0.23vw, 1.375rem);   /* 18 → 22 px  sub-section h3 / card title */
   --h-sub:     clamp(1rem,     0.96rem + 0.12vw, 1.125rem);   /* 16 → 18 px  hero subheading / lead */
   --h-body:    clamp(1rem,     0.96rem + 0.12vw, 1.125rem);   /* 16 → 18 px  body */
-  --h-eyebrow: clamp(0.6875rem,0.65rem + 0.06vw, 0.75rem);    /* 11 → 12 px  eyebrow / overline */
+  --h-eyebrow: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);        /* 16 → 20 px  eyebrow / overline (bumped) */
 
   /* SPACING */
   --space-1: 0.25rem;
@@ -375,49 +375,6 @@ body.loader-active {
   .rc-spline-float { animation: none; }
 }
 
-/* ── CRT terminal boot line on the monitor screen (old-PC effect) ──
-   Sized in the 1200×900 frame's design space; the splineFit scale shrinks it
-   to the on-screen monitor. Phosphor-green text with a soft glow + a blinking
-   block cursor for the retro terminal feel. */
-.rc-crt-screen {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 7% 8%;
-  overflow: hidden;
-  text-align: left;
-  font-family: var(--font-mono);
-}
-.rc-crt-line {
-  font-size: 32px;
-  line-height: 1.35;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: #76ff9c;
-  text-shadow:
-    0 0 3px rgba(118, 255, 156, 0.9),
-    0 0 10px rgba(118, 255, 156, 0.55),
-    0 0 22px rgba(118, 255, 156, 0.3);
-  animation: rc-crt-textin 0.5s 0.2s ease both;
-}
-.rc-crt-cursor {
-  display: inline-block;
-  margin-left: 0.1em;
-  transform: translateY(0.05em);
-  animation: rc-crt-blink 1.05s steps(1, end) infinite;
-}
-@keyframes rc-crt-blink {
-  0%, 50%      { opacity: 1; }
-  50.01%, 100% { opacity: 0; }
-}
-@keyframes rc-crt-textin {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rc-crt-cursor,
-  .rc-crt-line { animation: none; }
-}
 .rc-side-right { right: 5vw; top: 50%; text-align: left; }
 .rc-side-left { left: 5vw; top: 50%; text-align: left; }
 .rc-side-center { left: 50%; top: 50%; text-align: center; align-items: center; }

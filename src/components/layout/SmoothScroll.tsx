@@ -27,11 +27,6 @@ export function useLenis() {
   return useContext(LenisContext);
 }
 
-function isTouchDevice(): boolean {
-  if (typeof window === 'undefined') return false;
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-
 interface SmoothScrollProps {
   children: ReactNode;
 }
@@ -59,17 +54,68 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
 
   // Initialize Lenis
   useEffect(() => {
-    const isTouch = isTouchDevice();
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Cinematic smoothing — heavier coast on desktop with a quartic ease-out.
-    // Lenis interprets `duration` as the time (in seconds) to settle from a
-    // scroll burst to rest; a higher value gives more weight/inertia.
+    // ── Shared: keep ScrollTrigger positions correct across late layout shifts ──
+    // Refresh after web fonts swap in (next/font display:swap shifts text metrics
+    // and therefore every pinned section's start/end), after window load (late
+    // images), and on resize (debounced). invalidateOnRefresh on the triggers
+    // themselves recomputes their distance functions on each refresh.
+    let fontsLoaded = false;
+    const refreshAfterFonts = () => {
+      if (fontsLoaded) return;
+      fontsLoaded = true;
+      ScrollTrigger.refresh();
+    };
+    if (typeof document !== 'undefined' && 'fonts' in document) {
+      document.fonts.ready.then(refreshAfterFonts).catch(() => {});
+    }
+    const onLoad = () => ScrollTrigger.refresh();
+    if (document.readyState === 'complete') {
+      requestAnimationFrame(() => ScrollTrigger.refresh());
+    } else {
+      window.addEventListener('load', onLoad, { once: true });
+    }
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+    const onResize = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => ScrollTrigger.refresh(), 200);
+    };
+    window.addEventListener('resize', onResize);
+
+    // ── Reduced motion: NO Lenis, NO smoothing — native browser scroll. ──
+    // ScrollTrigger listens to native scroll on its own, so scrub/pin sections
+    // (which each also kill their scrub/pin under reduced motion) still resolve
+    // to their final state. We keep a light native listener so the scroll store
+    // stays roughly in sync for any UI that reads it.
+    if (prefersReducedMotion) {
+      let lastY = window.scrollY;
+      const onNativeScroll = () => {
+        const y = window.scrollY;
+        setScrollY(y);
+        setScrollDirection(y >= lastY ? 'down' : 'up');
+        lastY = y;
+      };
+      window.addEventListener('scroll', onNativeScroll, { passive: true });
+      onNativeScroll();
+      return () => {
+        window.removeEventListener('scroll', onNativeScroll);
+        window.removeEventListener('load', onLoad);
+        window.removeEventListener('resize', onResize);
+        if (resizeTimer) clearTimeout(resizeTimer);
+      };
+    }
+
+    // ── Smooth scroll: a single Lenis instance driven by GSAP's ticker. ──
+    // Lerp-based smoothing; no separate requestAnimationFrame loop (the GSAP
+    // ticker is the sole rAF source, so Lenis + ScrollTrigger stay in lockstep).
     const instance = new Lenis({
-      duration: isTouch ? 1.0 : 1.2,
-      easing: (t: number) => 1 - Math.pow(1 - t, 4),
+      lerp: 0.1,
       wheelMultiplier: 0.9,
-      touchMultiplier: isTouch ? 1.2 : 1.8,
-      smoothWheel: !isTouch,
+      smoothWheel: true,
+      syncTouch: false,
     });
 
     lenisRef.current = instance;
@@ -78,21 +124,18 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     // Sync Lenis scroll with ScrollTrigger
     instance.on('scroll', ScrollTrigger.update);
 
-    // Use GSAP ticker for RAF sync
-    gsap.ticker.lagSmoothing(0);
+    // Drive Lenis from the GSAP ticker (no double rAF loop).
     const tickerCallback = (time: number) => {
       instance.raf(time * 1000);
     };
     gsap.ticker.add(tickerCallback);
+    gsap.ticker.lagSmoothing(0);
 
     // Velocity-driven `--scroll-skew` CSS variable on the document root.
     // Elements opt in via `transform: skewY(var(--scroll-skew, 0deg))` (see
     // the `.rc-scroll-skew` helper in globals.css). The hero owns its own
     // RAF transforms; using a CSS var keeps the two systems composable
     // instead of fighting per-frame.
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let smoothedVelocity = 0;
     const updateSkew = (velocity: number) => {
       if (prefersReducedMotion) return;
@@ -135,31 +178,6 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
 
     instance.on('scroll', handleScroll);
 
-    // Refresh ScrollTrigger after web fonts swap in. next/font with
-    // display: 'swap' shifts text metrics on load, which can move every
-    // pinned section's `start`/`end` boundaries by a few pixels. We also
-    // refresh once after the window load event so any late-loading
-    // images (hero, project cards) recompute trigger positions.
-    let fontsLoaded = false;
-    const refreshAfterFonts = () => {
-      if (fontsLoaded) return;
-      fontsLoaded = true;
-      ScrollTrigger.refresh();
-    };
-    if (typeof document !== 'undefined' && 'fonts' in document) {
-      document.fonts.ready.then(refreshAfterFonts).catch(() => {
-        /* noop — fall through to window.load */
-      });
-    }
-    const onLoad = () => ScrollTrigger.refresh();
-    if (document.readyState === 'complete') {
-      // Already loaded — schedule a refresh on the next frame so the
-      // ScrollTriggers created by sibling effects have time to register.
-      requestAnimationFrame(() => ScrollTrigger.refresh());
-    } else {
-      window.addEventListener('load', onLoad, { once: true });
-    }
-
     return () => {
       gsap.ticker.remove(tickerCallback);
       instance.off('scroll', handleScroll);
@@ -167,6 +185,8 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       instance.destroy();
       lenisRef.current = null;
       window.removeEventListener('load', onLoad);
+      window.removeEventListener('resize', onResize);
+      if (resizeTimer) clearTimeout(resizeTimer);
 
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);

@@ -7,7 +7,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { FadeIn } from '@/components/animation/FadeIn';
-import { CountUp } from '@/components/animation/CountUp';
 import { projects } from '@/content/projects';
 import { cn } from '@/lib/utils/cn';
 
@@ -64,9 +63,9 @@ export function FeaturedWork() {
         trigger: sectionRef.current,
         start: 'top top',
         end: 'bottom bottom',
-        // 0.8s scrub gives enough lag-smoothing to feel cinematic without
-        // the noticeable "drag" the previous 1.5 introduced.
-        scrub: 0.8,
+        // Consistent 0.5s scrub: smooth catch-up on fast scroll without drag.
+        scrub: 0.5,
+        invalidateOnRefresh: true,
         onUpdate: (self) => {
           const p = self.progress;
 
@@ -176,18 +175,12 @@ export function FeaturedWork() {
             >
               Real-World Digital Solutions Built for Scale
             </h2>
-            <span
-              className="mt-4 inline-block text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            >
-              0<CountUp end={projects.length} /> Projects
-            </span>
           </FadeIn>
         </div>
       </div>
 
       {/* Scroll area — drives the animation */}
-      <div ref={sectionRef} style={{ height: `${N * 100}vh` }} className="relative">
+      <div ref={sectionRef} style={{ height: `${N * 70}vh` }} className="relative">
         {/* Sticky viewport */}
         <div className="sticky top-0 flex flex-col min-h-[760px] h-[80vh] items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
           {/* Card stack */}

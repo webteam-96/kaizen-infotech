@@ -54,7 +54,7 @@ export function Hero() {
             trigger: sectionRef.current,
             start: 'top top',
             end: '100px top',
-            scrub: true,
+            scrub: 0.5,
           },
         });
       }

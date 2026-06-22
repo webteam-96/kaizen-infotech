@@ -53,6 +53,7 @@ export function TextReveal({
             opacity: 1,
             duration: ANIMATION_CONFIG.duration.fast,
             ease: ANIMATION_CONFIG.ease.smooth,
+            immediateRender: false,
             scrollTrigger: {
               trigger: containerRef.current,
               start: ANIMATION_CONFIG.scrollTrigger.start,
@@ -98,6 +99,10 @@ export function TextReveal({
           ease: ANIMATION_CONFIG.ease.textReveal,
           stagger,
           delay,
+          // Non-scrub reveals: keep the split spans at their CSS default
+          // (visible) until the trigger fires, so a missed trigger on fast
+          // scroll never leaves the text stuck at opacity:0.
+          immediateRender: scrub ? undefined : false,
         }
       );
 

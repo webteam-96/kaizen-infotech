@@ -206,8 +206,8 @@ export default function KaizenValues() {
 function Header() {
   return (
     <div className="text-center">
-      <span className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-500">Our Values</span>
-      <h2 className="mt-2 font-[family-name:var(--font-heading)] text-4xl font-bold text-slate-900 sm:text-5xl">The Kaizen Way</h2>
+      <span className="text-[length:var(--h-eyebrow)] font-semibold uppercase tracking-[0.2em] text-sky-500">Our Values</span>
+      <h2 className="mt-2 font-[family-name:var(--font-heading)] text-[length:var(--h-section)] font-bold text-slate-900">The Kaizen Way</h2>
     </div>
   );
 }
