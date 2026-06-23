@@ -43,6 +43,7 @@ export function DrawSVG({
             opacity: 1,
             duration: ANIMATION_CONFIG.duration.fast,
             ease: ANIMATION_CONFIG.ease.smooth,
+            immediateRender: false,
             scrollTrigger: {
               trigger: containerRef.current,
               start: ANIMATION_CONFIG.scrollTrigger.start,

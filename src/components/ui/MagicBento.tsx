@@ -13,7 +13,7 @@ const MOBILE_BREAKPOINT = 768;
 export interface BentoCardData {
   title: string;
   description: string;
-  label: string;
+  label?: string;
   color?: string;
 }
 
@@ -545,9 +545,11 @@ export default function MagicBento({
 
           const cardBody = (
             <>
-              <div className="magic-bento-card__header">
-                <div className="magic-bento-card__label">{card.label}</div>
-              </div>
+              {card.label && (
+                <div className="magic-bento-card__header">
+                  <div className="magic-bento-card__label">{card.label}</div>
+                </div>
+              )}
               <div className="magic-bento-card__content">
                 <h3 className="magic-bento-card__title">{card.title}</h3>
                 <p className="magic-bento-card__description">{card.description}</p>

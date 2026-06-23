@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
@@ -41,7 +40,6 @@ export function PageHero({
   title,
   accentWords = [],
   description,
-  breadcrumbs,
   stats,
   align = 'left',
   children,
@@ -116,35 +114,6 @@ export function PageHero({
       </div>
 
       <div className={cn('mx-auto w-full max-w-7xl', centered && 'text-center')}>
-        {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav aria-label="Breadcrumb" data-ph-rest className="mb-6 opacity-0">
-            <ol
-              className={cn(
-                'flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[var(--color-text-tertiary)]',
-                centered && 'justify-center'
-              )}
-            >
-              {breadcrumbs.map((crumb, i) => (
-                <li key={crumb.label} className="flex items-center gap-2">
-                  {i > 0 && <span aria-hidden>/</span>}
-                  {crumb.href ? (
-                    <Link
-                      href={crumb.href}
-                      className="focus-ring transition-colors hover:text-[var(--color-accent-primary)]"
-                    >
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span aria-current="page" className="text-[var(--color-text-secondary)]">
-                      {crumb.label}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </nav>
-        )}
-
         <p
           data-ph-rest
           className="mb-5 font-mono text-xs uppercase tracking-[0.24em] text-[var(--color-accent-primary)] opacity-0"

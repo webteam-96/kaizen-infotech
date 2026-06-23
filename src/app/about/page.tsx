@@ -319,7 +319,7 @@ export default function AboutPage() {
             <TextReveal
               as="h2"
               splitBy="words"
-              className="heading-responsive font-semibold leading-tight text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
             >
               A Decade of Delivering Impact
             </TextReveal>

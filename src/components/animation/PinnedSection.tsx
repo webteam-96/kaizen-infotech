@@ -35,7 +35,9 @@ export function PinnedSection({
         end: duration,
         pin: true,
         pinSpacing,
+        anticipatePin: 1,
         scrub: ANIMATION_CONFIG.scrub.smooth,
+        invalidateOnRefresh: true,
         onUpdate: onProgress
           ? (self) => onProgress(self.progress)
           : undefined,

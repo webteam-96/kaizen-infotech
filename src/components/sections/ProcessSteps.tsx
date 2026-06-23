@@ -2,35 +2,45 @@
 
 import { useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
+import { Search, PenTool, Code2, Rocket, type LucideIcon } from 'lucide-react';
 import { gsap, ScrollTrigger, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { useReducedMotion } from '@/hooks';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { cn } from '@/lib/utils/cn';
 
-const steps = [
+const steps: {
+  number: string;
+  title: string;
+  description: string;
+  Icon: LucideIcon;
+}[] = [
   {
     number: '01',
     title: 'Understand',
     description:
       'We deeply understand your business goals, users, and operational challenges before writing a single line of code.',
+    Icon: Search,
   },
   {
     number: '02',
     title: 'Design',
     description:
       'We create secure, scalable solution architectures aligned with your long-term growth objectives.',
+    Icon: PenTool,
   },
   {
     number: '03',
     title: 'Develop',
     description:
       'We follow clean coding practices with rigorous testing and performance optimisation throughout development.',
+    Icon: Code2,
   },
   {
     number: '04',
     title: 'Deploy & Support',
     description:
       'We ensure smooth deployment with continuous post-launch support, maintenance, and enhancements.',
+    Icon: Rocket,
   },
 ];
 
@@ -92,7 +102,8 @@ export function ProcessSteps() {
         start:              'top top',
         end:                () => `+=${getTravel()}`,
         pin:                true,
-        scrub:              1,
+        anticipatePin:      1,
+        scrub:              0.5,
         animation:          tween,
         invalidateOnRefresh: true,
 
@@ -146,7 +157,7 @@ export function ProcessSteps() {
       ref={sectionRef}
       data-section-index={5}
       className={cn(
-        'relative flex flex-col overflow-hidden bg-[var(--color-bg-primary)]',
+        'relative flex flex-col overflow-hidden section-light-aura seam-blue',
         // Desktop: full-viewport height for the GSAP pin.
         'h-auto md:h-screen',
       )}
@@ -234,18 +245,17 @@ export function ProcessSteps() {
 
               {/* ── Foreground content ─────────────────────────── */}
               <div className="relative z-10 px-[clamp(2.5rem,6vw,6rem)]">
-                {/* Step badge */}
+                {/* Step badge — icon in circle, above the content */}
                 <div
                   className={cn(
-                    'mb-6 flex h-11 w-11 items-center justify-center rounded-full border-2',
-                    'font-[family-name:var(--font-mono)] text-[length:var(--text-sm)] font-bold',
+                    'mb-6 flex h-14 w-14 items-center justify-center rounded-full border-2',
                     'transition-all duration-500',
                     activeStep === i
                       ? 'border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] text-[var(--color-text-inverse)] shadow-[0_0_20px_rgba(33,150,243,0.28)]'
                       : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]',
                   )}
                 >
-                  {step.number}
+                  <step.Icon className="h-6 w-6" strokeWidth={1.75} />
                 </div>
 
                 <h3
@@ -295,19 +305,17 @@ export function ProcessSteps() {
             {steps.map((step, i) => (
               <div
                 key={step.number}
+                aria-hidden
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full border-2',
-                  'font-[family-name:var(--font-mono)] text-[length:var(--text-xs)] font-bold',
+                  'h-4 w-4 rounded-full border-2',
                   'bg-[var(--color-bg-primary)] transition-all duration-500',
                   activeStep === i
-                    ? 'scale-110 border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] text-[var(--color-text-inverse)] shadow-[0_0_12px_rgba(33,150,243,0.35)]'
+                    ? 'scale-125 border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] shadow-[0_0_12px_rgba(33,150,243,0.35)]'
                     : i < activeStep
-                      ? 'border-[var(--color-accent-primary)]/50 text-[var(--color-text-tertiary)]'
-                      : 'border-[var(--color-border)] text-[var(--color-text-tertiary)]',
+                      ? 'border-[var(--color-accent-primary)]/50 bg-[var(--color-accent-primary)]/40'
+                      : 'border-[var(--color-border)]',
                 )}
-              >
-                {step.number}
-              </div>
+              />
             ))}
           </div>
         </div>

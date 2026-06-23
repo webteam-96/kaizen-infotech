@@ -44,6 +44,8 @@ export function useScrollTrigger(
         end,
         scrub,
         pin,
+        anticipatePin: pin ? 1 : 0,
+        invalidateOnRefresh: true,
         markers,
         toggleActions: scrub ? undefined : toggleActions,
         once,

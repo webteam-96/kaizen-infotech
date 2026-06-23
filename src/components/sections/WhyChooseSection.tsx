@@ -28,7 +28,7 @@ export function WhyChooseSection() {
   return (
     <section
       data-section-index={8}
-      className="bg-[var(--color-bg-primary)] py-[var(--space-section)]"
+      className="relative section-light-aura seam-red py-[var(--space-section)]"
     >
       <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
         <div className="mb-16 text-center">
@@ -58,7 +58,7 @@ export function WhyChooseSection() {
           {reasons.map((reason) => (
             <div key={reason.title} className="flex gap-4">
               <ParallaxLayer speed={0.15} className="shrink-0">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(192,0,0,0.08)] text-[var(--red-brand)] ring-1 ring-[rgba(192,0,0,0.18)]">
                   <DrawSVG>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path d="M5 10L8.5 13.5L15 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

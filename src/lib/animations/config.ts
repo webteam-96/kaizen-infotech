@@ -29,11 +29,15 @@ export const ANIMATION_CONFIG = {
     edges: { each: 0.08, from: 'edges' as const },
     random: { each: 0.1, from: 'random' as const },
   },
+  // Single consistent scrub value across the site. A small numeric scrub (0.5s)
+  // lets scroll-linked tweens smoothly *catch up* on fast scroll instead of
+  // jumping/skipping, while staying tight enough to feel responsive. The keys
+  // are kept (call sites reference them) but all resolve to the same value.
   scrub: {
     tight: 0.5,
-    smooth: 1.8,
-    cinematic: 3.5,
-    heavy: 5,
+    smooth: 0.5,
+    cinematic: 0.5,
+    heavy: 0.5,
   },
   reducedMotion: {
     respectPreference: true,

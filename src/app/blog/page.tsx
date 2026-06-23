@@ -251,7 +251,7 @@ export default function BlogPage() {
         <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
             <h2
-              className="mb-4 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
+              className="mb-4 text-[length:var(--h-section)] font-extrabold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Stay in the Loop

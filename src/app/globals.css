@@ -54,11 +54,11 @@
   /* ── STANDARDIZED HEADING SCALE (use these tokens for ALL headings site-wide) ── */
   --h-hero:    clamp(2rem,     1.60rem + 1.15vw, 3.25rem);    /* 32 → 52 px  landing hero h1 (homepage only) */
   --h-page:    clamp(1.75rem,  1.42rem + 0.93vw, 2.75rem);    /* 28 → 44 px  inner-page hero h1 */
-  --h-section: clamp(1.375rem, 1.25rem + 0.35vw, 1.75rem);    /* 22 → 28 px  section heading h2 */
+  --h-section: clamp(2.125rem, 1.85rem + 0.8vw, 2.75rem);     /* 34 → 44 px  section heading h2 (bumped) */
   --h-card:    clamp(1.125rem, 1.04rem + 0.23vw, 1.375rem);   /* 18 → 22 px  sub-section h3 / card title */
   --h-sub:     clamp(1rem,     0.96rem + 0.12vw, 1.125rem);   /* 16 → 18 px  hero subheading / lead */
   --h-body:    clamp(1rem,     0.96rem + 0.12vw, 1.125rem);   /* 16 → 18 px  body */
-  --h-eyebrow: clamp(0.6875rem,0.65rem + 0.06vw, 0.75rem);    /* 11 → 12 px  eyebrow / overline */
+  --h-eyebrow: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);        /* 16 → 20 px  eyebrow / overline (bumped) */
 
   /* SPACING */
   --space-1: 0.25rem;
@@ -130,6 +130,41 @@
   --accent-10: rgba(33, 150, 243, 0.1);
   --accent-20: rgba(33, 150, 243, 0.2);
   --accent-30: rgba(33, 150, 243, 0.3);
+
+  /* ── EXPANDED BLUE RANGE (sky → azure → deep navy) ──
+     A full premium blue ladder so accents can vary in temperature/depth
+     instead of repeating one flat #2196F3. */
+  --blue-50:   #EAF3FB;   /* lightest wash — tint surfaces */
+  --blue-100:  #D6E8F7;
+  --blue-200:  #A9D3F0;
+  --blue-sky:  #87CEEB;   /* brand light blue */
+  --blue-bright: #5AB6F7; /* bright (on-ink accent) */
+  --blue-azure: #2196F3;  /* brand primary */
+  --blue-600:  #1976D2;
+  --blue-700:  #1565C0;   /* deep */
+  --blue-800:  #0D47A1;
+  --blue-navy: #0E1B2C;   /* darkest — ink surface */
+
+  /* ── EXPANDED RED RANGE (coral → crimson → deep maroon) ── */
+  --red-soft:    #F4D7D7;  /* faint red wash */
+  --red-coral:   #E5546B;
+  --red-crimson: #D32030;
+  --red-brand:   #C00000;  /* brand warm accent */
+  --red-deep:    #8B0000;
+  --red-maroon:  #6A0000;
+
+  /* ── ALTERNATING-RHYTHM SURFACES ──
+     Tinted light band: a soft blue-tinted surface that sits between pure
+     white sections and the dark ink bands, giving a clear light/dark cadence
+     without re-theming the heavy sections. */
+  --color-bg-tint: #EDF4FB;
+
+  /* Soft red/blue rgba helpers for glows + seams */
+  --blue-glow-08: rgba(33, 150, 243, 0.08);
+  --blue-glow-12: rgba(33, 150, 243, 0.12);
+  --sky-glow-16:  rgba(135, 206, 235, 0.16);
+  --red-glow-05:  rgba(192, 0, 0, 0.05);
+  --red-glow-10:  rgba(192, 0, 0, 0.10);
 }
 
 /* Tailwind v4 theme integration */
@@ -375,49 +410,6 @@ body.loader-active {
   .rc-spline-float { animation: none; }
 }
 
-/* ── CRT terminal boot line on the monitor screen (old-PC effect) ──
-   Sized in the 1200×900 frame's design space; the splineFit scale shrinks it
-   to the on-screen monitor. Phosphor-green text with a soft glow + a blinking
-   block cursor for the retro terminal feel. */
-.rc-crt-screen {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 7% 8%;
-  overflow: hidden;
-  text-align: left;
-  font-family: var(--font-mono);
-}
-.rc-crt-line {
-  font-size: 32px;
-  line-height: 1.35;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: #76ff9c;
-  text-shadow:
-    0 0 3px rgba(118, 255, 156, 0.9),
-    0 0 10px rgba(118, 255, 156, 0.55),
-    0 0 22px rgba(118, 255, 156, 0.3);
-  animation: rc-crt-textin 0.5s 0.2s ease both;
-}
-.rc-crt-cursor {
-  display: inline-block;
-  margin-left: 0.1em;
-  transform: translateY(0.05em);
-  animation: rc-crt-blink 1.05s steps(1, end) infinite;
-}
-@keyframes rc-crt-blink {
-  0%, 50%      { opacity: 1; }
-  50.01%, 100% { opacity: 0; }
-}
-@keyframes rc-crt-textin {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rc-crt-cursor,
-  .rc-crt-line { animation: none; }
-}
 .rc-side-right { right: 5vw; top: 50%; text-align: left; }
 .rc-side-left { left: 5vw; top: 50%; text-align: left; }
 .rc-side-center { left: 50%; top: 50%; text-align: center; align-items: center; }
@@ -844,6 +836,107 @@ html, body { max-width: 100%; overflow-x: clip; }
   .section-ink .focus-ring:focus-visible {
     outline-color: var(--accent-on-ink);
   }
+
+  /* ===== Tinted light band =====
+     The "in-between" surface in the light/dark rhythm. A soft blue-tinted
+     base plus two faint radial glows (azure + sky) so it never reads flat.
+     Text stays dark — this is a LIGHT band, just cooler than pure white.
+     Glows live in background-image so they always paint behind content with
+     no extra DOM or z-index juggling. */
+  .section-tint {
+    background-color: var(--color-bg-tint);
+    background-image:
+      radial-gradient(44rem 44rem at 14% 14%, var(--blue-glow-12), transparent 60%),
+      radial-gradient(40rem 40rem at 88% 86%, var(--sky-glow-16), transparent 62%);
+  }
+
+  /* ===== Faint aura on pure-white bands =====
+     Keeps the white sections from feeling empty — a whisper of blue in one
+     corner and an even fainter red in the other, for the "pinch of colour". */
+  .section-light-aura {
+    background-color: var(--color-bg-primary);
+    background-image:
+      radial-gradient(46rem 46rem at 84% 8%, var(--blue-glow-08), transparent 58%),
+      radial-gradient(38rem 38rem at 8% 92%, var(--red-glow-05), transparent 58%);
+  }
+
+  /* ── Warm (red) counterparts — used to interleave red into the rhythm so
+        the page isn't blue-dominant. Same construction, warm hues, dark text. */
+  .section-tint-red {
+    background-color: #FBF1F1;
+    background-image:
+      radial-gradient(44rem 44rem at 14% 14%, var(--red-glow-10), transparent 60%),
+      radial-gradient(40rem 40rem at 88% 86%, rgba(229, 84, 107, 0.10), transparent 62%);
+  }
+  .section-aura-red {
+    background-color: var(--color-bg-primary);
+    background-image:
+      radial-gradient(46rem 46rem at 84% 8%, var(--red-glow-10), transparent 58%),
+      radial-gradient(38rem 38rem at 8% 92%, var(--blue-glow-08), transparent 58%);
+  }
+}
+
+/* ===== Section seams — the "pinch of colour between sections" =====
+   A glowing hairline across the very top edge of a section, alternating blue
+   and red down the page. Sits in the top padding gutter (z above the band's
+   own background, below content), so it reads as a divider between the
+   previous section and this one. Unlayered so it isn't overridden by utils. */
+.seam-blue,
+.seam-red { position: relative; }
+.seam-blue::before,
+.seam-red::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  z-index: 3;
+}
+.seam-blue::before {
+  background: linear-gradient(90deg, transparent 8%, rgba(33, 150, 243, 0.55) 50%, transparent 92%);
+  box-shadow: 0 0 26px 2px rgba(33, 150, 243, 0.22);
+}
+.seam-red::before {
+  background: linear-gradient(90deg, transparent 12%, rgba(192, 0, 0, 0.45) 50%, transparent 88%);
+  box-shadow: 0 0 26px 2px rgba(192, 0, 0, 0.16);
+}
+@media (prefers-reduced-motion: reduce) {
+  .seam-blue::before,
+  .seam-red::before { box-shadow: none; }
+}
+
+/* ===== Per-section card identities =====
+   Each card-bearing section gets a signature edge accent so its cards read as
+   one set, yet clearly differ from neighbouring sections. These touch only
+   ::before/::after + colour — never transform/opacity, which are GSAP-owned. */
+
+/* Services deck — glass card with a thin red top accent bar (red = the small
+   highlight accent; the card body stays on the blue light surface). */
+.card-services::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--red-brand), var(--red-crimson) 55%, var(--red-coral));
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* Featured work — warm card with a red left "spine" accent. */
+.card-work::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--red-crimson), var(--red-brand));
+  z-index: 6;
+  pointer-events: none;
 }
 
 /* Secondary/ghost buttons inside ink bands — unlayered so it beats the

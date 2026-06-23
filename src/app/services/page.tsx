@@ -116,22 +116,22 @@ export default function ServicesPage() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services' }]}
       >
         {/* Animated keyword rotation — keep AnimatePresence for interaction-driven animation */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span
-            className="text-[length:var(--h-sub)] text-[var(--color-text-secondary)]"
+            className="text-[length:var(--h-section)] text-[var(--color-text-secondary)]"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             We specialize in
           </span>
-          <div className="relative h-8 w-36 overflow-hidden">
+          <div className="relative h-12 w-56 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
                 key={keywords[keywordIndex]}
-                initial={{ y: 24, opacity: 0 }}
+                initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -24, opacity: 0 }}
+                exit={{ y: -30, opacity: 0 }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute left-0 top-0 text-[length:var(--h-sub)] font-semibold text-[var(--color-accent-primary)]"
+                className="absolute left-0 top-0 text-[length:var(--h-section)] font-semibold text-[var(--color-accent-primary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {keywords[keywordIndex]}
@@ -249,7 +249,7 @@ export default function ServicesPage() {
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
-              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-extrabold leading-[1.2] text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Let&apos;s Discuss Your Project

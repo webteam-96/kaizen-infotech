@@ -73,6 +73,11 @@ function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+// Frame-rate-independent exponential smoothing. `tau` ≈ time (s) to reach 63%.
+function smoothLerp(current: number, target: number, tau: number, dt: number) {
+  return current + (target - current) * (1 - Math.exp(-dt / tau));
+}
+
 // ---------------------------------------------------------------------------
 // Phase boundaries (unchanged from original)
 // ---------------------------------------------------------------------------
@@ -170,6 +175,9 @@ export function ServicesScroll() {
 
   useGSAP(
     () => {
+      // Reduced motion: no pinned carousel at all — a static grid is rendered
+      // instead (see below), so skip the entire scroll-scrubbed setup.
+      if (prefersReducedMotion) return;
       if (!sectionRef.current || !deckRef.current) return;
 
       // Responsive spotlight spacing. Desktop stays 620; phones & iPad-portrait
@@ -315,7 +323,9 @@ export function ServicesScroll() {
             s.y(off.y * (1 - t));
             s.rotation(prefersReducedMotion ? 0 : off.r * (1 - t));
             s.scale(prefersReducedMotion ? 1 : 1 - t * 0.15);
-            s.opacity(1 - t * 0.15);
+            // Card 0 is the spotlight during the spread — keep it fully opaque.
+            s.opacity(i === 0 ? 1 : 1 - t * 0.15);
+            card.style.visibility = 'visible';
             card.style.zIndex = String(i);
           });
 
@@ -349,7 +359,11 @@ export function ServicesScroll() {
               ? 0.97 + proxSmooth * 0.03           // subtle: 0.97 → 1.00
               : 0.90 + proxSmooth * 0.15;           // standard: 0.90 → 1.05
 
-            const op    = 0.72 + proxSmooth * 0.28; // inactive 0.72, active 1.0
+            // The nearest card is FORCED to a full opacity:1 target (not the
+            // proxSmooth fraction). This guarantees the deck always settles with a
+            // fully-readable card — fixing the measured "stuck at 0.72–0.92" end
+            // states — regardless of where between centers the scroll comes to rest.
+            const op    = i === idx ? 1 : 0.72 + proxSmooth * 0.28;
             const yLift = prefersReducedMotion ? 0 : -proxSmooth * 24;
 
             const shadowBlur  = 12 + proxSmooth * 28;
@@ -363,6 +377,7 @@ export function ServicesScroll() {
             s.scale(sc);
             s.opacity(op);
             s.boxShadow(shadow);
+            card.style.visibility = 'visible';
             card.style.zIndex = String(Math.round(proxSmooth * 10));
           });
 
@@ -407,22 +422,62 @@ export function ServicesScroll() {
            AFTER — blank
            ═══════════════════════════════════════════ */
         else {
-          setters.forEach((s) => s.opacity(0));
+          cards.forEach((card, i) => {
+            setters[i].opacity(0);
+            card.style.visibility = 'hidden'; // autoAlpha-style safe hidden state
+          });
         }
       }
 
-      // scrub: true = progress tied exactly to scroll position; the CSS
-      // transition on each .deck-card (0.45s easeOutQuint) provides all
-      // visual smoothing without adding GSAP's own lag on top.
-      ScrollTrigger.create({
+      // ── Decouple the render from raw scroll ──────────────────────────────────
+      // The trigger only RECORDS the scroll progress; a GSAP-ticker loop eases a
+      // smoothed value toward it AND hard-caps the per-frame change. A fast flick
+      // can therefore no longer jump the carousel past a card between two frames,
+      // so every card's opacity peak renders and the deck settles on a card at
+      // opacity:1 (combined with the forced active=1 above). scrub:1 keeps the
+      // recorded value itself from teleporting.
+      const deckState = { progress: 0 };
+      let deckSmooth = 0;
+      let deckActive = false;
+
+      const trigger = ScrollTrigger.create({
         trigger: section,
         start:   'top top',
         end:     'bottom bottom',
-        scrub:   true,
-        onUpdate: (self) => render(self.progress),
+        scrub:   1,
+        invalidateOnRefresh: true,
+        onUpdate:  (self) => { deckState.progress = self.progress; },
+        onToggle:  (self) => { deckActive = self.isActive; },
+        // Snapshot on refresh: re-seat the smoothed value on the real position and
+        // re-render so a resize/font-swap never leaves a card stuck mid-fade.
+        onRefresh: (self) => {
+          deckState.progress = self.progress;
+          deckSmooth = self.progress;
+          render(self.progress);
+        },
       });
 
+      const deckTick = (_time: number, deltaTime: number) => {
+        if (!deckActive) return;
+        const dt = Math.min(0.05, Math.max(0.001, deltaTime / 1000));
+        const eased = smoothLerp(deckSmooth, deckState.progress, 0.2, dt);
+        // 1.2 progress/sec: low enough that a flick can't jump the carousel past a
+        // card center between frames, high enough to avoid visible lag against the
+        // CSS-sticky deck at the section edges. Forced active=1 is the rest backstop.
+        const maxStep = 1.2 * dt;
+        const d = eased - deckSmooth;
+        deckSmooth =
+          Math.abs(d) > maxStep ? deckSmooth + Math.sign(d) * maxStep : eased;
+        render(deckSmooth);
+      };
+      gsap.ticker.add(deckTick);
+
       render(0);
+
+      return () => {
+        gsap.ticker.remove(deckTick);
+        trigger.kill();
+      };
     },
     { scope: sectionRef, dependencies: [prefersReducedMotion, metrics] },
   );
@@ -433,8 +488,42 @@ export function ServicesScroll() {
     ? 'opacity 0.3s ease'
     : 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease';
 
+  // Reduced motion: a static, fully-visible grid of all services — no sticky, no
+  // pinning, no fake scroll height, no scroll-scrubbed opacity. Every card rests
+  // at opacity:1, so nothing can be skipped or left dim at any scroll speed.
+  if (prefersReducedMotion) {
+    return (
+      <section data-section-index={2} className="section-light-aura seam-red px-[var(--container-padding)] py-24 md:py-32">
+        <div className="mx-auto max-w-[var(--container-max)]">
+          <div className="mb-12">
+            <span
+              className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              Our Services
+            </span>
+            <h2 className="mt-1 font-display text-[length:var(--h-section)] tracking-tight text-[var(--color-text-primary)]">
+              End-to-End Technology Services
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {services.map((service, i) => (
+              <ServiceCard
+                key={service.id}
+                icon={serviceIcons[i] || serviceIcons[0]}
+                title={service.title}
+                description={service.description}
+                isActive
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <div data-section-index={2}>
+    <div data-section-index={2} className="seam-red">
 
       {/* Off-screen probe — measures the natural card height at the current
           mobile width so the pinned deck box is tall enough to avoid clipping.
@@ -463,45 +552,30 @@ export function ServicesScroll() {
       <section
         ref={sectionRef}
         className="relative block"
-        style={{ height: '600vh' }}
+        style={{ height: '400vh' }}
       >
         {/*
           perspective here creates the shared 3D vanishing point for all
           .deck-card children so GSAP rotation/scale look natural in 3D space.
         */}
         <div
-          className="sticky top-0 flex h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]"
+          className="sticky top-0 flex h-screen items-center justify-center overflow-hidden section-light-aura"
           style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
         >
           {/* Header */}
           <div className="absolute left-0 right-0 top-20 z-10 flex items-start justify-between px-[var(--container-padding)] min-[820px]:top-8">
             <div>
-              <div className="flex items-baseline gap-4">
-                <span
-                  className="text-xs font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  Our Services
-                </span>
-                <span
-                  className="text-xs text-[var(--color-accent-primary)]"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                >
-                  01
-                </span>
-              </div>
-              <h2 className="mt-1 font-display text-lg tracking-tight text-[var(--color-text-primary)] xl:text-xl">
+              <span
+                className="text-[length:var(--h-eyebrow)] font-medium uppercase tracking-widest text-[var(--color-text-tertiary)]"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
+                Our Services
+              </span>
+              <h2 className="mt-1 font-display text-[length:var(--h-section)] tracking-tight text-[var(--color-text-primary)]">
                 End-to-End Technology Services
               </h2>
             </div>
             <div className="flex flex-col items-end gap-1.5">
-              <span
-                ref={counterRef}
-                className="text-xs text-[var(--color-text-tertiary)]"
-                style={{ fontFamily: 'var(--font-mono)' }}
-              >
-                01 / {String(services.length).padStart(2, '0')}
-              </span>
               <Link
                 href="/services"
                 className="focus-ring text-sm font-medium text-[var(--color-accent-primary)] transition-colors hover:text-[var(--color-text-primary)]"

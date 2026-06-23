@@ -75,7 +75,7 @@ export function CTASection() {
   return (
     <section
       data-section-index={9}
-      className="section-ink relative flex min-h-screen items-center justify-center overflow-hidden"
+      className="section-ink seam-blue relative flex min-h-screen items-center justify-center overflow-hidden"
     >
       {/* Parallax orbs */}
       <div
@@ -84,7 +84,7 @@ export function CTASection() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 70% 50% at 50% 50%, var(--color-accent-primary)/0.1 0%, transparent 70%)',
+            'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(33, 150, 243, 0.14) 0%, transparent 70%)',
         }}
       />
       <div
@@ -93,7 +93,7 @@ export function CTASection() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 40% 60% at 70% 40%, var(--color-accent-secondary)/0.08 0%, transparent 60%)',
+            'radial-gradient(ellipse 40% 60% at 70% 40%, rgba(135, 206, 235, 0.12) 0%, transparent 60%)',
         }}
       />
       <div
@@ -102,7 +102,7 @@ export function CTASection() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 30% 30% at 20% 70%, var(--color-accent-primary)/0.06 0%, transparent 50%)',
+            'radial-gradient(ellipse 34% 34% at 20% 72%, rgba(192, 0, 0, 0.12) 0%, transparent 55%)',
         }}
       />
 

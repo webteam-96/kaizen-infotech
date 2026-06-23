@@ -97,7 +97,8 @@ export function ServiceCardDeck() {
         trigger: containerRef.current,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 1.2,
+        scrub: 0.5,
+        invalidateOnRefresh: true,
       },
     });
 

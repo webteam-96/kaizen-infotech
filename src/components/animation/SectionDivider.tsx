@@ -56,6 +56,9 @@ export function SectionDivider({
               duration: ANIMATION_CONFIG.duration.fast,
               ease: ANIMATION_CONFIG.ease.snappy,
               stagger: ANIMATION_CONFIG.stagger.fast,
+              // Non-scrub reveals: don't apply the {opacity:0,scale:0} from-state
+              // at load so a missed trigger on fast scroll leaves dots visible.
+              immediateRender: scrub ? undefined : false,
               scrollTrigger: {
                 trigger: containerRef.current,
                 start: ANIMATION_CONFIG.scrollTrigger.start,

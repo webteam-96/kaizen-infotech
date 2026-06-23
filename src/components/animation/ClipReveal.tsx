@@ -58,6 +58,7 @@ export function ClipReveal({
             opacity: 1,
             duration: ANIMATION_CONFIG.duration.fast,
             ease: ANIMATION_CONFIG.ease.smooth,
+            immediateRender: false,
             scrollTrigger: {
               trigger: ref.current,
               start: ANIMATION_CONFIG.scrollTrigger.start,
@@ -77,6 +78,9 @@ export function ClipReveal({
           duration,
           delay,
           ease: ANIMATION_CONFIG.ease.cinematic,
+          // Non-scrub reveal: don't apply the clipped from-state at load, so a
+          // missed trigger on fast scroll leaves the content fully visible.
+          immediateRender: false,
           scrollTrigger: {
             trigger: ref.current,
             start: ANIMATION_CONFIG.scrollTrigger.start,

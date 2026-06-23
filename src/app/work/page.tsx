@@ -98,7 +98,7 @@ export default function WorkPage() {
         <div className="mx-auto max-w-7xl text-center">
           <ScrollFadeIn>
             <h2
-              className="mb-6 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
+              className="mb-6 text-[length:var(--h-section)] font-extrabold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Let&apos;s Build the Next Success Story
