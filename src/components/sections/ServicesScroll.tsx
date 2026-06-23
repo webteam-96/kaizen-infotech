@@ -493,7 +493,7 @@ export function ServicesScroll() {
   // at opacity:1, so nothing can be skipped or left dim at any scroll speed.
   if (prefersReducedMotion) {
     return (
-      <section data-section-index={2} className="px-[var(--container-padding)] py-24 md:py-32">
+      <section data-section-index={2} className="section-light-aura seam-red px-[var(--container-padding)] py-24 md:py-32">
         <div className="mx-auto max-w-[var(--container-max)]">
           <div className="mb-12">
             <span
@@ -523,7 +523,7 @@ export function ServicesScroll() {
   }
 
   return (
-    <div data-section-index={2}>
+    <div data-section-index={2} className="seam-red">
 
       {/* Off-screen probe — measures the natural card height at the current
           mobile width so the pinned deck box is tall enough to avoid clipping.
@@ -559,7 +559,7 @@ export function ServicesScroll() {
           .deck-card children so GSAP rotation/scale look natural in 3D space.
         */}
         <div
-          className="sticky top-0 flex h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]"
+          className="sticky top-0 flex h-screen items-center justify-center overflow-hidden section-light-aura"
           style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
         >
           {/* Header */}

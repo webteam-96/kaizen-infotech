@@ -157,7 +157,7 @@ export function ProcessSteps() {
       ref={sectionRef}
       data-section-index={5}
       className={cn(
-        'relative flex flex-col overflow-hidden bg-[var(--color-bg-primary)]',
+        'relative flex flex-col overflow-hidden section-light-aura seam-blue',
         // Desktop: full-viewport height for the GSAP pin.
         'h-auto md:h-screen',
       )}

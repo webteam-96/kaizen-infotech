@@ -44,7 +44,7 @@ export function IndustriesSection() {
   return (
     <section
       data-section-index={6}
-      className="section-ink py-[var(--space-section)]"
+      className="section-ink seam-red py-[var(--space-section)]"
     >
       <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
         {/* Header */}

@@ -90,7 +90,7 @@ export function StatsGrid() {
     <section
       ref={sectionRef}
       data-section-index={3}
-      className="section-ink relative flex items-center justify-center overflow-hidden py-20"
+      className="section-ink seam-blue relative flex items-center justify-center overflow-hidden py-20"
     >
       {/* Decorative dot grid */}
       <div
@@ -148,6 +148,14 @@ export function StatsGrid() {
               >
                 <CountUp end={stat.number} suffix={stat.suffix} />
               </div>
+
+              {/* Small red accent underbar — red is the highlight colour on the
+                  dark-blue band (kept tiny, per the "smallest design" intent). */}
+              <div
+                aria-hidden
+                className="mx-auto mt-3 h-[3px] w-10 rounded-full"
+                style={{ background: 'linear-gradient(90deg, var(--red-brand), var(--red-coral))' }}
+              />
 
               {/* Label */}
               <p

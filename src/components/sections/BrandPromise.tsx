@@ -18,11 +18,11 @@ export function BrandPromise() {
   }, []);
 
   return (
-    <section data-section-index={1}>
+    <section data-section-index={1} className="seam-blue">
       <PinnedSection
         onProgress={handleProgress}
         duration="+=200%"
-        className="flex min-h-screen items-center justify-center bg-[var(--color-bg-primary)]"
+        className="flex min-h-screen items-center justify-center section-tint"
       >
         <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)] text-center">
           <div className="space-y-4">
@@ -58,7 +58,7 @@ export function BrandPromise() {
                     <span
                       className="relative z-10"
                       style={{
-                        color: isRevealed ? 'var(--color-accent-primary)' : 'var(--color-text-primary)',
+                        color: isRevealed ? 'var(--color-accent-warm)' : 'var(--color-text-primary)',
                         transition: 'color 0.4s ease',
                       }}
                     >
@@ -66,7 +66,7 @@ export function BrandPromise() {
                     </span>
                     {/* Accent underline wipe */}
                     <span
-                      className="absolute bottom-0 left-0 h-[3px] bg-[var(--color-accent-primary)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      className="absolute bottom-0 left-0 h-[3px] bg-[var(--color-accent-warm)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
                       style={{ width: isRevealed ? '100%' : '0%' }}
                     />
                   </span>

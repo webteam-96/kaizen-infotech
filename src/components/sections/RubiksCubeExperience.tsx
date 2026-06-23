@@ -1564,7 +1564,7 @@ export function RubiksCubeExperience() {
               Kaizen Infotech Solutions
             </p>
             <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.25rem,6vw,4rem)] font-semibold leading-[1.06] tracking-tight text-[var(--color-text-primary)]">
-              Your Vision, <span className="text-[var(--color-accent-primary)]">Our Code</span>
+              Your Vision, <span className="text-[var(--color-accent-warm)]">Our Code</span>
             </h1>
           </header>
           {[
@@ -1742,12 +1742,23 @@ export function RubiksCubeExperience() {
                   }}
                 />
               )}
-              {/* Mask the canvas-drawn "Built with Spline" watermark (bottom-right). */}
+              {/* Dissolve the canvas-drawn "Built with Spline" watermark (bottom-right).
+                  A flat fill left a bright rectangle because the scene background is a
+                  textured gradient, not flat #f5f5f5. Instead we frost the corner with a
+                  backdrop blur (uses the REAL pixels behind, so it matches the local
+                  colour) plus a faint wash to wipe the wordmark, then fade the whole
+                  patch out with a radial mask so there's no hard edge to notice. */}
               <div
                 aria-hidden
                 style={{
                   position: 'absolute', bottom: 0, right: 0,
-                  width: '34%', height: '11%', background: BG_COLOR, pointerEvents: 'none',
+                  width: '38%', height: '14%',
+                  background: 'rgba(245,245,245,0.45)',
+                  backdropFilter: 'blur(14px)',
+                  WebkitBackdropFilter: 'blur(14px)',
+                  WebkitMaskImage: 'radial-gradient(135% 135% at 100% 100%, #000 42%, transparent 78%)',
+                  maskImage: 'radial-gradient(135% 135% at 100% 100%, #000 42%, transparent 78%)',
+                  pointerEvents: 'none',
                 }}
               />
             </div>

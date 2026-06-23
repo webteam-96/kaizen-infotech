@@ -52,8 +52,14 @@ const IconAgent = (
   </svg>
 );
 
-const Monogram = (text: string) => (
-  <span className="text-[18px] font-bold leading-none tracking-tight">{text}</span>
+// React Native shares React's official atom logo (there is no separate mark),
+// so to avoid a duplicate icon it gets a distinct device glyph instead.
+const IconMobile = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-full w-full">
+    <rect x="6.5" y="2.5" width="11" height="19" rx="2.6" />
+    <path d="M10.5 5.4h3" />
+    <circle cx="12" cy="18.2" r="0.95" fill="currentColor" stroke="none" />
+  </svg>
 );
 
 // ---------------------------------------------------------------------------
@@ -63,7 +69,8 @@ const Monogram = (text: string) => (
 
 interface Tech {
   name: string;
-  slug?: string;
+  slug?: string;   // official logo from cdn.simpleicons.org
+  img?: string;    // local logo image (brands not on the CDN)
   node?: ReactNode;
   tint?: string;
 }
@@ -81,12 +88,12 @@ const TECHS: Tech[] = [
   { name: 'Android', slug: 'android' },
   { name: 'iOS', slug: 'ios' },
   { name: 'Flutter', slug: 'flutter' },
-  { name: 'React Native', slug: 'react' },
+  { name: 'React Native', node: IconMobile, tint: '#61DAFB' },
   { name: 'HTML / CSS', slug: 'html5' },
   { name: 'WhatsApp', slug: 'whatsapp' },
   { name: 'Razorpay', slug: 'razorpay' },
-  { name: 'Instamojo', node: Monogram('im'), tint: '#EF5350' },
-  { name: 'Cashfree', node: Monogram('Cf'), tint: '#5367FF' },
+  { name: 'Instamojo', img: '/images/tech/instamojo.png', tint: '#2E3192' },
+  { name: 'Cashfree', img: '/images/tech/cashfree.png', tint: '#05C16E' },
   { name: 'Express API', slug: 'express' },
   { name: 'Tailwind CSS', slug: 'tailwindcss' },
   { name: 'AI Technologies', node: IconSparkles, tint: '#8B5CF6' },
@@ -116,7 +123,17 @@ function Chip({ tech }: { tech: Tech }) {
       style={{ '--tint': tech.tint ?? 'var(--color-accent-primary)' } as CSSProperties}
     >
       <span className="flex h-11 w-11 items-center justify-center">
-        {tech.slug ? (
+        {tech.img ? (
+          <img
+            src={tech.img}
+            alt=""
+            width={44}
+            height={44}
+            loading="lazy"
+            draggable={false}
+            className="h-11 w-11 rounded-[9px] object-contain opacity-60 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+          />
+        ) : tech.slug ? (
           <img
             src={`https://cdn.simpleicons.org/${tech.slug}`}
             alt=""
@@ -288,7 +305,7 @@ export function TechStack() {
   return (
     <section
       data-section-index={7}
-      className="relative overflow-hidden bg-[var(--color-bg-secondary)] py-[var(--space-section)]"
+      className="relative overflow-hidden section-tint seam-blue py-[var(--space-section)]"
     >
       <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
         <Header />
