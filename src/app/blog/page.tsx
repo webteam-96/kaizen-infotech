@@ -10,7 +10,8 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { blogPosts, blogCategories } from '@/content/blog';
+import { blogCategories } from '@/content/blog';
+import { usePublicBlogs } from '@/lib/blog/usePublicBlogs';
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('All');
@@ -19,10 +20,12 @@ export default function BlogPage() {
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
 
+  // Published posts from public/data/blogs.json (admin-managed), seed fallback.
+  const { blogs } = usePublicBlogs();
   const filteredPosts =
     activeCategory === 'All'
-      ? blogPosts
-      : blogPosts.filter((p) => p.category === activeCategory);
+      ? blogs
+      : blogs.filter((p) => p.category === activeCategory);
 
   const featuredPost = filteredPosts[0];
   const otherPosts = filteredPosts.slice(1);
@@ -54,6 +57,7 @@ export default function BlogPage() {
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* Hero Section */}
       <PageHero
+        align="center"
         kicker="Insights & Perspectives"
         title="Technology, Business & Digital Transformation"
         accentWords={['Digital', 'Transformation']}
@@ -62,7 +66,7 @@ export default function BlogPage() {
       />
 
       {/* Category Filter */}
-      <section className="px-6 pb-12 md:px-12 lg:px-24">
+      <section className="section-tint seam-blue relative px-6 py-12 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl">
           <FadeIn delay={0.4}>
             <div className="flex flex-wrap gap-3">
@@ -101,7 +105,7 @@ export default function BlogPage() {
       </section>
 
       {/* Featured Post + Grid */}
-      <section className="px-6 pb-24 md:px-12 lg:px-24">
+      <section className="section-light-aura seam-red relative px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl">
           <AnimatePresence mode="popLayout">
             <motion.div
@@ -117,15 +121,24 @@ export default function BlogPage() {
                   href={`/blog/${featuredPost.slug}`}
                   className="group mb-12 block"
                 >
-                  <Card tilt={false} glow className="overflow-hidden p-0">
+                  <Card tilt={false} glow className="card-red-accent relative overflow-hidden p-0">
                     <div className="grid grid-cols-1 md:grid-cols-2">
-                      {/* Cover art */}
+                      {/* Cover — uploaded main image, else generated cover art */}
                       <div className="relative aspect-[16/10] md:aspect-auto">
-                        <BlogCover
-                          slug={featuredPost.slug}
-                          category={featuredPost.category}
-                          className="absolute inset-0"
-                        />
+                        {featuredPost.mainImage?.url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={featuredPost.mainImage.url}
+                            alt={featuredPost.mainImage.alt || featuredPost.title}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <BlogCover
+                            slug={featuredPost.slug}
+                            category={featuredPost.category}
+                            className="absolute inset-0"
+                          />
+                        )}
                       </div>
 
                       <div className="relative z-10 flex flex-col justify-center p-8 md:p-12">
@@ -134,7 +147,7 @@ export default function BlogPage() {
                             {featuredPost.category}
                           </Badge>
                           <span
-                            className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]"
+                            className="text-[length:var(--text-xs)] font-medium text-[var(--red-brand)]"
                             style={{ fontFamily: 'var(--font-mono)' }}
                           >
                             {featuredPost.readingTime}
@@ -142,7 +155,7 @@ export default function BlogPage() {
                         </div>
 
                         <h2
-                          className="mb-4 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                          className="mb-4 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--red-brand)]"
                           style={{ fontFamily: 'var(--font-heading)' }}
                         >
                           {featuredPost.title}
@@ -165,7 +178,7 @@ export default function BlogPage() {
                               className="text-[length:var(--text-sm)] font-medium text-[var(--color-text-primary)]"
                               style={{ fontFamily: 'var(--font-heading)' }}
                             >
-                              {featuredPost.author.name}
+                              {featuredPost.authorName}
                             </p>
                             <p
                               className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]"
@@ -189,21 +202,30 @@ export default function BlogPage() {
                     href={`/blog/${post.slug}`}
                     className="group"
                   >
-                    <Card tilt={false} glow className="h-full overflow-hidden p-0">
-                      {/* Cover art */}
+                    <Card tilt={false} glow className="card-red-accent relative h-full overflow-hidden p-0">
+                      {/* Cover — uploaded main image, else generated cover art */}
                       <div className="relative aspect-[16/10]">
-                        <BlogCover
-                          slug={post.slug}
-                          category={post.category}
-                          className="absolute inset-0"
-                        />
+                        {post.mainImage?.url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={post.mainImage.url}
+                            alt={post.mainImage.alt || post.title}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <BlogCover
+                            slug={post.slug}
+                            category={post.category}
+                            className="absolute inset-0"
+                          />
+                        )}
                       </div>
 
                       <div className="relative z-10 p-6">
                         <div className="mb-3 flex items-center gap-3">
                           <Badge variant="accent">{post.category}</Badge>
                           <span
-                            className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]"
+                            className="text-[length:var(--text-xs)] font-medium text-[var(--red-brand)]"
                             style={{ fontFamily: 'var(--font-mono)' }}
                           >
                             {post.readingTime}
@@ -211,7 +233,7 @@ export default function BlogPage() {
                         </div>
 
                         <h3
-                          className="mb-3 text-[length:var(--h-card)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--color-accent-primary)]"
+                          className="mb-3 text-[length:var(--h-card)] font-bold text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--red-brand)]"
                           style={{ fontFamily: 'var(--font-heading)' }}
                         >
                           {post.title}
@@ -233,7 +255,7 @@ export default function BlogPage() {
                             className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]"
                             style={{ fontFamily: 'var(--font-body)' }}
                           >
-                            {post.author.name} &middot; {post.publishedAt}
+                            {post.authorName} &middot; {post.publishedAt}
                           </p>
                         </div>
                       </div>
@@ -247,17 +269,17 @@ export default function BlogPage() {
       </section>
 
       {/* Newsletter CTA */}
-      <section className="border-t border-[var(--color-border)] px-6 py-24 md:px-12 lg:px-24">
+      <section className="section-ink seam-red relative px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
             <h2
-              className="mb-4 text-[length:var(--h-section)] font-extrabold text-[var(--color-text-primary)]"
+              className="mb-4 text-[length:var(--h-section)] font-extrabold text-[var(--text-on-ink)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Stay in the Loop
+              Stay in the <span className="text-[var(--accent-on-ink)]">Loop</span>
             </h2>
             <p
-              className="mx-auto mb-10 max-w-lg text-[length:var(--text-lg)] text-[var(--color-text-secondary)]"
+              className="mx-auto mb-10 max-w-lg text-[length:var(--text-lg)] text-[var(--text-on-ink-muted)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Get practical technology insights from the Kaizen team delivered
@@ -301,7 +323,7 @@ export default function BlogPage() {
                   <button
                     type="button"
                     onClick={() => setNewsletterStatus('idle')}
-                    className="focus-ring mt-2 text-[length:var(--text-xs)] text-[var(--color-text-tertiary)] underline underline-offset-2 transition-colors hover:text-[var(--color-text-primary)]"
+                    className="focus-ring mt-2 text-[length:var(--text-xs)] text-[var(--text-on-ink-muted)] underline underline-offset-2 transition-colors hover:text-[var(--text-on-ink)]"
                     style={{ fontFamily: 'var(--font-body)' }}
                   >
                     Subscribe another email

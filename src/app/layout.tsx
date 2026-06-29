@@ -1,11 +1,7 @@
 import type { Metadata } from 'next';
 import { Jost, Lato, JetBrains_Mono, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
-import { Providers } from './providers';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import ScrollProgress from '@/components/layout/ScrollProgress';
-import CustomScrollbar from '@/components/layout/CustomScrollbar';
+import { AppFrame } from '@/components/layout/AppFrame';
 
 const jost = Jost({
   subsets: ['latin'],
@@ -82,19 +78,7 @@ export default function RootLayout({
       <body
         className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} antialiased`}
       >
-        <Providers>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-md focus:bg-[var(--color-accent-primary)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[var(--color-text-inverse)]"
-          >
-            Skip to main content
-          </a>
-          <ScrollProgress />
-          <CustomScrollbar />
-          <Navbar />
-          <div id="main-content">{children}</div>
-          <Footer />
-        </Providers>
+        <AppFrame>{children}</AppFrame>
       </body>
     </html>
   );

@@ -108,13 +108,14 @@ _Full article coming soon._`,
 // Categories
 // ---------------------------------------------------------------------------
 
+// Categories shown as filter chips on /blog and suggested in the admin form.
+// Trimmed to the categories the imported posts actually use (admins can still
+// type any custom category in the form).
 export const blogCategories = [
   'All',
   'Government Tech',
   'Enterprise Software',
   'Mobile Development',
-  'Event Technology',
-  'Digital Marketing',
 ] as const;
 
 export type BlogCategory = (typeof blogCategories)[number];

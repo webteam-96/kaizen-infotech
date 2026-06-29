@@ -1,54 +1,35 @@
 import { notFound } from 'next/navigation';
-import { blogPosts } from '@/content/blog';
-import BlogPostClient from './BlogPostClient';
+import { getPublishedFromFile } from '@/lib/blog/serverStore';
+import { sanitizeHtml } from '@/lib/blog/markdown';
+import { BlogPostDetail } from './BlogPostDetail';
 
-// ---------------------------------------------------------------------------
-// Static params
-// ---------------------------------------------------------------------------
+// Read public/data/blogs.json on every request so admin edits appear without a
+// rebuild. (Reads work on any host; the admin write needs a persistent FS.)
+export const dynamic = 'force-dynamic';
 
-export async function generateStaticParams() {
-  return blogPosts.map((post) => ({
-    slug: post.slug,
-  }));
-}
-
-// ---------------------------------------------------------------------------
-// Metadata
-// ---------------------------------------------------------------------------
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const posts = await getPublishedFromFile();
+  const post = posts.find((p) => p.slug === slug);
   if (!post) return { title: 'Post Not Found' };
-
   return {
-    title: `${post.title} | Kaizen Infotech Blog`,
-    description: post.excerpt,
+    title: post.seo?.metaTitle || `${post.title} | Kaizen Infotech Blog`,
+    description: post.seo?.metaDescription || post.excerpt,
   };
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
-export default async function BlogPostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
-
+  const posts = await getPublishedFromFile();
+  const post = posts.find((p) => p.slug === slug);
   if (!post) notFound();
 
-  const relatedPosts = blogPosts
+  const relatedPosts = posts
     .filter((p) => p.slug !== slug)
     .filter((p) => p.category === post.category || p.tags.some((t) => post.tags.includes(t)))
     .slice(0, 2);
 
-  return <BlogPostClient post={post} relatedPosts={relatedPosts} />;
+  // Sanitise server-side so the injected HTML is identical on SSR + hydration.
+  const safePost = { ...post, bodyHtml: sanitizeHtml(post.bodyHtml) };
+  return <BlogPostDetail post={safePost} relatedPosts={relatedPosts} />;
 }
