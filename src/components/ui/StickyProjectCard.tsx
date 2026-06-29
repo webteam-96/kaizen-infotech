@@ -7,10 +7,11 @@ import {
   useScroll,
   useTransform,
 } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 export interface StickyProjectCardProps {
   title: string;
@@ -37,6 +38,17 @@ export function StickyProjectCard({
 }: StickyProjectCardProps) {
   const container = useRef<HTMLDivElement>(null);
   const [maxScrollY, setMaxScrollY] = useState(Infinity);
+
+  // Entry reveal (dependency-free IntersectionObserver). The card root is also
+  // framer-motion's scroll target, so we fan the same node into BOTH refs.
+  const { ref: revealRef, revealed } = useScrollReveal<HTMLDivElement>();
+  const setRefs = useCallback(
+    (el: HTMLDivElement | null) => {
+      container.current = el;
+      revealRef.current = el;
+    },
+    [revealRef]
+  );
 
   // `tilt` drives both the card rotation and the counter-rotation on the inner image
   const tilt = useMotionValue(0);
@@ -74,8 +86,11 @@ export function StickyProjectCard({
 
   return (
     <motion.div
-      ref={container}
-      className="card-red-accent group sticky w-full max-w-5xl overflow-hidden"
+      ref={setRefs}
+      className={cn(
+        'card-red-accent work-card group sticky w-full max-w-5xl overflow-hidden',
+        revealed && 'is-revealed'
+      )}
       style={{
         // Explicit sticky: the `.card-red-accent` highlight class sets
         // position:relative, which (same specificity, later in the cascade) was
@@ -109,7 +124,7 @@ export function StickyProjectCard({
             alt={title}
             fill
             sizes="(max-width: 768px) 100vw, 80vw"
-            className="object-contain p-6 md:p-10"
+            className="object-contain p-6 md:p-10 transition-transform duration-[600ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform group-hover:scale-[1.04]"
             priority={index < 2}
           />
         </motion.div>

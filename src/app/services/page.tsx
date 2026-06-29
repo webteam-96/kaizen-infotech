@@ -145,11 +145,11 @@ export default function ServicesPage() {
       {/* ================================================================= */}
       {/* SERVICE CARD DECK */}
       {/* ================================================================= */}
-      <section className="section-tint seam-blue relative">
-        <div className="mx-auto mb-16 max-w-7xl px-6 pt-32 text-center">
+      <section className="section-ink seam-blue relative">
+        <div className="mx-auto max-w-7xl px-6 pt-32 text-center">
           <ScrollFadeIn>
             <span
-              className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
+              className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--text-on-ink-muted)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Capabilities
@@ -158,7 +158,7 @@ export default function ServicesPage() {
           <TextReveal
             as="h2"
             splitBy="words"
-            className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--color-text-primary)]"
+            className="text-[length:var(--h-section)] font-semibold leading-tight text-[var(--text-on-ink)]"
           >
             End-to-End Technology Services
           </TextReveal>

@@ -1290,3 +1290,349 @@ html.has-custom-cursor * {
   color: var(--color-text-tertiary);
   pointer-events: none;
 }
+
+/* ============================================================================
+   SCROLL-REVEAL PRIMITIVES  (useScrollReveal + <Reveal> + /work polish)
+   Animate transform + opacity ONLY (no layout-affecting props) so it stays
+   smooth at every breakpoint. Easing matches the brand cubic-bezier(.4,0,.2,1).
+   ========================================================================== */
+
+.reveal {
+  opacity: 0;
+  will-change: opacity, transform;
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* "up" — large blocks: rise 40px + fade over .8s */
+.reveal-up {
+  transform: translateY(40px);
+  transition-duration: 0.8s;
+}
+/* "sm" — small elements (pills): rise 20px + scale .96 over .55s */
+.reveal-sm {
+  transform: translateY(20px) scale(0.96);
+  transition-duration: 0.55s;
+}
+.reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Project card entry reveal (.work-card) ─────────────────────────────────
+   The card root is a framer-motion element whose `transform` is driven by the
+   scroll-based sticky scale/tilt. So the entry reveal uses the INDIVIDUAL
+   `translate` + `scale` properties (which compose with `transform` instead of
+   overwriting it) + opacity. translate/scale don't affect layout, so the
+   position:sticky offsets are never disturbed. */
+.work-card {
+  opacity: 0;
+  translate: 0 60px;
+  scale: 0.97;
+  will-change: opacity, transform;
+  transition:
+    opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    translate 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    scale 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.work-card.is-revealed {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+/* Hover polish — deeper shadow + brand glow. `!important` so it wins over the
+   card's inline base box-shadow; transitions via the rule above. Mouse only. */
+@media (hover: hover) {
+  .work-card:hover {
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.15),
+      0 0 50px var(--color-glow) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .work-card,
+  .work-card img {
+    opacity: 1 !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================================================
+   SOLUTIONS IN ACTION — FOLLOW.ART-style pinned / card-on-card STACKING (/work)
+   200vh runway + sticky 100vh pane; cards pulled up 100vh so each entrance runs
+   while it rises OVER the previous pinned card. Pin = CSS sticky; GSAP only reads
+   progress. Motion = transform/opacity/CSS-var; reduced-motion + mobile collapse.
+   Brand tokens only.
+   ========================================================================== */
+
+/* Clip ONLY horizontally — overflow-x:clip contains the blob bleed without
+   turning the section into a vertical scroll-container that would re-base sticky. */
+.sia-section { position: relative; background: var(--color-bg-primary); overflow-x: clip; }
+.sia-head {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 5rem) var(--container-padding) clamp(1.5rem, 4vw, 3rem);
+}
+.sia-eyebrow {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: var(--text-xs);
+  color: var(--color-accent-primary);
+}
+.sia-title {
+  margin-top: 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  font-size: var(--text-2xl);
+  color: var(--color-text-primary);
+}
+.sia-stack { position: relative; } /* NO overflow here — would break sticky */
+
+/* ── 200vh runway, two 100vh rows; pull each card up one viewport (THE cover). */
+.sia-card {
+  position: relative;
+  z-index: var(--idx, 0); /* ascending → incoming card paints over the outgoing */
+  display: grid;
+  grid-template-rows: 100vh 100vh;
+}
+.sia-card + .sia-card { margin-top: -100vh; } /* overlap timelines → card-on-card cover */
+
+/* ── Sticky pane: pins for 100vh; OPAQUE = occludes the card beneath. NEVER put
+   transform/filter/perspective/will-change here (would kill sticky). */
+.sia-sticky {
+  position: sticky;
+  top: 0;
+  grid-row: 1; /* lives in row 1; row 2 is the scroll runway */
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 50/50 two-column interior */
+  gap: 20px;
+  align-items: center;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: clamp(2rem, 4vw, 4rem) var(--container-padding);
+  background: var(--color-bg-primary); /* opaque cover surface — mandatory */
+  overflow: hidden; /* clip blob/parallax overshoot (OK on the sticky itself) */
+}
+.sia-media-right .sia-media { order: 2; }
+.sia-media-right .sia-content { order: 1; }
+
+/* ── Media (GSAP writes x/opacity to .sia-media-inner — a descendant of sticky) */
+.sia-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.sia-media-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  opacity: 0; /* offstage seed; reduced-motion/mobile override to 1 */
+  will-change: transform, opacity;
+}
+.sia-blob {
+  position: absolute;
+  top: 0;
+  width: 80%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 32%, rgba(135, 206, 235, 0.55), transparent 60%),
+    radial-gradient(circle at 68% 64%, rgba(33, 150, 243, 0.4), transparent 62%),
+    radial-gradient(circle at 52% 28%, rgba(192, 0, 0, 0.1), transparent 55%);
+  filter: blur(30px);
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.sia-media-left .sia-blob { left: 4%; }
+.sia-media-right .sia-blob { right: 4%; }
+.sia-image-wrap {
+  position: relative;
+  display: block;
+  width: 65%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+  box-shadow: var(--shadow-lg);
+  z-index: 1;
+  transition: transform var(--transition-slow);
+}
+@media (hover: hover) {
+  .sia-image-wrap:hover { transform: translateY(-6px); }
+}
+.sia-image { object-fit: contain; padding: 7%; }
+.sia-spark {
+  position: absolute;
+  bottom: 10%;
+  z-index: 2;
+  width: clamp(28px, 3vw, 40px);
+  height: clamp(28px, 3vw, 40px);
+  color: var(--color-accent-warm);
+  filter: drop-shadow(0 4px 10px rgba(192, 0, 0, 0.28));
+}
+.sia-media-left .sia-spark { right: 15%; }
+.sia-media-right .sia-spark { left: 15%; }
+
+/* ── Content ────────────────────────────────────────────────────────────── */
+.sia-content {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2.2vw, 1.6rem);
+  min-width: 0;
+}
+
+/* Headline marker sweep: ghost (base, SR-readable) + crisp (clip-revealed) +
+   travelling blue marker, all driven by the per-line --hl (0→1) from GSAP. */
+.sia-headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  font-size: clamp(2.25rem, 5.2vw, 4.5rem);
+}
+.sia-line {
+  --hl: 0;
+  position: relative;
+  display: block;
+  width: fit-content;
+  padding: 0 0.05em;
+  line-height: 0.95;
+}
+.sia-ghost { color: rgba(0, 0, 0, 0.18); }
+.sia-crisp {
+  position: absolute;
+  inset: 0;
+  padding: 0 0.05em;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  clip-path: inset(0 calc((1 - var(--hl)) * 100%) 0 0); /* hard L→R wipe to crisp */
+  will-change: clip-path;
+}
+.sia-hl {
+  position: absolute;
+  top: -0.04em;
+  bottom: -0.04em;
+  left: calc(var(--hl) * 100%);
+  width: 0.5em;
+  transform: translateX(-50%);
+  background: var(--color-accent-primary);
+  border-radius: 2px;
+  pointer-events: none;
+  /* fade the marker in at the start of the sweep and out near the end */
+  opacity: calc(min(var(--hl) * 10, 1) * (1 - max(0, (var(--hl) - 0.9)) * 10));
+}
+
+.sia-bullets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.sia-bullets li {
+  position: relative;
+  padding-left: 1.4em;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  opacity: 0;
+  transform: translateY(8px);
+  will-change: opacity, transform;
+}
+.sia-bullets li::before {
+  content: '–';
+  position: absolute;
+  left: 0;
+  color: var(--color-accent-primary);
+  font-weight: 600;
+}
+.sia-closing {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  opacity: 0;
+  transform: translateY(10px);
+  will-change: opacity, transform;
+}
+.sia-closing u {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  text-decoration-color: var(--color-accent-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* Bullets + closing: discrete CSS keyframe stagger, latched by .sia-bullets-in. */
+.sia-bullets-in .sia-bullets li {
+  animation: sia-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i) * 0.1s);
+}
+.sia-bullets-in .sia-closing {
+  animation: sia-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+}
+@keyframes sia-rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Desktop short-viewport guard (content must fit a 100vh sticky) ──────── */
+@media (min-width: 768px) and (max-height: 640px) {
+  .sia-headline { font-size: clamp(1.8rem, 4.4vw, 2.6rem); line-height: 1; }
+  .sia-content { gap: 0.8rem; }
+}
+
+/* ── Reduced motion: collapse to plain stacked, legible cards, native scroll ── */
+@media (prefers-reduced-motion: reduce) {
+  .sia-card { grid-template-rows: none; display: block; }
+  .sia-card + .sia-card { margin-top: 0; }
+  .sia-sticky {
+    position: static;
+    height: auto;
+    min-height: 60vh;
+    overflow: visible;
+  }
+  .sia-media-inner { opacity: 1 !important; transform: none !important; }
+  .sia-crisp { clip-path: none !important; }
+  .sia-ghost, .sia-hl { display: none !important; }
+  .sia-bullets li, .sia-closing { opacity: 1 !important; transform: none !important; animation: none !important; }
+}
+
+/* ── Mobile (<768px): same static collapse, single column, media on top.
+   The stacking mechanic is JS-gated to ≥768px, so no scrub runs here. ─────── */
+@media (max-width: 767px) {
+  .sia-card { grid-template-rows: none; display: block; }
+  .sia-card + .sia-card { margin-top: 0; }
+  .sia-sticky {
+    position: static;
+    height: auto;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    overflow: visible;
+    padding: clamp(2rem, 8vw, 3rem) var(--container-padding);
+  }
+  .sia-media-right .sia-media,
+  .sia-media-right .sia-content { order: 0; }
+  .sia-media-inner { opacity: 1 !important; transform: none !important; }
+  .sia-media { min-height: 44vh; }
+  .sia-image-wrap { width: 86%; }
+  .sia-headline { font-size: clamp(2.25rem, 9vw, 3rem); }
+  .sia-crisp { clip-path: none !important; }
+  .sia-ghost, .sia-hl { display: none !important; }
+  .sia-bullets li, .sia-closing { opacity: 1 !important; transform: none !important; animation: none !important; }
+}

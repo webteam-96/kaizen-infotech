@@ -1,21 +1,9 @@
-'use client';
-
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
+import { Reveal } from '@/components/animation/Reveal';
 import { PageHero } from '@/components/sections/PageHero';
-import { StickyProjectCard } from '@/components/ui/StickyProjectCard';
+import { SolutionsInAction } from '@/components/sections/SolutionsInAction';
 import { Button } from '@/components/ui/Button';
-import { projects, projectCategories, type ProjectCategory } from '@/content/projects';
 
 export default function WorkPage() {
-  const [activeCategory, setActiveCategory] = useState<ProjectCategory>('All');
-
-  const filteredProjects =
-    activeCategory === 'All'
-      ? projects
-      : projects.filter((p) => p.category === activeCategory);
-
   return (
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* ── Hero ── */}
@@ -28,78 +16,13 @@ export default function WorkPage() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Work' }]}
       />
 
-      {/* ── Category Filter ── */}
-      {/* Plain white (no tint, no seam) so it reads as a continuation of the
-          hero's white background. */}
-      <section className="relative bg-[var(--color-bg-primary)] px-6 pb-10 pt-12 md:px-12 lg:px-24">
-        <div className="mx-auto max-w-7xl">
-          <ScrollFadeIn delay={0.4}>
-            <div className="flex flex-wrap gap-3">
-              {projectCategories.map((category) => (
-                <motion.button
-                  key={category}
-                  type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`focus-ring relative cursor-pointer rounded-[var(--radius-full)] px-5 py-2.5 text-[length:var(--text-sm)] font-medium transition-colors duration-300 ${
-                    activeCategory === category
-                      ? 'text-[var(--color-text-inverse)]'
-                      : 'border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
-                  }`}
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                >
-                  {activeCategory === category && (
-                    <motion.div
-                      className="absolute inset-0 rounded-[var(--radius-full)] bg-[var(--red-brand)]"
-                      layoutId="activeCategory"
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10">{category}</span>
-                </motion.button>
-              ))}
-            </div>
-          </ScrollFadeIn>
-        </div>
-      </section>
-
-      {/* ── Sticky Scroll Project Stack ── */}
-      {/*
-        Each card uses `position: sticky` and a scroll-driven scale + tilt effect
-        (adapted from Skiper UI StickyCard_003). Cards shrink + tilt away as you
-        scroll past them, revealing the next card beneath.
-      */}
-      <AnimatePresence mode="wait">
-        <motion.section
-          key={activeCategory}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="section-tint seam-blue relative flex flex-col items-center gap-[8vh] px-4 pb-[30vh] pt-[4vh] md:px-8"
-        >
-          {filteredProjects.map((project, idx) => (
-            <StickyProjectCard
-              key={`${activeCategory}-${project.slug}`}
-              title={project.title}
-              client={project.client}
-              category={project.category}
-              year={project.year}
-              description={project.description}
-              image={project.image}
-              slug={project.slug}
-              index={idx}
-            />
-          ))}
-        </motion.section>
-      </AnimatePresence>
+      {/* ── Solutions in Action — alternating feature cards ── */}
+      <SolutionsInAction />
 
       {/* ── CTA Section ── */}
       <section className="section-ink seam-red relative px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl text-center">
-          <ScrollFadeIn>
+          <Reveal variant="up">
             <h2
               className="mb-6 text-[length:var(--h-section)] font-extrabold text-[var(--text-on-ink)]"
               style={{ fontFamily: 'var(--font-heading)' }}
@@ -117,7 +40,7 @@ export default function WorkPage() {
             <Button href="/contact" size="lg">
               Talk to Our Experts
             </Button>
-          </ScrollFadeIn>
+          </Reveal>
         </div>
       </section>
     </main>

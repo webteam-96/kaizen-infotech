@@ -1,34 +1,48 @@
 'use client';
 
-import { useRef, useCallback, useState, useEffect } from 'react';
-import { useGSAP } from '@gsap/react';
-import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { services } from '@/content/services';
-import { cn } from '@/lib/utils/cn';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layout constants (desktop deck)
+// Capabilities — 3D ORBIT carousel.
+//
+// Cards sit on a ring (cylinder) and rotate around a central axis like a globe.
+// Scrolling the section spins the ring (two turns); dragging left/right spins it
+// manually and snaps to the nearest card; clicking the front card opens its
+// detail panel, clicking a side card brings it to the front. Pure React + CSS 3D
+// transforms — no animation libraries. The SAME animation runs on phone, iPad and
+// desktop (pointer drag + `touch-action: pan-y`, capability-independent), only the
+// ring radius scales down. Styled in our brand: blue/red accents on the ink
+// surface, our display + body fonts.
 // ─────────────────────────────────────────────────────────────────────────────
-const W = 320;   // card width  (px) — 3-card row = 1016px, fits 1024 with no horizontal clip
-const H = 590;   // card height (px) — uniform, sized to the LONGEST card's content (≈574px) + margin
-const G = 28;    // gap between cards within a row (px)
 
-// Stack offsets — matches reference animation
-const STACK: { x: number; y: number; r: number }[] = [
-  { x: 0,  y: 0,   r: -3   },
-  { x: 2,  y: -3,  r: -1.5 },
-  { x: 4,  y: -6,  r: 0    },
-  { x: 6,  y: -9,  r: 1.5  },
-  { x: 8,  y: -12, r: 3    },
-];
+// Per-card brand accent (blue ↔ red alternating) + a short tag.
+const ACCENTS = ['#2196F3', '#C00000', '#5AB6F7', '#E5546B', '#1976D2'];
+const TAGS = ['Software', 'Mobile', 'Events', 'Web Portals', 'Marketing'];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Icon components
-// ─────────────────────────────────────────────────────────────────────────────
+const CARDS = services.map((s, i) => ({
+  id: s.id,
+  slug: s.slug,
+  icon: s.icon,
+  label: String(i + 1).padStart(2, '0'),
+  title: s.title,
+  tag: TAGS[i] ?? 'Service',
+  body: s.description,
+  features: s.features ?? [],
+  accent: ACCENTS[i % ACCENTS.length],
+}));
+
+const N = CARDS.length;
+const STEP = 360 / N;
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, n));
+}
+
 function ServiceIcon({ name }: { name: string }) {
   const p = {
-    width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none',
+    width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none',
     stroke: 'currentColor', strokeWidth: 1.5,
     strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
   };
@@ -48,346 +62,360 @@ function ServiceIcon({ name }: { name: string }) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared card chrome — one source of truth for the deck card on desktop, the
-// touch deck, AND the offscreen height-probe, so all three measure/animate the
-// exact same box.
-// ─────────────────────────────────────────────────────────────────────────────
-const CARD_CLASS = cn(
-  'card-red-accent overflow-hidden',
-  'flex flex-col rounded-[var(--radius-xl)] p-7',
-  'border border-[var(--color-border)]',
-  'bg-[var(--color-bg-secondary)]',
-  'shadow-[0_8px_32px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.04)]',
-);
+type CardT = (typeof CARDS)[number];
 
-function CardFace({ service }: { service: (typeof services)[number] }) {
-  return (
-    <>
-      {/* Icon */}
-      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--red-soft)] text-[var(--red-brand)]">
-        <ServiceIcon name={service.icon} />
-      </div>
+export function ServiceCardDeck() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const scrollRotRef = useRef(0); // rotation contributed by scroll
+  const dragRotRef = useRef(0);   // rotation contributed by drag
+  const rafRef = useRef(0);
+  const drag = useRef({ active: false, startX: 0, startRot: 0, moved: false });
 
-      {/* Title */}
-      <h3
-        className="mb-3 text-[length:var(--text-lg)] font-semibold leading-snug text-[var(--color-text-primary)]"
-        style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
-      >
-        {service.title}
-      </h3>
+  const [rotation, setRotation] = useState(0);
+  const [active, setActive] = useState(0);
+  const [selected, setSelected] = useState<CardT | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [radius, setRadius] = useState(400);
+  const [reduced, setReduced] = useState(false);
 
-      {/* Description — full copy (no clamp); card height fits it */}
-      <p
-        className="mb-5 flex-1 text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
-        style={{ fontFamily: 'var(--font-body)' }}
-      >
-        {service.description}
-      </p>
-
-      {/* Learn more */}
-      <Link
-        href={`/services/${service.slug}`}
-        className={cn(
-          'flex items-center justify-between',
-          'border-t border-[var(--color-border)] pt-4',
-          'text-[length:var(--text-sm)] font-medium uppercase tracking-wider',
-          'text-[var(--color-accent-secondary)] transition-colors duration-200',
-          'hover:text-[var(--color-accent-primary)]',
-        )}
-        style={{ fontFamily: 'var(--font-heading)' }}
-      >
-        Learn more
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-          <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </Link>
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Desktop deck — pointer/wheel-driven scroll-scrub reveal (mouse, ≥1024px only)
-// ─────────────────────────────────────────────────────────────────────────────
-// Row X positions when a row is the focused, centred row.
-const ROW1_X = (i: number) => (i - 1) * (W + G);          // 3 cards: −(W+G), 0, +(W+G)
-const ROW2_X = (i: number) => (i - 3 - 0.5) * (W + G);    // 2 cards: −½(W+G), +½(W+G)
-
-function ServiceDeck() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  registerGSAPPlugins();
-
-  const setCardRef = useCallback((el: HTMLDivElement | null, i: number) => {
-    cardRefs.current[i] = el;
+  // Responsive ring radius.
+  useEffect(() => {
+    const measure = () => {
+      const w = window.innerWidth;
+      setRadius(w < 560 ? 215 : w < 960 ? 310 : 400);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, []);
 
-  useGSAP(() => {
-    if (!containerRef.current) return;
-    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
-    if (cards.length === 0) return;
+  // Reduced-motion preference.
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
-    const offY = (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 + H / 2 + 48;
+  const apply = useCallback(() => {
+    const total = scrollRotRef.current + dragRotRef.current;
+    setRotation(total);
+    const idx = ((Math.round(-total / STEP) % N) + N) % N;
+    setActive(idx);
+  }, []);
 
-    cards.forEach((card, i) => {
-      const s = STACK[i];
-      gsap.set(card, {
-        x: s.x, y: s.y + 40, rotation: s.r, scale: 0.55, opacity: 0,
-        zIndex: cards.length - i, transformOrigin: 'center center',
+  // Scroll drives the ring while the section passes through the viewport.
+  // (Lenis updates the native scroll position, so window 'scroll' still fires.)
+  useEffect(() => {
+    const onScroll = () => {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = 0;
+        const el = sectionRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const vh = window.innerHeight;
+        const travel = rect.height - vh;
+        const progress = travel > 0 ? clamp(-rect.top / travel, 0, 1) : 0;
+        scrollRotRef.current = -progress * 720; // two full turns across the section
+        apply();
       });
-    });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [apply]);
 
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 0.5,
-        invalidateOnRefresh: true,
-      },
-    });
+  // Pointer drag to rotate + snap (works for mouse AND touch).
+  const onPointerDown = (e: React.PointerEvent) => {
+    drag.current = { active: true, startX: e.clientX, startRot: dragRotRef.current, moved: false };
+    setDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current.active) return;
+    const dx = e.clientX - drag.current.startX;
+    if (Math.abs(dx) > 4) drag.current.moved = true;
+    dragRotRef.current = drag.current.startRot + dx * 0.35; // 0.35 deg / px
+    apply();
+  };
+  const endDrag = () => {
+    if (!drag.current.active) return;
+    drag.current.active = false;
+    setDragging(false);
+    const total = scrollRotRef.current + dragRotRef.current;
+    const snappedTotal = Math.round(total / STEP) * STEP;
+    dragRotRef.current += snappedTotal - total;
+    apply();
+  };
 
-    // Phase 1 — stack pops up at centre
-    cards.forEach((card, i) => {
-      const s = STACK[i];
-      tl.to(card, { opacity: 1, ease: 'power1.out', duration: 0.15 }, 0);
-      tl.to(card, { x: s.x, y: s.y, rotation: s.r, scale: 1, ease: 'power2.inOut', duration: 1 }, 0);
-    });
-    if (glowRef.current) {
-      tl.fromTo(glowRef.current, { opacity: 0.2 }, { opacity: 0.8, duration: 1, ease: 'power2.inOut' }, 0);
-    }
+  // Arrow-key navigation.
+  const rotateBy = useCallback((dir: number) => {
+    dragRotRef.current -= dir * STEP;
+    apply();
+  }, [apply]);
 
-    // Phase 2 — ROW 1 fans out (centred); ROW 2 drops DOWN
-    cards.forEach((card, i) => {
-      if (i < 3) {
-        tl.to(card, { x: ROW1_X(i), y: 0, rotation: 0, scale: 1, opacity: 1, ease: 'power3.inOut', duration: 1 }, 1 + i * 0.05);
-      } else {
-        tl.to(card, { x: 0, y: offY, rotation: 0, scale: 0.72, opacity: 1, ease: 'power2.inOut', duration: 1 }, 1);
-      }
-    });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (selected) return;
+      if (e.key === 'ArrowLeft') rotateBy(-1);
+      if (e.key === 'ArrowRight') rotateBy(1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [rotateBy, selected]);
 
-    // Phase 3 — ROW 1 exits UP; ROW 2 rises into the centred row
-    cards.forEach((card, i) => {
-      if (i < 3) {
-        tl.to(card, { y: -offY, opacity: 0, ease: 'power2.inOut', duration: 1 }, 2);
-      } else {
-        tl.to(card, { x: ROW2_X(i), y: 0, rotation: 0, scale: 1, opacity: 1, ease: 'power3.inOut', duration: 1 }, 2 + (i - 3) * 0.06);
-      }
-    });
-
-    if (glowRef.current) {
-      tl.to(glowRef.current, { opacity: 0.45, scale: 1.25, duration: 1, ease: 'power2.inOut' }, 1);
-      tl.to(glowRef.current, { opacity: 0.6, duration: 1, ease: 'power2.inOut' }, 2);
-    }
-  }, { scope: containerRef, dependencies: [] });
+  const goToCard = (i: number) => {
+    const target = -i * STEP;
+    const current = scrollRotRef.current + dragRotRef.current;
+    let diff = target - current;
+    diff = (((diff + 180) % 360) + 360) % 360 - 180; // wrap to [-180,180]
+    dragRotRef.current += diff;
+    apply();
+  };
 
   return (
-    <div ref={containerRef} className="relative" style={{ height: '600vh' }}>
-      <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        <div
-          ref={glowRef}
-          aria-hidden
-          className="pointer-events-none absolute rounded-full"
-          style={{ width: 500, height: 500, background: 'radial-gradient(circle, var(--color-glow), transparent 70%)', opacity: 0.2, filter: 'blur(40px)' }}
-        />
-        <div style={{ position: 'relative', width: W, height: H }}>
-          {services.map((service, i) => (
+    <div className="oc-root">
+      <style>{styles}</style>
+
+      <section ref={sectionRef} className="oc-section">
+        <div className="oc-sticky">
+          <div className="oc-scene">
+            <div className="oc-core" aria-hidden />
             <div
-              key={service.id}
-              ref={(el) => setCardRef(el, i)}
-              style={{ position: 'absolute', width: W, height: H, willChange: 'transform, opacity', zIndex: services.length - i, opacity: 0 }}
-              className={CARD_CLASS}
+              className={`oc-ring-wrap ${dragging ? 'dragging' : ''} ${reduced ? 'reduced' : ''}`}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              onPointerLeave={endDrag}
+              role="listbox"
+              aria-label="Our capabilities"
             >
-              <CardFace service={service} />
+              <div
+                className="oc-ring"
+                style={{ transform: `translateZ(-${radius}px) rotateY(${rotation}deg)` }}
+              >
+                {CARDS.map((c, i) => {
+                  const isActive = i === active;
+                  return (
+                    <button
+                      key={c.id}
+                      className={`oc-card ${isActive ? 'active' : ''}`}
+                      role="option"
+                      aria-selected={isActive}
+                      style={{
+                        transform: `rotateY(${i * STEP}deg) translateZ(${radius}px)`,
+                        '--accent': c.accent,
+                      } as React.CSSProperties}
+                      onClick={() => {
+                        if (drag.current.moved) return; // ignore click right after a drag
+                        if (isActive) setSelected(c);
+                        else goToCard(i);
+                      }}
+                    >
+                      <span className="oc-card-icon" style={{ color: c.accent }}>
+                        <ServiceIcon name={c.icon} />
+                      </span>
+                      <span className="oc-card-label" style={{ color: c.accent }}>{c.label}</span>
+                      <span className="oc-card-tag">{c.tag}</span>
+                      <span className="oc-card-name">{c.title}</span>
+                      <span className="oc-card-line" />
+                      <span className="oc-card-cta">{isActive ? 'Read more' : 'Bring to front'}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          ))}
+          </div>
+
+          <nav className="oc-dots" aria-label="Jump to capability">
+            {CARDS.map((c, i) => (
+              <button
+                key={c.id}
+                className={`oc-dot ${i === active ? 'on' : ''}`}
+                style={{ '--accent': c.accent } as React.CSSProperties}
+                aria-label={`Go to ${c.title}`}
+                onClick={() => goToCard(i)}
+              />
+            ))}
+          </nav>
         </div>
+      </section>
+
+      {/* Detail panel */}
+      <div className={`oc-panel ${selected ? 'open' : ''}`} aria-hidden={!selected}>
+        <div className="oc-panel-bg" onClick={() => setSelected(null)} />
+        {selected && (
+          <div className="oc-panel-card" style={{ '--accent': selected.accent } as React.CSSProperties}>
+            <button className="oc-close" onClick={() => setSelected(null)} aria-label="Close">✕</button>
+            <span className="oc-panel-icon" style={{ color: selected.accent }}>
+              <ServiceIcon name={selected.icon} />
+            </span>
+            <span className="oc-panel-label">{selected.label}</span>
+            <span className="oc-panel-tag">{selected.tag}</span>
+            <h2 className="oc-panel-name">{selected.title}</h2>
+            <p className="oc-panel-body">{selected.body}</p>
+            {selected.features.length > 0 && (
+              <ul className="oc-panel-feats">
+                {selected.features.slice(0, 3).map((f) => (
+                  <li key={f}><span style={{ color: selected.accent }}>—</span>{f}</li>
+                ))}
+              </ul>
+            )}
+            <Link href={`/services/${selected.slug}`} className="oc-panel-link" style={{ color: selected.accent }}>
+              Explore service →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Touch deck — HORIZONTAL TRAVEL carousel (phones + ALL iPads).
-//
-// The cards are kept at a STANDARD, readable size (most of the phone width; ~half
-// an iPad) — never shrunk to cram three across — so the copy is legible for every
-// age group. The section pins, and vertical scroll TRANSLATES the row sideways:
-// each card glides through the centre one at a time (with a gentle focus
-// scale/opacity), so scrolling down pans 1 → 5 and scrolling up pans 5 → 1.
-//
-// render(progress) writes every value (track x, per-card scale/opacity) purely
-// from progress, and `scrub: true` locks it to the Lenis-smoothed scroll position
-// with zero catch-up — so the reverse pan is the exact mirror of the forward pan.
-// Card heights come from an offscreen probe so long descriptions never clip.
-// ─────────────────────────────────────────────────────────────────────────────
-function ServiceDeckTouch() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const probeRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [m, setM] = useState({ w: 320, h: 480, g: 16, ready: false });
+const styles = `
+.oc-root{
+  --oc-ink: var(--text-on-ink);
+  --oc-muted: var(--text-on-ink-muted);
+  --oc-line: rgba(245,248,252,.14);
+  color: var(--oc-ink);
+}
+.oc-root *{box-sizing:border-box;}
 
-  registerGSAPPlugins();
-
-  const setCardRef = useCallback((el: HTMLDivElement | null, i: number) => {
-    cardRefs.current[i] = el;
-  }, []);
-
-  // ── Responsive geometry — a STANDARD readable card, not a shrunk-to-fit one ──
-  useEffect(() => {
-    const GAP = 16;
-    const measure = () => {
-      const vw = window.innerWidth;
-      // Phone: ~82% of the width (one big readable card, neighbours peek at the
-      // edges). iPad: ~52% (about two visible). Capped so it never gets unwieldy.
-      const frac = vw < 768 ? 0.82 : 0.52;
-      const w = Math.min(460, Math.round(vw * frac));
-
-      // Measure the TALLEST card's natural height at this width from the probe so
-      // the fixed card box never clips a long description.
-      let h = Math.round(w * 1.4); // sensible fallback before the probe paints
-      const probe = probeRef.current;
-      if (probe) {
-        probe.style.width = `${w}px`;
-        let max = 0;
-        Array.from(probe.children).forEach((ch) => {
-          const hh = (ch as HTMLElement).getBoundingClientRect().height;
-          if (hh > max) max = hh;
-        });
-        if (max > 0) h = Math.ceil(max);
-      }
-
-      setM((p) => (p.w === w && p.h === h && p.ready ? p : { w, h, g: GAP, ready: true }));
-    };
-
-    measure();
-    let raf = 0;
-    const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
-    window.addEventListener('resize', onResize);
-    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); };
-  }, []);
-
-  // ── Scroll-driven horizontal pan ───────────────────────────────────────────
-  useGSAP(() => {
-    if (!m.ready || !containerRef.current || !trackRef.current) return;
-    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
-    if (cards.length === 0) return;
-
-    const N = cards.length;
-    const step = m.w + m.g;
-    const vw = window.innerWidth;
-    // x that centres card 0 at progress 0; each unit of progress pans one step.
-    const startX = vw / 2 - m.w / 2;
-    const totalShift = (N - 1) * step;
-
-    const trackX = gsap.quickSetter(trackRef.current, 'x', 'px') as (v: number) => void;
-    const setters = cards.map((card) => {
-      const sx = gsap.quickSetter(card, 'scaleX') as (v: number) => void;
-      const sy = gsap.quickSetter(card, 'scaleY') as (v: number) => void;
-      return {
-        scale: (v: number) => { sx(v); sy(v); },
-        opacity: gsap.quickSetter(card, 'opacity') as (v: number) => void,
-      };
-    });
-
-    gsap.set(cards, { transformOrigin: 'center center', force3D: true });
-    gsap.set(trackRef.current, { x: startX });
-
-    // Pure function of progress → mirror-symmetric forward/reverse.
-    function render(p: number) {
-      trackX(startX - p * totalShift);
-      const focus = p * (N - 1); // which card is centred (float)
-      for (let i = 0; i < N; i++) {
-        const prox = Math.max(0, 1 - Math.abs(i - focus)); // 1 at centre → 0 a card away
-        const e = prox * prox * (3 - 2 * prox);            // smoothstep
-        setters[i].scale(0.92 + 0.08 * e);                 // 0.92 → 1.0
-        setters[i].opacity(0.5 + 0.5 * e);                 // 0.5 → 1.0 (centre fully readable)
-      }
-    }
-
-    ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: 'top top',
-      end: 'bottom bottom',
-      // Lock render directly to the Lenis-smoothed scroll position: zero catch-up,
-      // so the reverse pan mirrors the forward pan exactly.
-      scrub: true,
-      invalidateOnRefresh: true,
-      onUpdate: (self) => render(self.progress),
-      onRefresh: (self) => render(self.progress),
-    });
-
-    render(0);
-  }, { scope: containerRef, dependencies: [m.ready, m.w, m.h, m.g] });
-
-  // Comfortable pan speed: the pinned scroll distance (~2.6× viewport) is a bit
-  // longer than the horizontal travel, so cards glide slowly enough to read.
-  const sectionVh = 360;
-
-  return (
-    <>
-      {/* Offscreen probe — natural card height at the current width. */}
-      <div
-        ref={probeRef}
-        aria-hidden
-        className="pointer-events-none invisible absolute left-[-9999px] top-0"
-        style={{ width: m.w }}
-      >
-        {services.map((service) => (
-          <div key={service.id} className={CARD_CLASS}>
-            <CardFace service={service} />
-          </div>
-        ))}
-      </div>
-
-      <div ref={containerRef} className="relative" style={{ height: `${sectionVh}vh` }}>
-        <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-          {/* Light STATIC glow centred behind the focused card. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{ width: 420, height: 420, background: 'radial-gradient(circle, var(--color-glow), transparent 70%)', opacity: 0.3, filter: 'blur(28px)' }}
-          />
-          {/* Horizontal track — GSAP translates this on scroll. */}
-          <div ref={trackRef} className="relative flex items-center" style={{ gap: `${m.g}px`, willChange: 'transform' }}>
-            {services.map((service, i) => (
-              <div
-                key={service.id}
-                ref={(el) => setCardRef(el, i)}
-                style={{ width: m.w, height: m.h, flex: '0 0 auto', willChange: 'transform, opacity' }}
-                className={CARD_CLASS}
-              >
-                <CardFace service={service} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+/* tall section so scroll has room to spin the ring; inner stage is sticky */
+.oc-section{position:relative;height:320vh;}
+.oc-sticky{
+  position:sticky;top:0;height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ServiceCardDeck — picks the experience by device capability.
-//   • mouse-capable large screen → the original desktop scroll-scrub deck
-//   • everything touch (phones, all iPads) → a horizontal-travel carousel of
-//     standard, readable cards (vertical scroll pans the row sideways)
-// SSR renders the touch deck; desktop swaps to its deck after mount (the section
-// sits far below the fold, so the swap is never visible).
-// ─────────────────────────────────────────────────────────────────────────────
-export function ServiceCardDeck() {
-  const [deckMode, setDeckMode] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)');
-    const apply = () => setDeckMode(mq.matches);
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
-  return deckMode ? <ServiceDeck /> : <ServiceDeckTouch />;
+/* 3D scene */
+.oc-scene{
+  flex:1;width:100%;
+  display:flex;align-items:center;justify-content:center;
+  perspective:1500px;
+  position:relative;
 }
+.oc-core{
+  position:absolute;width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%, #BFE2FB, #2196F3 42%, rgba(33,150,243,0) 72%);
+  filter:blur(2px);
+  box-shadow:0 0 130px 34px rgba(33,150,243,.26);
+  pointer-events:none;
+  animation:oc-pulse 6s ease-in-out infinite;
+}
+@keyframes oc-pulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.08);opacity:1}}
+
+.oc-ring-wrap{
+  position:relative;width:300px;height:380px;
+  transform-style:preserve-3d;
+  cursor:grab;touch-action:pan-y;
+}
+.oc-ring-wrap.dragging{cursor:grabbing;}
+.oc-ring{
+  position:absolute;inset:0;
+  transform-style:preserve-3d;
+  transition:transform .65s cubic-bezier(.22,.61,.36,1);
+}
+.oc-ring-wrap.dragging .oc-ring{transition:none;}
+.oc-ring-wrap.reduced .oc-ring{transition:transform .2s linear;}
+
+.oc-card{
+  position:absolute;left:0;top:0;width:300px;height:380px;
+  display:flex;flex-direction:column;
+  padding:28px 26px;text-align:left;
+  background:linear-gradient(160deg, rgba(22,39,61,.94), rgba(14,27,44,.94));
+  border:1px solid var(--oc-line);
+  border-radius:20px;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+  color:var(--oc-ink);font-family:var(--font-body);
+  cursor:pointer;
+  transition:border-color .4s, box-shadow .4s, opacity .4s, filter .4s;
+  opacity:.4;filter:saturate(.7);
+}
+.oc-card.active{
+  opacity:1;filter:none;
+  border-color:color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow:0 30px 80px rgba(0,0,0,.55),
+             0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+             0 0 60px -10px var(--accent);
+}
+.oc-card-icon{display:inline-flex;}
+.oc-card-label{
+  font-family:var(--font-display);font-size:38px;font-weight:600;line-height:1;
+  margin-top:14px;
+}
+.oc-card-tag{
+  margin-top:auto;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--oc-muted);font-family:var(--font-heading);
+}
+.oc-card-name{
+  font-family:var(--font-display);font-size:25px;font-weight:600;
+  margin-top:8px;letter-spacing:-.01em;line-height:1.18;
+}
+.oc-card-line{
+  height:1px;width:100%;background:var(--oc-line);margin:16px 0 14px;
+}
+.oc-card-cta{
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  color:var(--accent);font-family:var(--font-heading);
+  display:flex;align-items:center;gap:6px;
+}
+.oc-card-cta::after{content:"→";transition:transform .3s;}
+.oc-card.active:hover .oc-card-cta::after{transform:translateX(4px);}
+
+/* dots */
+.oc-dots{display:flex;gap:10px;padding:0 0 5vh;z-index:5;}
+.oc-dot{
+  width:9px;height:9px;border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:rgba(245,248,252,.28);transition:transform .3s, background .3s, box-shadow .3s;
+}
+.oc-dot:hover{transform:scale(1.3);}
+.oc-dot.on{background:var(--accent);transform:scale(1.25);box-shadow:0 0 12px var(--accent);}
+
+/* detail panel */
+.oc-panel{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .35s;}
+.oc-panel.open{pointer-events:auto;opacity:1;}
+.oc-panel-bg{position:absolute;inset:0;background:rgba(7,12,22,.74);backdrop-filter:blur(6px);}
+.oc-panel-card{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-46%);
+  width:min(500px,92vw);
+  background:linear-gradient(160deg,#16273d,#0b1726);
+  border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius:22px;padding:38px 34px;
+  box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 80px -20px var(--accent);
+  transition:transform .4s cubic-bezier(.22,.61,.36,1);
+  color:var(--oc-ink);font-family:var(--font-body);
+}
+.oc-panel.open .oc-panel-card{transform:translate(-50%,-50%);}
+.oc-panel-icon{display:inline-flex;margin-bottom:14px;}
+.oc-panel-label{display:block;font-family:var(--font-display);font-size:48px;font-weight:600;color:var(--accent);line-height:1;}
+.oc-panel-tag{display:block;margin-top:12px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--oc-muted);font-family:var(--font-heading);}
+.oc-panel-name{font-family:var(--font-display);font-weight:600;font-size:32px;margin:4px 0 0;letter-spacing:-.01em;line-height:1.15;color:var(--oc-ink);}
+.oc-panel-body{color:var(--oc-muted);font-size:15px;line-height:1.7;margin:16px 0 18px;}
+.oc-panel-feats{list-style:none;margin:0 0 22px;padding:0;border-top:1px solid var(--oc-line);}
+.oc-panel-feats li{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--oc-line);font-size:13.5px;color:var(--oc-ink);}
+.oc-panel-link{display:inline-block;font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:.04em;text-decoration:none;}
+.oc-close{
+  position:absolute;top:18px;right:18px;width:34px;height:34px;border-radius:50%;
+  background:rgba(245,248,252,.1);border:1px solid var(--oc-line);
+  color:var(--oc-ink);cursor:pointer;font-size:13px;transition:background .25s;
+}
+.oc-close:hover{background:rgba(245,248,252,.22);}
+
+.oc-card:focus-visible,.oc-dot:focus-visible,.oc-close:focus-visible{
+  outline:2px solid var(--accent-on-ink);outline-offset:3px;
+}
+
+@media (max-width:560px){
+  .oc-ring-wrap{width:250px;height:350px;}
+  .oc-card{width:250px;height:350px;padding:22px 20px;}
+  .oc-card-label{font-size:32px;}
+  .oc-card-name{font-size:22px;}
+}
+`;

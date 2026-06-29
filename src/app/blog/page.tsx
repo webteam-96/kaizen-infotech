@@ -203,14 +203,16 @@ export default function BlogPage() {
                     className="group"
                   >
                     <Card tilt={false} glow className="card-red-accent relative h-full overflow-hidden p-0">
-                      {/* Cover — uploaded main image, else generated cover art */}
-                      <div className="relative aspect-[16/10]">
+                      {/* Cover — image shown in full (contained) on a light-blue
+                          backdrop, with a fixed height so portrait images stay
+                          small and never bleed over the text. */}
+                      <div className="relative flex h-52 items-center justify-center overflow-hidden bg-[var(--color-bg-tertiary)] p-2">
                         {post.mainImage?.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={post.mainImage.url}
                             alt={post.mainImage.alt || post.title}
-                            className="absolute inset-0 h-full w-full object-cover"
+                            className="max-h-full max-w-full object-contain"
                           />
                         ) : (
                           <BlogCover
@@ -221,7 +223,7 @@ export default function BlogPage() {
                         )}
                       </div>
 
-                      <div className="relative z-10 p-6">
+                      <div className="relative z-10 bg-[var(--color-bg-tertiary)] p-6">
                         <div className="mb-3 flex items-center gap-3">
                           <Badge variant="accent">{post.category}</Badge>
                           <span
