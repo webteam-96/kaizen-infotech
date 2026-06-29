@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { Turnstile } from '@/components/ui/Turnstile';
 import { socialLinks } from '@/content/navigation';
 import { SITE_CONFIG } from '@/lib/utils/constants';
 
@@ -82,6 +83,9 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaError, setCaptchaError] = useState(false);
+  const [captchaKey, setCaptchaKey] = useState(0); // bump to reset the widget
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [selectErrors, setSelectErrors] = useState<{
     budget?: string;
@@ -140,6 +144,13 @@ export default function ContactPage() {
       }
       setSelectErrors({});
 
+      // Block submission until the CAPTCHA is solved.
+      if (!captchaToken) {
+        setCaptchaError(true);
+        return;
+      }
+      setCaptchaError(false);
+
       setIsSubmitting(true);
       setSubmitStatus('idle');
 
@@ -147,7 +158,7 @@ export default function ContactPage() {
         const res = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formState),
+          body: JSON.stringify({ ...formState, turnstileToken: captchaToken }),
         });
 
         if (res.ok) {
@@ -161,22 +172,30 @@ export default function ContactPage() {
             projectType: '',
             message: '',
           });
+          // Tokens are single-use — reset the widget for any further submission.
+          setCaptchaToken('');
+          setCaptchaKey((k) => k + 1);
         } else {
           setSubmitStatus('error');
+          setCaptchaToken('');
+          setCaptchaKey((k) => k + 1);
         }
       } catch {
         setSubmitStatus('error');
+        setCaptchaToken('');
+        setCaptchaKey((k) => k + 1);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [formState]
+    [formState, captchaToken]
   );
 
   return (
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* Hero Section */}
       <PageHero
+        align="center"
         kicker="Contact"
         title="Let's Start a Conversation"
         accentWords={['Conversation']}
@@ -185,14 +204,14 @@ export default function ContactPage() {
       />
 
       {/* Contact Form + Info */}
-      <section className="px-6 pb-24 md:px-12 lg:px-24">
+      <section className="section-tint seam-blue relative px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto grid max-w-7xl gap-16 md:grid-cols-2 lg:grid-cols-[1fr_auto_400px]">
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-10">
             <div ref={formFieldsRef} className="space-y-10">
               <fieldset className="space-y-10 border-0 p-0">
                 <legend className="mb-6 font-mono text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
-                  About Yourself
+                  About <span className="text-[var(--red-brand)]">Yourself</span>
                 </legend>
                 <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
                   <Input
@@ -229,7 +248,7 @@ export default function ContactPage() {
 
               <fieldset className="space-y-10 border-0 p-0">
                 <legend className="mb-6 font-mono text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
-                  Your project
+                  Your <span className="text-[var(--red-brand)]">project</span>
                 </legend>
                 <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
                   <Select
@@ -258,6 +277,26 @@ export default function ContactPage() {
                   required
                 />
               </fieldset>
+            </div>
+
+            {/* Spam protection — Cloudflare Turnstile CAPTCHA */}
+            <div>
+              <Turnstile
+                key={captchaKey}
+                onVerify={(t) => {
+                  setCaptchaToken(t);
+                  if (t) setCaptchaError(false);
+                }}
+                onExpire={() => setCaptchaToken('')}
+              />
+              {captchaError && (
+                <p
+                  className="mt-2 text-[length:var(--text-sm)] text-[var(--color-accent-warm)]"
+                  style={{ fontFamily: 'var(--font-body)' }}
+                >
+                  Please complete the verification below the form.
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-4">
@@ -298,14 +337,31 @@ export default function ContactPage() {
           {/* Contact Info Sidebar */}
           <ScrollFadeIn direction="right">
             <ParallaxLayer speed={0.1}>
-              <div className="section-ink space-y-10 rounded-2xl p-8">
+              <div className="section-ink card-accent-ring relative overflow-hidden space-y-10 rounded-2xl p-8">
                 <div className="space-y-8">
                   {contactInfo.map((item) => (
                     <div key={item.label}>
                       <p
-                        className="ink-accent mb-1 text-[length:var(--text-xs)] uppercase tracking-wider"
+                        className="mb-1 flex items-center gap-2 text-[length:var(--text-xs)] uppercase tracking-wider text-[var(--red-coral)]"
                         style={{ fontFamily: 'var(--font-mono)' }}
                       >
+                        <span aria-hidden="true" className="text-[var(--red-coral)]">
+                          {item.label === 'Email' ? (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                              <rect x="1.5" y="3" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                              <path d="M2 4l6 4.5L14 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : item.label === 'Address' ? (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                              <path d="M8 1.5c-2.5 0-4.5 2-4.5 4.5C3.5 9.5 8 14.5 8 14.5S12.5 9.5 12.5 6c0-2.5-2-4.5-4.5-4.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+                              <circle cx="8" cy="6" r="1.6" stroke="currentColor" strokeWidth="1.4" />
+                            </svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                              <path d="M3 2.5h2.5l1 3-1.5 1a8 8 0 0 0 4.5 4.5l1-1.5 3 1V13a1.5 1.5 0 0 1-1.5 1.5C7 14.5 1.5 9 1.5 4A1.5 1.5 0 0 1 3 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </span>
                         {item.label}
                       </p>
                       <div className="flex items-center gap-2">
