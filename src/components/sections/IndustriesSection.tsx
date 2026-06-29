@@ -66,7 +66,7 @@ export function IndustriesSection() {
               'text-[var(--text-on-ink)]'
             )}
           >
-            Industries We Serve
+            Solutions Built for Every Sector
           </TextReveal>
         </div>
 

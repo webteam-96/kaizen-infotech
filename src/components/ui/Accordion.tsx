@@ -16,6 +16,8 @@ export interface AccordionItem {
 export interface AccordionProps {
   items: AccordionItem[];
   allowMultiple?: boolean;
+  /** When true, hovering a row also reveals its answer (in addition to click). */
+  revealOnHover?: boolean;
   className?: string;
 }
 
@@ -75,9 +77,11 @@ function ChevronIcon({ isOpen }: { isOpen: boolean }) {
 export function Accordion({
   items,
   allowMultiple = false,
+  revealOnHover = false,
   className,
 }: AccordionProps) {
   const [openIndices, setOpenIndices] = useState<Set<number>>(new Set());
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const toggle = useCallback(
     (index: number) => {
@@ -100,10 +104,13 @@ export function Accordion({
   return (
     <div className={cn('w-full', className)}>
       {items.map((item, index) => {
-        const isOpen = openIndices.has(index);
+        const isOpen =
+          openIndices.has(index) || (revealOnHover && hoverIndex === index);
         return (
           <div
             key={index}
+            onMouseEnter={revealOnHover ? () => setHoverIndex(index) : undefined}
+            onMouseLeave={revealOnHover ? () => setHoverIndex(null) : undefined}
             className={cn(
               'border-b border-[var(--color-border)]',
               'transition-colors duration-300'

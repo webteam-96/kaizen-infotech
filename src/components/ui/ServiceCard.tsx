@@ -16,6 +16,11 @@ export interface ServiceCardProps {
   index?: number;
   isActive?: boolean;
   onClick?: () => void;
+  // Compact = phones + all iPads: smaller padding / icon / type so the spotlight
+  // card fits a viewport-fitted box. Desktop (mouse) leaves this false for the
+  // large 800×860 deck geometry. Capability-driven by ServicesScroll — NOT a
+  // width breakpoint, so an iPad held at ≥820px no longer gets desktop sizing.
+  compact?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -39,24 +44,29 @@ export function ServiceCard({
   description,
   isActive = false,
   onClick,
+  compact = false,
 }: ServiceCardProps) {
   return (
     <motion.div
-      className="shrink-0"
+      // h-full w-full: the card must FILL its parent box (the fixed-size deck
+      // card / grid cell). Without this the wrapper is auto-height, so the inner
+      // Card's `h-full` collapsed to the content height and every card sized to
+      // its own copy — visibly different heights. Filling the box makes the
+      // `fill` + `justify-center` below actually centre content in a uniform box.
+      className="h-full w-full shrink-0"
       animate={{ scale: isActive ? 1.03 : 1 }}
       transition={spring}
     >
       <Card
         className={cn(
-          // The card always FILLS its parent deck cell (w-full h-full). On
-          // phones / iPad-portrait that cell is a measured, viewport-fitted box
-          // sized by ServicesScroll; at >=820px the explicit 800×860 below pins
-          // it to the desktop geometry the carousel maths depends on.
-          // NB: no `sm:` step — in this Tailwind v4 setup `sm:` sorts AFTER an
-          // arbitrary `min-[820px]:` and would override it, leaving desktop at the
-          // tablet size. base -> min-[820px]: keeps the >=820 desktop box intact.
+          // The card always FILLS its parent box (w-full h-full); ServicesScroll
+          // sizes that box per device (a viewport-fitted compact box on touch,
+          // the 800×860 deck box on mouse desktops). Padding/type scale via the
+          // `compact` prop — capability-driven, not a width breakpoint — so iPads
+          // get the smaller card even at ≥820px.
           'card-services',
-          'flex w-full h-full cursor-pointer flex-col p-6 min-[820px]:w-[800px] min-[820px]:h-[860px] min-[820px]:p-14',
+          'flex w-full h-full cursor-pointer flex-col',
+          compact ? 'p-5' : 'p-14',
           'transition-shadow duration-300',
           isActive && 'shadow-[0_0_40px_var(--color-glow)]'
         )}
@@ -64,12 +74,18 @@ export function ServiceCard({
         glow={isActive}
         hoverScale={isActive ? 1.02 : 1.01}
         as="article"
+        fill
       >
-        <div className="flex flex-1 flex-col" onClick={onClick}>
+        {/* justify-center: with a uniform fixed card height, shorter cards would
+            leave a big void at the BOTTOM (reads as a stray panel). Centring the
+            icon/title/description group splits the slack evenly top & bottom, so
+            every card looks intentional and uniform regardless of copy length. */}
+        <div className="flex flex-1 flex-col justify-center" onClick={onClick}>
           {/* Icon */}
           <div
             className={cn(
-              'mb-5 min-[820px]:mb-8 flex h-14 w-14 min-[820px]:h-20 min-[820px]:w-20 items-center justify-center rounded-[var(--radius-md)]',
+              'flex items-center justify-center rounded-[var(--radius-md)]',
+              compact ? 'mb-4 h-12 w-12' : 'mb-8 h-20 w-20',
               'bg-[rgba(192,0,0,0.08)] text-[var(--color-accent-warm)] ring-1 ring-[rgba(192,0,0,0.18)]',
               'text-4xl'
             )}
@@ -77,17 +93,24 @@ export function ServiceCard({
             {icon}
           </div>
 
-          {/* Title — single fixed size */}
+          {/* Title */}
           <h3
-            className="mb-3 min-[820px]:mb-5 text-xl min-[820px]:text-4xl font-semibold leading-snug text-[var(--color-text-primary)]"
+            className={cn(
+              'font-semibold leading-snug text-[var(--color-text-primary)]',
+              compact ? 'mb-2 text-lg' : 'mb-5 text-4xl'
+            )}
             style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
           >
             {title}
           </h3>
 
-          {/* Description — single fixed size */}
+          {/* Description — natural height (no flex-1) so the icon/title/desc
+              group can centre as a unit; flex-1 would re-introduce a bottom void. */}
           <p
-            className="flex-1 text-base min-[820px]:text-2xl leading-relaxed text-[var(--color-text-primary)]"
+            className={cn(
+              'leading-relaxed text-[var(--color-text-primary)]',
+              compact ? 'text-sm' : 'text-2xl'
+            )}
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {description}

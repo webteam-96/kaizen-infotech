@@ -104,6 +104,12 @@ const ANGLEVALS = [Math.PI / 2, -Math.PI / 2];
 /* ── Light theme colors ── */
 const BG_COLOR = '#f5f5f5';
 
+/* The heavy Spline 3D scene. Its file is prefetched under the countdown loader so
+   the download finishes early, but the <Spline> component is only MOUNTED once the
+   loader clears — that way the scene's native typing animation starts fresh as the
+   computer reveals, instead of finishing while it's hidden behind the overlay. */
+const SPLINE_SCENE_URL = 'https://prod.spline.design/bXo513RtAR9aENZB/scene.splinecode';
+
 /* The Spline canvas always renders at this fixed square size (big enough to hold
    the whole monitor), then is scaled DOWN to fit any viewport — so the monitor is
    never cropped, even on short laptop screens. */
@@ -152,6 +158,11 @@ export function RubiksCubeExperience() {
   // Captured Spline app instance (from onLoad) so the scene can be controlled
   // imperatively later — e.g. splineAppRef.current?.emitEvent('start', 'code 2').
   const splineAppRef = useRef<unknown>(null);
+  // Starts/replays the Spline scene's CRT typing intro. The scene loads UNDER the
+  // countdown overlay (so it's fully sharp by the time the loader clears), but its
+  // render loop is frozen with app.stop() on load so the typing doesn't burn off
+  // behind the overlay. The loader-complete effect calls this to play it in view.
+  const splineStartRef = useRef<(() => void) | null>(null);
   // Travel-through effect overlays — opacity driven by updateIntro.
   const scanlineRef = useRef<HTMLDivElement>(null);
   const diveVignetteRef = useRef<HTMLDivElement>(null);
@@ -190,7 +201,32 @@ export function RubiksCubeExperience() {
     lenisRef.current = lenis;
     if (lenis && scrollLockedRef.current) lenis.stop();
   }, [lenis]);
-  useEffect(() => { loaderCompleteRef.current = loaderComplete; }, [loaderComplete]);
+  useEffect(() => {
+    loaderCompleteRef.current = loaderComplete;
+    if (!loaderComplete) return;
+    // Loader has cleared: everything was preloaded under the overlay and is now
+    // allowed to PLAY. Start the buffered background videos (preload="auto", no
+    // autoPlay → they sat ready, paused, during the countdown) and resume the
+    // Spline scene — it loaded fully sharp under the overlay but was frozen, so
+    // its typing intro now animates in view, as the computer comes alive.
+    introBgVideoRef.current?.play().catch(() => {});
+    backdropVideoRef.current?.play().catch(() => {});
+    splineStartRef.current?.();
+  }, [loaderComplete]);
+
+  // Warm the HTTP cache for the heavy Spline scene file while the loader counts
+  // down, so the scene initialises as early as possible under the overlay.
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.as = 'fetch';
+    link.href = SPLINE_SCENE_URL;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+    return () => {
+      link.remove();
+    };
+  }, []);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -502,11 +538,15 @@ export function RubiksCubeExperience() {
     const SPLINE_ENLARGE = 1.32;
     function computeSplineScale() {
       const navbarReserve = compact ? 130 : 96;
-      const fill = compact ? 0.92 : 1.0;
+      // Compact (phones + iPad-portrait): let the monitor grow well past the
+      // viewport width (its transparent design margins overflow off-screen, so
+      // the COMPUTER reads bigger) while staying clamped to the available height
+      // so it is never cropped vertically.
+      const fill = compact ? 1.45 : 1.0;
       const colWidth = compact ? innerWidth : innerWidth * 0.6;
       const availW = colWidth * fill;
       const availH = (innerHeight - navbarReserve) * fill;
-      let s = Math.min(compact ? 1.18 : 1.7, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
+      let s = Math.min(compact ? 1.8 : 1.7, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
       if (!compact) s = Math.min(s * SPLINE_ENLARGE, availH / SPLINE_DESIGN_H);
       return s;
     }
@@ -1603,7 +1643,7 @@ export function RubiksCubeExperience() {
             tick scales within that ceiling. */}
         <video
           ref={introBgVideoRef}
-          autoPlay
+          preload="auto"
           muted
           loop
           playsInline
@@ -1626,7 +1666,7 @@ export function RubiksCubeExperience() {
             fill phones / iPad-portrait (and every other size) with no gaps. */}
         <video
           ref={backdropVideoRef}
-          autoPlay
+          preload="auto"
           muted
           loop
           playsInline
@@ -1670,7 +1710,7 @@ export function RubiksCubeExperience() {
                 filter: 'blur(7px)',
                 transform: 'scale(1.04)',
                 opacity: splineLoaded ? 0 : 1,
-                transition: 'opacity 0.7s ease',
+                transition: 'opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1)',
                 pointerEvents: 'none',
                 willChange: 'opacity',
               }}
@@ -1679,53 +1719,44 @@ export function RubiksCubeExperience() {
                 transformOrigin is set to the screen centre in the effect. */}
             <div ref={splineZoomRef} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: -120, transformOrigin: '48% 36%', willChange: 'transform' }}>
               {splineNearViewport && (
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    // Gentle crossfade-in that mirrors the poster's fade-out, with a
+                    // tiny scale settle so the computer eases into place rather than
+                    // snapping on. Kept on this dedicated wrapper so it never fights
+                    // the scroll-driven transforms on the parent zoom/fit layers.
+                    opacity: splineLoaded ? 1 : 0,
+                    transform: splineLoaded ? 'scale(1)' : 'scale(1.015)',
+                    transition:
+                      'opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 1.2s cubic-bezier(0.22, 1, 0.36, 1)',
+                    willChange: 'opacity, transform',
+                  }}
+                >
                 <Spline
-                  scene="https://prod.spline.design/bXo513RtAR9aENZB/scene.splinecode"
+                  scene={SPLINE_SCENE_URL}
                   onLoad={(app: unknown) => {
                     // Keep a handle on the Spline app so the scene can be driven
                     // imperatively (emit events, find objects) from anywhere.
                     splineAppRef.current = app;
 
-                    // Re-trigger the CRT text typing animation imperatively — don't
-                    // rely solely on the passive load-time "Start" event, which fires
-                    // unreliably on the live site. emitEvent signature is
-                    // emitEvent(eventName, nameOrUuid); names can vary, so try a few
-                    // defensively and swallow misses.
+                    // Drive the scene imperatively. The runtime Application exposes
+                    // play()/stop() (render-loop control) and emitEvent() (trigger a
+                    // scene event). Names can vary, so calls are defensive + swallowed.
                     const splineApp = app as {
+                      play?: () => void;
+                      stop?: () => void;
                       emitEvent?: (event: string, nameOrUuid: string) => void;
-                      eventNames?: () => unknown;
-                      getAllObjects?: () => Array<{ name?: string }>;
                     };
+                    // Resume the render loop and (re)fire the CRT typing so it animates
+                    // cleanly from the start, in view, once the loader has cleared.
                     const playIntro = () => {
-                      try {
-                        splineApp.emitEvent?.('start', 'code 2');
-                      } catch {
-                        // ignore if this event/object name doesn't exist
-                      }
-                      try {
-                        splineApp.emitEvent?.('start', 'code');
-                      } catch {
-                        /* ignore */
-                      }
-                      // TEMP diagnostics — read the real event/object names from the
-                      // browser console, then we'll remove this logging.
-                      console.log('[Spline] playIntro fired. app keys:', Object.keys(app as object));
-                      try {
-                        console.log('[Spline] eventNames:', splineApp.eventNames?.());
-                      } catch (e) {
-                        console.log('[Spline] eventNames() threw:', e);
-                      }
-                      // eventNames() is absent on this runtime build — enumerate the
-                      // scene's object names instead so the real target name (is it
-                      // exactly "code 2"?) can be confirmed from the console.
-                      try {
-                        console.log('[Spline] object names:', splineApp.getAllObjects?.().map((o) => o.name));
-                      } catch (e) {
-                        console.log('[Spline] getAllObjects() threw:', e);
-                      }
+                      try { splineApp.play?.(); } catch { /* ignore */ }
+                      try { splineApp.emitEvent?.('start', 'code 2'); } catch { /* ignore */ }
+                      try { splineApp.emitEvent?.('start', 'code'); } catch { /* ignore */ }
                     };
-                    // Give the canvas a frame to finish its first paint, then play.
-                    requestAnimationFrame(() => requestAnimationFrame(playIntro));
+                    splineStartRef.current = playIntro;
 
                     // Hide the pointing-hand prop, if this scene ships one (older scene did).
                     try {
@@ -1737,10 +1768,25 @@ export function RubiksCubeExperience() {
                     }
                     // The heavy 3D scene paints late; recompute trigger positions.
                     ScrollTrigger.refresh();
-                    // Fade the blurred poster out now that the real scene is up.
-                    setSplineLoaded(true);
+
+                    // Let the canvas paint a couple of real frames, then cross-fade the
+                    // poster out onto the sharp scene. If the loader is still up, FREEZE
+                    // the scene (stop the render loop) so its typing doesn't burn off
+                    // behind the overlay — the loader-complete effect resumes + plays it.
+                    // If the loader already cleared (returning visitor), play immediately.
+                    requestAnimationFrame(() =>
+                      requestAnimationFrame(() => {
+                        setSplineLoaded(true);
+                        if (loaderCompleteRef.current) {
+                          playIntro();
+                        } else {
+                          try { splineApp.stop?.(); } catch { /* ignore */ }
+                        }
+                      })
+                    );
                   }}
                 />
+                </div>
               )}
               {/* Dissolve the canvas-drawn "Built with Spline" watermark (bottom-right).
                   A flat fill left a bright rectangle because the scene background is a
@@ -1750,6 +1796,7 @@ export function RubiksCubeExperience() {
                   patch out with a radial mask so there's no hard edge to notice. */}
               <div
                 aria-hidden
+                className="rc-wm-mask"
                 style={{
                   position: 'absolute', bottom: 0, right: 0,
                   width: '38%', height: '14%',

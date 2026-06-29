@@ -3,7 +3,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
 import { useLoaderStore } from '@/store/loaderStore';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 /* ── Thread/Knot/Swing Countdown: 5 → 1 ── */
 const NUMS = [5, 4, 3, 2, 1];
@@ -15,7 +14,6 @@ export function CountdownLoader() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const doneRef = useRef(false);
   const setComplete = useLoaderStore((s) => s.setComplete);
-  const prefersReducedMotion = useReducedMotion();
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
@@ -134,31 +132,6 @@ export function CountdownLoader() {
     };
   }, [finish, setComplete]);
 
-  /* Skip handler */
-  const handleSkip = useCallback(() => {
-    if (doneRef.current) return;
-    doneRef.current = true;
-    const overlay = overlayRef.current;
-    if (!overlay) return;
-    if (prefersReducedMotion) {
-      // No slide animation — opacity-only fade.
-      overlay.style.transition = 'opacity 0.2s ease';
-      overlay.style.opacity = '0';
-      overlay.style.pointerEvents = 'none';
-    } else {
-      overlay.classList.add('rc-cd-fade-out');
-    }
-    document.body.classList.remove('loader-active');
-    setTimeout(
-      () => {
-        overlay.style.display = 'none';
-        setComplete();
-        ScrollTrigger.refresh();
-      },
-      prefersReducedMotion ? 220 : 500
-    );
-  }, [setComplete, prefersReducedMotion]);
-
   return (
     <div
       ref={overlayRef}
@@ -190,25 +163,6 @@ export function CountdownLoader() {
       >
         Kaizen Infotech Solutions
       </div>
-
-      {/* Skip button */}
-      <button
-        onClick={handleSkip}
-        className="absolute bottom-[3%] left-1/2 -translate-x-1/2 cursor-pointer uppercase transition-colors duration-300"
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.75rem',
-          letterSpacing: '3px',
-          color: 'rgba(0,0,0,0.2)',
-          background: 'none',
-          border: 'none',
-          padding: '8px 20px',
-        }}
-        onMouseEnter={e => (e.currentTarget.style.color = 'rgba(0,0,0,0.5)')}
-        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(0,0,0,0.2)')}
-      >
-        skip
-      </button>
     </div>
   );
 }

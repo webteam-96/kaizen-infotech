@@ -53,6 +53,12 @@ export function CTASection() {
     () => {
       if (!hrRef.current || prefersReducedMotion) return;
 
+      // Touch (phones + all iPads): reverse on scroll-up via toggleActions; drop
+      // `once` so the rule collapses back as it leaves. Desktop stays one-way.
+      const isTouch =
+        typeof window !== 'undefined' &&
+        !window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches;
+
       gsap.fromTo(
         hrRef.current,
         { scaleX: 0 },
@@ -64,7 +70,7 @@ export function CTASection() {
             trigger: hrRef.current,
             start: ANIMATION_CONFIG.scrollTrigger.start,
             toggleActions: ANIMATION_CONFIG.scrollTrigger.toggleActions,
-            once: true,
+            once: !isTouch,
           },
         }
       );

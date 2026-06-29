@@ -2,6 +2,15 @@
 @import "../styles/fonts.css";
 @import "../styles/animations.css";
 
+/* ===== Capability variant =====
+   `desk:` = genuine desktop (large screen + mouse). Mirrors the JS capability
+   query used by the pinned carousels (ServicesScroll). Using this instead of a
+   width-only breakpoint (`md`/`lg`) is what lets a card treat EVERY iPad as a
+   touch device — iPads are ≥768px so `md:` would wrongly give them the desktop
+   layout. Unprefixed classes therefore target phone + ALL iPads; `desk:` styles
+   only apply on a real mouse desktop. */
+@custom-variant desk (@media (min-width: 1024px) and (hover: hover) and (pointer: fine));
+
 /* ===== DESIGN TOKENS ===== */
 :root {
   /* BASE COLORS — Brand: White #FFFFFF, Black #000000, Light Blue #87CEEB */
@@ -165,6 +174,26 @@
   --sky-glow-16:  rgba(135, 206, 235, 0.16);
   --red-glow-05:  rgba(192, 0, 0, 0.05);
   --red-glow-10:  rgba(192, 0, 0, 0.10);
+}
+
+/* ── Compact type scale — phones + iPads ONLY ──────────────────────────────
+   The standard heading scale above runs large on small screens (section h2 at
+   34px, eyebrow at 16px). Shrink the WHOLE scale here so every heading/eyebrow
+   site-wide steps down uniformly — these tokens drive all of them. Hierarchy is
+   preserved: the eyebrow (red kicker) always stays well below the section
+   heading (blue h2). Body/sub stay ≥16px for readability. Targets ≤1024px
+   (phones + iPad-portrait) plus any coarse-pointer screen ≤1366px (iPad
+   landscape), but never a mouse desktop. */
+@media (max-width: 1024px), (max-width: 1366px) and (pointer: coarse) {
+  :root {
+    --h-hero:    clamp(1.625rem, 1.40rem + 1.0vw,  2.25rem);   /* ~26 → 36 px */
+    --h-page:    clamp(1.375rem, 1.20rem + 0.8vw,  1.875rem);  /* ~22 → 30 px */
+    --h-section: clamp(1.5rem,   1.30rem + 0.9vw,  2rem);      /* ~24 → 32 px  (was 34) */
+    --h-card:    clamp(1rem,     0.97rem + 0.15vw, 1.125rem);  /* ~16 → 18 px */
+    --h-sub:     1rem;                                         /*  16 px (readability) */
+    --h-body:    1rem;                                         /*  16 px (readability) */
+    --h-eyebrow: clamp(0.75rem,  0.72rem + 0.12vw, 0.875rem);  /* ~12 → 14 px  (was 16) */
+  }
 }
 
 /* Tailwind v4 theme integration */
@@ -771,15 +800,16 @@ html, body { max-width: 100%; overflow-x: clip; }
     left: 0 !important;
     right: 0 !important;
     margin-inline: auto !important;
-    transform: translateY(-6vh) !important; /* "place it a little higher" */
+    transform: translateY(0) !important; /* centre the monitor vertically in the viewport */
     pointer-events: none !important;        /* never blocks taps / scrolling */
   }
 
-  /* Opening hook copy: strip the glass-card chrome and drop it to the bottom,
-     centred. JS still drives its fade; only position/skin are overridden here. */
+  /* Opening hook copy: strip the glass-card chrome and group it in a comfortable
+     band below the monitor (not jammed at the very bottom). JS still drives its
+     fade; only position/skin are overridden here. */
   .rc-glass-card.rc-hook-card {
     top: auto !important;
-    bottom: 6% !important;
+    bottom: 5% !important;
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
@@ -798,6 +828,65 @@ html, body { max-width: 100%; overflow-x: clip; }
   .rc-hook-card .rc-hook-inner {
     align-items: center !important;
     text-align: center !important;
+    gap: 0.15rem;
+  }
+
+  /* Overline hidden on phone / portrait-tablet — the big monitor is the
+     branding; the headline + CTA carry the message at the bottom. */
+  .rc-hook-card .rc-overline { display: none !important; }
+
+  /* Title: bolder, tighter, with a soft halo so it stays crisp over the
+     busy hexagon texture behind it */
+  .rc-hook-card .rc-hook-title {
+    font-weight: 600;
+    font-size: clamp(2rem, 10vw, 2.85rem) !important;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 18px rgba(245,245,245,0.9), 0 1px 2px rgba(245,245,245,0.9);
+  }
+
+  /* Tap / scroll cue → a clear, inviting CTA pill (it's the primary
+     affordance on touch). Replaces the near-invisible 22%-black label. */
+  .rc-hook-card .rc-scroll-cue {
+    margin-top: 1.5rem !important;
+    align-self: center;
+  }
+  .rc-hook-card .rc-scroll-cue span {
+    display: inline-block;
+    padding: 0.62rem 1.4rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    color: var(--color-accent-primary);
+    background: rgba(33,150,243,0.08);
+    border: 1px solid rgba(33,150,243,0.28);
+    box-shadow: 0 6px 20px rgba(33,150,243,0.12);
+    animation: rc-cue-pulse 2.4s ease-in-out infinite;
+  }
+  /* The vertical hairline reads as clutter under a pill — hide it on touch. */
+  .rc-hook-card .rc-scroll-line { display: none !important; }
+}
+
+@keyframes rc-cue-pulse {
+  0%, 100% { box-shadow: 0 6px 20px rgba(33,150,243,0.12); transform: translateY(0); }
+  50%      { box-shadow: 0 8px 26px rgba(33,150,243,0.22); transform: translateY(-2px); }
+}
+
+/* Spline "Built with Spline" watermark mask — on phones/portrait-tablet the
+   monitor canvas is scaled down and overflows the right edge, and Chrome's
+   backdrop-filter does not reliably blur over the WebGL canvas there, so the
+   wordmark stays legible. Swap the frost for a near-opaque background wash
+   (still feathered by the radial mask so there is no hard rectangle edge). */
+@media (max-width: 767px),
+       (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .rc-wm-mask {
+    width: 22% !important;
+    height: 12% !important;
+    background: rgba(245,245,245,0.97) !important;
+    /* tighter feather so the smaller patch is fully opaque over the badge */
+    -webkit-mask-image: radial-gradient(120% 120% at 100% 100%, #000 62%, transparent 95%) !important;
+    mask-image: radial-gradient(120% 120% at 100% 100%, #000 62%, transparent 95%) !important;
   }
 }
 
@@ -926,6 +1015,22 @@ html, body { max-width: 100%; overflow-x: clip; }
   pointer-events: none;
 }
 
+/* Reusable red top-accent bar — the same highlight the services deck uses, so
+   cards in other sections (About → Our Values, How We Work) read as one family.
+   Host must clip overflow (rounded corners) for the bar to follow the radius. */
+.card-red-accent { position: relative; }
+.card-red-accent::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--red-brand), var(--red-crimson) 55%, var(--red-coral));
+  z-index: 6;
+  pointer-events: none;
+}
+
 /* Featured work — warm card with a red left "spine" accent. */
 .card-work::before {
   content: '';
@@ -938,6 +1043,59 @@ html, body { max-width: 100%; overflow-x: clip; }
   z-index: 6;
   pointer-events: none;
 }
+
+/* ===== Reusable card-accent variants — give each card group across the site a
+   distinct silhouette while sharing one red highlight language. Apply to any
+   card that is position:relative; overflow:hidden. ===== */
+
+/* Red top bar that wipes in from the left on hover. */
+.card-accent-top { position: relative; }
+.card-accent-top::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  background: linear-gradient(90deg, var(--red-brand), var(--red-coral));
+  z-index: 6;
+  pointer-events: none;
+}
+.card-accent-top:hover::before,
+.group:hover .card-accent-top::before { transform: scaleX(1); }
+
+/* Permanent red left spine. */
+.card-accent-spine { position: relative; }
+.card-accent-spine::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--red-crimson), var(--red-brand));
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* Folded red corner in the top-right. */
+.card-accent-corner { position: relative; }
+.card-accent-corner::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 0;
+  border-top: 26px solid var(--red-brand);
+  border-left: 26px solid transparent;
+  opacity: 0.85;
+  transition: border-top-width 0.3s ease, border-left-width 0.3s ease;
+  z-index: 6;
+  pointer-events: none;
+}
+.card-accent-corner:hover::after { border-top-width: 34px; border-left-width: 34px; }
+
+/* Inset red ring that appears on hover. */
+.card-accent-ring { transition: box-shadow 0.3s ease, border-color 0.3s ease; }
+.card-accent-ring:hover { box-shadow: inset 0 0 0 1.5px var(--red-brand); }
 
 /* Secondary/ghost buttons inside ink bands — unlayered so it beats the
    variant's text/border utilities. */
@@ -1025,4 +1183,110 @@ html.has-custom-cursor * {
 /* ===== Very large screens: ≥ 1536px ===== */
 @media (min-width: 1536px) {
   .container { max-width: 1440px; }
+}
+
+/* ===========================================================================
+   Blog rich content (.prose-custom) — styles the HTML produced by the admin
+   editor AND rendered on public blog detail pages. Also used live inside the
+   editor (.rich-editor) so authoring matches the published look.
+   =========================================================================== */
+.prose-custom { color: var(--color-text-secondary); line-height: 1.8; }
+.prose-custom > :first-child { margin-top: 0; }
+.prose-custom h2 {
+  margin: 2.5rem 0 1rem;
+  font-family: var(--font-heading);
+  font-size: var(--h-section);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+}
+.prose-custom h3 {
+  margin: 2rem 0 0.75rem;
+  font-family: var(--font-heading);
+  font-size: var(--h-card);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text-primary);
+}
+.prose-custom h4 {
+  margin: 1.5rem 0 0.5rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.prose-custom p { margin: 0 0 1.25rem; font-size: var(--text-base); }
+.prose-custom a {
+  color: var(--color-accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-custom strong { color: var(--color-text-primary); font-weight: 700; }
+.prose-custom em { font-style: italic; }
+.prose-custom ul,
+.prose-custom ol { margin: 0 0 1.5rem; padding-left: 1.5rem; }
+.prose-custom ul { list-style: disc; }
+.prose-custom ol { list-style: decimal; }
+.prose-custom li { margin-bottom: 0.5rem; font-size: var(--text-base); }
+.prose-custom blockquote {
+  margin: 1.5rem 0;
+  padding: 0.5rem 0 0.5rem 1.25rem;
+  border-left: 3px solid var(--red-brand);
+  color: var(--color-text-primary);
+  font-style: italic;
+}
+.prose-custom code {
+  border-radius: 4px;
+  background: var(--color-bg-tertiary);
+  padding: 0.15em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--color-accent-primary);
+}
+.prose-custom pre {
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-inverse);
+  padding: 1rem 1.25rem;
+  color: #e6edf3;
+}
+.prose-custom pre code { background: transparent; color: inherit; padding: 0; }
+.prose-custom img {
+  margin: 1.5rem 0;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+.prose-custom figure { margin: 1.5rem 0; }
+.prose-custom figcaption {
+  margin-top: 0.5rem;
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+.prose-custom table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.prose-custom th,
+.prose-custom td {
+  border: 1px solid var(--color-border);
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-custom thead th {
+  background: var(--color-bg-tertiary);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.prose-custom tbody tr:nth-child(even) { background: var(--color-bg-secondary); }
+
+/* Editor: placeholder when empty */
+.rich-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
 }

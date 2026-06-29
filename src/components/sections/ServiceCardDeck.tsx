@@ -1,14 +1,14 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
-import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
+import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
 import Link from 'next/link';
 import { services } from '@/content/services';
 import { cn } from '@/lib/utils/cn';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layout constants
+// Layout constants (desktop deck)
 // ─────────────────────────────────────────────────────────────────────────────
 const W = 320;   // card width  (px) — 3-card row = 1016px, fits 1024 with no horizontal clip
 const H = 590;   // card height (px) — uniform, sized to the LONGEST card's content (≈574px) + margin
@@ -22,12 +22,6 @@ const STACK: { x: number; y: number; r: number }[] = [
   { x: 6,  y: -9,  r: 1.5  },
   { x: 8,  y: -12, r: 3    },
 ];
-
-// The five cards reveal as TWO rows, one at a time, each centred in the
-// viewport. Row 1 = first three cards, Row 2 = last two. Positions are the
-// per-card X offset from centre when that row is the focused, centred row.
-const ROW1_X = (i: number) => (i - 1) * (W + G);          // 3 cards: −(W+G), 0, +(W+G)
-const ROW2_X = (i: number) => (i - 3 - 0.5) * (W + G);    // 2 cards: −½(W+G), +½(W+G)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icon components
@@ -55,9 +49,71 @@ function ServiceIcon({ name }: { name: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ServiceCardDeck
+// Shared card chrome — one source of truth for the deck card on desktop, the
+// touch deck, AND the offscreen height-probe, so all three measure/animate the
+// exact same box.
 // ─────────────────────────────────────────────────────────────────────────────
-export function ServiceCardDeck() {
+const CARD_CLASS = cn(
+  'card-red-accent overflow-hidden',
+  'flex flex-col rounded-[var(--radius-xl)] p-7',
+  'border border-[var(--color-border)]',
+  'bg-[var(--color-bg-secondary)]',
+  'shadow-[0_8px_32px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.04)]',
+);
+
+function CardFace({ service }: { service: (typeof services)[number] }) {
+  return (
+    <>
+      {/* Icon */}
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--red-soft)] text-[var(--red-brand)]">
+        <ServiceIcon name={service.icon} />
+      </div>
+
+      {/* Title */}
+      <h3
+        className="mb-3 text-[length:var(--text-lg)] font-semibold leading-snug text-[var(--color-text-primary)]"
+        style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
+      >
+        {service.title}
+      </h3>
+
+      {/* Description — full copy (no clamp); card height fits it */}
+      <p
+        className="mb-5 flex-1 text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
+        style={{ fontFamily: 'var(--font-body)' }}
+      >
+        {service.description}
+      </p>
+
+      {/* Learn more */}
+      <Link
+        href={`/services/${service.slug}`}
+        className={cn(
+          'flex items-center justify-between',
+          'border-t border-[var(--color-border)] pt-4',
+          'text-[length:var(--text-sm)] font-medium uppercase tracking-wider',
+          'text-[var(--color-accent-secondary)] transition-colors duration-200',
+          'hover:text-[var(--color-accent-primary)]',
+        )}
+        style={{ fontFamily: 'var(--font-heading)' }}
+      >
+        Learn more
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </Link>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Desktop deck — pointer/wheel-driven scroll-scrub reveal (mouse, ≥1024px only)
+// ─────────────────────────────────────────────────────────────────────────────
+// Row X positions when a row is the focused, centred row.
+const ROW1_X = (i: number) => (i - 1) * (W + G);          // 3 cards: −(W+G), 0, +(W+G)
+const ROW2_X = (i: number) => (i - 3 - 0.5) * (W + G);    // 2 cards: −½(W+G), +½(W+G)
+
+function ServiceDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -73,22 +129,13 @@ export function ServiceCardDeck() {
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
     if (cards.length === 0) return;
 
-    // Distance that pushes a card fully past the top/bottom edge of the viewport
-    // (deck is centred), used to send a row off-screen / bring it back.
     const offY = (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 + H / 2 + 48;
 
-    // ── Initial state ─────────────────────────────────────────────────────────
-    // Cards start invisible (opacity 0), scaled down, below their stack position.
     cards.forEach((card, i) => {
       const s = STACK[i];
       gsap.set(card, {
-        x: s.x,
-        y: s.y + 40,
-        rotation: s.r,
-        scale: 0.55,
-        opacity: 0,
-        zIndex: i + 1,
-        transformOrigin: 'center center',
+        x: s.x, y: s.y + 40, rotation: s.r, scale: 0.55, opacity: 0,
+        zIndex: cards.length - i, transformOrigin: 'center center',
       });
     });
 
@@ -102,184 +149,245 @@ export function ServiceCardDeck() {
       },
     });
 
-    // ── Phase 1 (tl 0–1): the stack pops up at centre ───────────────────────
+    // Phase 1 — stack pops up at centre
     cards.forEach((card, i) => {
       const s = STACK[i];
       tl.to(card, { opacity: 1, ease: 'power1.out', duration: 0.15 }, 0);
-      tl.to(card, {
-        x: s.x, y: s.y, rotation: s.r, scale: 1,
-        ease: 'power2.inOut', duration: 1,
-      }, 0);
+      tl.to(card, { x: s.x, y: s.y, rotation: s.r, scale: 1, ease: 'power2.inOut', duration: 1 }, 0);
     });
     if (glowRef.current) {
-      tl.fromTo(glowRef.current,
-        { opacity: 0.2 },
-        { opacity: 0.8, duration: 1, ease: 'power2.inOut' }, 0);
+      tl.fromTo(glowRef.current, { opacity: 0.2 }, { opacity: 0.8, duration: 1, ease: 'power2.inOut' }, 0);
     }
 
-    // ── Phase 2 (tl 1–2): ROW 1 fans out (centred); ROW 2 drops DOWN ─────────
-    // The first three cards spread into a centred horizontal row. The last two
-    // slide straight down, off the bottom edge, waiting their turn.
+    // Phase 2 — ROW 1 fans out (centred); ROW 2 drops DOWN
     cards.forEach((card, i) => {
       if (i < 3) {
-        tl.to(card, {
-          x: ROW1_X(i), y: 0, rotation: 0, scale: 1, opacity: 1,
-          ease: 'power3.inOut', duration: 1,
-        }, 1 + i * 0.05);
+        tl.to(card, { x: ROW1_X(i), y: 0, rotation: 0, scale: 1, opacity: 1, ease: 'power3.inOut', duration: 1 }, 1 + i * 0.05);
       } else {
-        tl.to(card, {
-          x: 0, y: offY, rotation: 0, scale: 0.72, opacity: 1,
-          ease: 'power2.inOut', duration: 1,
-        }, 1);
+        tl.to(card, { x: 0, y: offY, rotation: 0, scale: 0.72, opacity: 1, ease: 'power2.inOut', duration: 1 }, 1);
       }
     });
 
-    // ── Phase 3 (tl 2–3): ROW 1 exits UP; ROW 2 rises into the centred row ──
+    // Phase 3 — ROW 1 exits UP; ROW 2 rises into the centred row
     cards.forEach((card, i) => {
       if (i < 3) {
-        tl.to(card, {
-          y: -offY, opacity: 0, ease: 'power2.inOut', duration: 1,
-        }, 2);
+        tl.to(card, { y: -offY, opacity: 0, ease: 'power2.inOut', duration: 1 }, 2);
       } else {
-        tl.to(card, {
-          x: ROW2_X(i), y: 0, rotation: 0, scale: 1, opacity: 1,
-          ease: 'power3.inOut', duration: 1,
-        }, 2 + (i - 3) * 0.06);
+        tl.to(card, { x: ROW2_X(i), y: 0, rotation: 0, scale: 1, opacity: 1, ease: 'power3.inOut', duration: 1 }, 2 + (i - 3) * 0.06);
       }
     });
 
-    // Glow keeps a soft presence through both reveals.
     if (glowRef.current) {
       tl.to(glowRef.current, { opacity: 0.45, scale: 1.25, duration: 1, ease: 'power2.inOut' }, 1);
       tl.to(glowRef.current, { opacity: 0.6, duration: 1, ease: 'power2.inOut' }, 2);
     }
   }, { scope: containerRef, dependencies: [] });
 
-  // ── JSX ──────────────────────────────────────────────────────────────────
+  return (
+    <div ref={containerRef} className="relative" style={{ height: '600vh' }}>
+      <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
+        <div
+          ref={glowRef}
+          aria-hidden
+          className="pointer-events-none absolute rounded-full"
+          style={{ width: 500, height: 500, background: 'radial-gradient(circle, var(--color-glow), transparent 70%)', opacity: 0.2, filter: 'blur(40px)' }}
+        />
+        <div style={{ position: 'relative', width: W, height: H }}>
+          {services.map((service, i) => (
+            <div
+              key={service.id}
+              ref={(el) => setCardRef(el, i)}
+              style={{ position: 'absolute', width: W, height: H, willChange: 'transform, opacity', zIndex: services.length - i, opacity: 0 }}
+              className={CARD_CLASS}
+            >
+              <CardFace service={service} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Touch deck — HORIZONTAL TRAVEL carousel (phones + ALL iPads).
+//
+// The cards are kept at a STANDARD, readable size (most of the phone width; ~half
+// an iPad) — never shrunk to cram three across — so the copy is legible for every
+// age group. The section pins, and vertical scroll TRANSLATES the row sideways:
+// each card glides through the centre one at a time (with a gentle focus
+// scale/opacity), so scrolling down pans 1 → 5 and scrolling up pans 5 → 1.
+//
+// render(progress) writes every value (track x, per-card scale/opacity) purely
+// from progress, and `scrub: true` locks it to the Lenis-smoothed scroll position
+// with zero catch-up — so the reverse pan is the exact mirror of the forward pan.
+// Card heights come from an offscreen probe so long descriptions never clip.
+// ─────────────────────────────────────────────────────────────────────────────
+function ServiceDeckTouch() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const probeRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [m, setM] = useState({ w: 320, h: 480, g: 16, ready: false });
+
+  registerGSAPPlugins();
+
+  const setCardRef = useCallback((el: HTMLDivElement | null, i: number) => {
+    cardRefs.current[i] = el;
+  }, []);
+
+  // ── Responsive geometry — a STANDARD readable card, not a shrunk-to-fit one ──
+  useEffect(() => {
+    const GAP = 16;
+    const measure = () => {
+      const vw = window.innerWidth;
+      // Phone: ~82% of the width (one big readable card, neighbours peek at the
+      // edges). iPad: ~52% (about two visible). Capped so it never gets unwieldy.
+      const frac = vw < 768 ? 0.82 : 0.52;
+      const w = Math.min(460, Math.round(vw * frac));
+
+      // Measure the TALLEST card's natural height at this width from the probe so
+      // the fixed card box never clips a long description.
+      let h = Math.round(w * 1.4); // sensible fallback before the probe paints
+      const probe = probeRef.current;
+      if (probe) {
+        probe.style.width = `${w}px`;
+        let max = 0;
+        Array.from(probe.children).forEach((ch) => {
+          const hh = (ch as HTMLElement).getBoundingClientRect().height;
+          if (hh > max) max = hh;
+        });
+        if (max > 0) h = Math.ceil(max);
+      }
+
+      setM((p) => (p.w === w && p.h === h && p.ready ? p : { w, h, g: GAP, ready: true }));
+    };
+
+    measure();
+    let raf = 0;
+    const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
+    window.addEventListener('resize', onResize);
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); };
+  }, []);
+
+  // ── Scroll-driven horizontal pan ───────────────────────────────────────────
+  useGSAP(() => {
+    if (!m.ready || !containerRef.current || !trackRef.current) return;
+    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
+    if (cards.length === 0) return;
+
+    const N = cards.length;
+    const step = m.w + m.g;
+    const vw = window.innerWidth;
+    // x that centres card 0 at progress 0; each unit of progress pans one step.
+    const startX = vw / 2 - m.w / 2;
+    const totalShift = (N - 1) * step;
+
+    const trackX = gsap.quickSetter(trackRef.current, 'x', 'px') as (v: number) => void;
+    const setters = cards.map((card) => {
+      const sx = gsap.quickSetter(card, 'scaleX') as (v: number) => void;
+      const sy = gsap.quickSetter(card, 'scaleY') as (v: number) => void;
+      return {
+        scale: (v: number) => { sx(v); sy(v); },
+        opacity: gsap.quickSetter(card, 'opacity') as (v: number) => void,
+      };
+    });
+
+    gsap.set(cards, { transformOrigin: 'center center', force3D: true });
+    gsap.set(trackRef.current, { x: startX });
+
+    // Pure function of progress → mirror-symmetric forward/reverse.
+    function render(p: number) {
+      trackX(startX - p * totalShift);
+      const focus = p * (N - 1); // which card is centred (float)
+      for (let i = 0; i < N; i++) {
+        const prox = Math.max(0, 1 - Math.abs(i - focus)); // 1 at centre → 0 a card away
+        const e = prox * prox * (3 - 2 * prox);            // smoothstep
+        setters[i].scale(0.92 + 0.08 * e);                 // 0.92 → 1.0
+        setters[i].opacity(0.5 + 0.5 * e);                 // 0.5 → 1.0 (centre fully readable)
+      }
+    }
+
+    ScrollTrigger.create({
+      trigger: containerRef.current,
+      start: 'top top',
+      end: 'bottom bottom',
+      // Lock render directly to the Lenis-smoothed scroll position: zero catch-up,
+      // so the reverse pan mirrors the forward pan exactly.
+      scrub: true,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => render(self.progress),
+      onRefresh: (self) => render(self.progress),
+    });
+
+    render(0);
+  }, { scope: containerRef, dependencies: [m.ready, m.w, m.h, m.g] });
+
+  // Comfortable pan speed: the pinned scroll distance (~2.6× viewport) is a bit
+  // longer than the horizontal travel, so cards glide slowly enough to read.
+  const sectionVh = 360;
+
   return (
     <>
-      {/* ── Desktop: sticky deck animation (lg+) ─────────────────────────── */}
+      {/* Offscreen probe — natural card height at the current width. */}
       <div
-        ref={containerRef}
-        className="relative hidden lg:block"
-        style={{ height: '600vh' }}
+        ref={probeRef}
+        aria-hidden
+        className="pointer-events-none invisible absolute left-[-9999px] top-0"
+        style={{ width: m.w }}
       >
-        <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
+        {services.map((service) => (
+          <div key={service.id} className={CARD_CLASS}>
+            <CardFace service={service} />
+          </div>
+        ))}
+      </div>
 
-          {/* Ambient glow — brand accent */}
+      <div ref={containerRef} className="relative" style={{ height: `${sectionVh}vh` }}>
+        <div className="sticky top-0 flex h-screen items-center overflow-hidden">
+          {/* Light STATIC glow centred behind the focused card. */}
           <div
-            ref={glowRef}
             aria-hidden
-            className="pointer-events-none absolute rounded-full"
-            style={{
-              width: 500,
-              height: 500,
-              background: 'radial-gradient(circle, var(--color-glow), transparent 70%)',
-              opacity: 0.2,
-              filter: 'blur(40px)',
-            }}
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ width: 420, height: 420, background: 'radial-gradient(circle, var(--color-glow), transparent 70%)', opacity: 0.3, filter: 'blur(28px)' }}
           />
-
-          {/* Deck container */}
-          <div style={{ position: 'relative', width: W, height: H }}>
+          {/* Horizontal track — GSAP translates this on scroll. */}
+          <div ref={trackRef} className="relative flex items-center" style={{ gap: `${m.g}px`, willChange: 'transform' }}>
             {services.map((service, i) => (
               <div
                 key={service.id}
                 ref={(el) => setCardRef(el, i)}
-                style={{
-                  position: 'absolute',
-                  width: W,
-                  height: H,
-                  willChange: 'transform, opacity',
-                  zIndex: i + 1,
-                  opacity: 0,
-                }}
-                className={cn(
-                  'flex flex-col rounded-[var(--radius-xl)] p-7',
-                  'border border-[var(--color-border)]',
-                  'bg-[var(--color-bg-secondary)]',
-                  'shadow-[0_8px_32px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.04)]',
-                )}
+                style={{ width: m.w, height: m.h, flex: '0 0 auto', willChange: 'transform, opacity' }}
+                className={CARD_CLASS}
               >
-                {/* Icon */}
-                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
-                  <ServiceIcon name={service.icon} />
-                </div>
-
-                {/* Title */}
-                <h3
-                  className="mb-3 text-[length:var(--text-lg)] font-semibold leading-snug text-[var(--color-text-primary)]"
-                  style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
-                >
-                  {service.title}
-                </h3>
-
-                {/* Description — full copy (no clamp); card height fits it */}
-                <p
-                  className="mb-5 flex-1 text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
-                  style={{ fontFamily: 'var(--font-body)' }}
-                >
-                  {service.description}
-                </p>
-
-                {/* Learn more */}
-                <Link
-                  href={`/services/${service.slug}`}
-                  className={cn(
-                    'flex items-center justify-between',
-                    'border-t border-[var(--color-border)] pt-4',
-                    'text-[length:var(--text-sm)] font-medium uppercase tracking-wider',
-                    'text-[var(--color-text-tertiary)] transition-colors duration-200',
-                    'hover:text-[var(--color-accent-primary)]',
-                  )}
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  Learn more
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                    <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
+                <CardFace service={service} />
               </div>
             ))}
           </div>
-
         </div>
-      </div>
-
-      {/* ── Mobile / tablet: regular responsive grid (< lg) ──────────────── */}
-      <div className="grid gap-5 px-6 pb-12 sm:grid-cols-2 md:px-12 lg:hidden">
-        {services.map((service) => (
-          <Link key={service.id} href={`/services/${service.slug}`} className="group block">
-            <div
-              className={cn(
-                'relative flex h-full flex-col rounded-[var(--radius-lg)] p-7',
-                'border border-[var(--color-border)] bg-[var(--color-bg-tertiary)]',
-                'transition-all duration-300',
-                'hover:border-[var(--color-border-hover)] hover:shadow-[0_0_40px_var(--color-glow)]',
-                'hover:-translate-y-1.5',
-              )}
-            >
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)] transition-transform duration-300 group-hover:scale-110">
-                <ServiceIcon name={service.icon} />
-              </div>
-              <h3 className="mb-2 text-[length:var(--text-lg)] font-semibold text-[var(--color-text-primary)]" style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}>
-                {service.title}
-              </h3>
-              <p className="mb-5 flex-1 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]" style={{ fontFamily: 'var(--font-body)' }}>
-                {service.description}
-              </p>
-              <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-4">
-                <span className="text-[length:var(--text-xs)] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] transition-colors group-hover:text-[var(--color-accent-primary)]" style={{ fontFamily: 'var(--font-heading)' }}>
-                  Learn more
-                </span>
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="text-[var(--color-text-tertiary)] transition-all group-hover:translate-x-1 group-hover:text-[var(--color-accent-primary)]">
-                  <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-          </Link>
-        ))}
       </div>
     </>
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ServiceCardDeck — picks the experience by device capability.
+//   • mouse-capable large screen → the original desktop scroll-scrub deck
+//   • everything touch (phones, all iPads) → a horizontal-travel carousel of
+//     standard, readable cards (vertical scroll pans the row sideways)
+// SSR renders the touch deck; desktop swaps to its deck after mount (the section
+// sits far below the fold, so the swap is never visible).
+// ─────────────────────────────────────────────────────────────────────────────
+export function ServiceCardDeck() {
+  const [deckMode, setDeckMode] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)');
+    const apply = () => setDeckMode(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  return deckMode ? <ServiceDeck /> : <ServiceDeckTouch />;
 }

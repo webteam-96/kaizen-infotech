@@ -77,6 +77,7 @@ export default function AboutPage() {
       {/* HERO SECTION */}
       {/* ================================================================= */}
       <PageHero
+        align="center"
         kicker="About Kaizen Infotech"
         title="A Technology Partner Focused on Solving Real Business Problems"
         accentWords={['Solving', 'Real']}
@@ -92,13 +93,13 @@ export default function AboutPage() {
       {/* ================================================================= */}
       {/* ORIGIN STORY SECTION */}
       {/* ================================================================= */}
-      <section className="relative px-6 py-32">
+      <section className="section-tint seam-blue relative px-6 py-32">
         <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-[1.5fr_1fr]">
           {/* Left: Story text */}
           <div>
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Who We Are
@@ -111,7 +112,7 @@ export default function AboutPage() {
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Headquartered in Mumbai, trusted across{' '}
-                <span className="italic text-[var(--color-accent-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+                <span className="italic text-[var(--red-brand)]" style={{ fontFamily: 'var(--font-display)' }}>
                   India
                 </span>
               </h2>
@@ -217,7 +218,7 @@ export default function AboutPage() {
       {/* MISSION & VISION — PINNED SCROLL TRANSITION */}
       {/* ================================================================= */}
       <PinnedSection
-        className="section-ink relative flex min-h-screen items-center justify-center px-6"
+        className="section-ink seam-red relative flex min-h-screen items-center justify-center px-6"
         onProgress={setMissionVisionProgress}
         duration="+=150%"
       >
@@ -303,14 +304,14 @@ export default function AboutPage() {
       {/* ================================================================= */}
       {/* SERVICES / MILESTONES */}
       {/* ================================================================= */}
-      <section className="relative py-32">
+      <section className="section-light-aura seam-red relative py-32">
         {/* Uses the global responsive utilities (.container / .heading-responsive /
             .grid-responsive from globals.css) instead of the token-based layout. */}
         <div className="container">
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Our Journey
@@ -334,15 +335,15 @@ export default function AboutPage() {
               <div
                 key={milestone.kicker}
                 className={cn(
-                  'group relative rounded-[var(--radius-lg)] p-7',
-                  'bg-[var(--color-bg-tertiary)] border border-[var(--color-border)]',
+                  'card-accent-spine group relative overflow-hidden rounded-[var(--radius-lg)] p-7 pl-8',
+                  'bg-[var(--color-bg-primary)] border border-[var(--color-border)]',
                   'transition-all duration-300',
                   'hover:border-[var(--color-border-hover)]',
                   'hover:shadow-[0_0_30px_var(--color-glow)]',
                   'hover:-translate-y-1'
                 )}
               >
-                <span className="mb-4 inline-block font-mono text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-accent-primary)]">
+                <span className="mb-4 inline-block font-mono text-xs font-medium uppercase tracking-[0.18em] text-[var(--red-brand)]">
                   {milestone.kicker}
                 </span>
                 <h3
@@ -366,12 +367,12 @@ export default function AboutPage() {
       {/* ================================================================= */}
       {/* DELIVERY PROCESS SECTION */}
       {/* ================================================================= */}
-      <section className="relative px-6 py-32">
+      <section className="section-tint seam-blue relative px-6 py-32">
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 How We Work
@@ -407,19 +408,20 @@ export default function AboutPage() {
       {/* ================================================================= */}
       {/* CTA SECTION */}
       {/* ================================================================= */}
-      <section className="relative px-6 py-32">
+      <section className="section-ink seam-red relative px-6 py-32">
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
-              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-normal leading-[1.2] text-[var(--text-on-ink)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Let&apos;s Build Technology That Works
+              Let&apos;s Build Technology That{' '}
+              <span className="text-[var(--accent-on-ink)]">Works</span>
             </h2>
           </ScrollFadeIn>
           <ScrollFadeIn delay={0.15}>
             <p
-              className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--text-on-ink-muted)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Whether you are planning a new digital platform or modernising
@@ -431,7 +433,7 @@ export default function AboutPage() {
               <Button variant="primary" size="lg" href="/contact">
                 Contact Us
               </Button>
-              <Button variant="secondary" size="lg" href="/work">
+              <Button variant="secondary" size="lg" href="/work" className="on-ink-secondary">
                 View Our Work
               </Button>
             </div>

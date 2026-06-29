@@ -62,8 +62,11 @@ export function ProcessSteps() {
       const track   = trackRef.current;
       if (!section || !track) return;
 
-      // On mobile or reduced-motion: CSS / native scroll handles it.
-      if (prefersReducedMotion || window.innerWidth < 768) return;
+      // Reduced motion ONLY: skip the pin/scrub — a native horizontal scroll
+      // (set on the track container below) is the accessible fallback. Everyone
+      // else, INCLUDING phones, gets the pinned horizontal-on-vertical-scroll
+      // timeline (no swipe slider): scrolling down drives the track sideways.
+      if (prefersReducedMotion) return;
 
       const panels = panelRefs.current.filter(Boolean) as HTMLDivElement[];
       if (panels.length === 0) return;
@@ -158,8 +161,9 @@ export function ProcessSteps() {
       data-section-index={5}
       className={cn(
         'relative flex flex-col overflow-hidden section-light-aura seam-blue',
-        // Desktop: full-viewport height for the GSAP pin.
-        'h-auto md:h-screen',
+        // Full-viewport height for the GSAP pin on EVERY device (phones included).
+        // Reduced motion keeps natural height (native horizontal scroll, no pin).
+        prefersReducedMotion ? 'h-auto' : 'h-screen',
       )}
     >
       {/* ── Section header ──────────────────────────────────────── */}
@@ -185,20 +189,17 @@ export function ProcessSteps() {
 
       {/* ── Horizontal track ────────────────────────────────────── */}
       {/*
-          Mobile  : overflow-x scroll + snap (CSS only, GSAP skipped).
-          Desktop : overflow-x hidden; GSAP drives trackRef translateX.
-          Height  : min(75vw,420px) on mobile → natural card height.
-                    flex-1 on desktop → fills remaining viewport between
-                    header and bottom rail bar.
+          Default (incl. phones): overflow-x hidden; GSAP pins the section and
+            drives trackRef translateX from vertical scroll — no swipe slider.
+          Reduced motion        : overflow-x scroll + snap (native, GSAP skipped).
+          Height: flex-1 fills the remaining viewport between header and rail.
       */}
       <div
         className={cn(
           'min-h-[min(75vw,420px)] flex-1',
-          // Mobile scroll
-          'overflow-x-auto [scroll-snap-type:x_mandatory]',
-          '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-          // Desktop: GSAP controls position
-          'md:overflow-x-hidden',
+          prefersReducedMotion
+            ? 'overflow-x-auto [scroll-snap-type:x_mandatory] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+            : 'overflow-x-hidden',
         )}
       >
         <div
@@ -232,7 +233,7 @@ export function ProcessSteps() {
                   className="font-[family-name:var(--font-display)] font-bold leading-none"
                   style={{
                     fontSize:      'clamp(7rem, 20vw, 18rem)',
-                    color:         'var(--color-accent-primary)',
+                    color:         'var(--red-brand)',
                     opacity:       0.05,
                     letterSpacing: '-0.04em',
                     willChange:    'transform',
@@ -250,9 +251,11 @@ export function ProcessSteps() {
                   className={cn(
                     'mb-6 flex h-14 w-14 items-center justify-center rounded-full border-2',
                     'transition-all duration-500',
+                    // Icon always red on a light-red shade; the ACTIVE step is
+                    // marked by a red ring + red glow (not a solid fill).
                     activeStep === i
-                      ? 'border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] text-[var(--color-text-inverse)] shadow-[0_0_20px_rgba(33,150,243,0.28)]'
-                      : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]',
+                      ? 'border-[var(--red-brand)] bg-[var(--red-soft)] text-[var(--red-brand)] shadow-[0_0_20px_rgba(192,0,0,0.28)]'
+                      : 'border-[var(--color-border)] bg-[var(--red-soft)] text-[var(--red-brand)]',
                   )}
                 >
                   <step.Icon className="h-6 w-6" strokeWidth={1.75} />

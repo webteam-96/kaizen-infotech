@@ -75,17 +75,23 @@ export function StickyProjectCard({
   return (
     <motion.div
       ref={container}
-      className="sticky w-full max-w-5xl overflow-hidden"
+      className="card-red-accent group sticky w-full max-w-5xl overflow-hidden"
       style={{
+        // Explicit sticky: the `.card-red-accent` highlight class sets
+        // position:relative, which (same specificity, later in the cascade) was
+        // overriding the `sticky` utility and killing the scroll pin/scale stack.
+        // Inline style wins over both, so the red detailing and the animation coexist.
+        position: 'sticky',
         scale,
         rotate: tilt,
         borderRadius: 'var(--radius-xl)',
         height: `${100 - 2 * VERT_MARGIN}vh`,
         top: `${VERT_MARGIN}vh`,
         background: 'var(--color-bg-secondary)',
-        // Emphasis shadow below the card — blue-tinted to match the overlay
+        // Layered lift so the card clearly rises off the light-blue band: a soft
+        // red halo (brand detailing) over the existing blue-tinted depth shadow.
         boxShadow:
-          '0 40px 70px -25px rgba(13,71,161,0.45), 0 18px 30px -18px rgba(0,0,0,0.30)',
+          '0 50px 90px -26px rgba(192,0,0,0.22), 0 34px 60px -28px rgba(13,71,161,0.48), 0 16px 28px -16px rgba(0,0,0,0.30)',
       }}
     >
       <Link
@@ -119,8 +125,8 @@ export function StickyProjectCard({
           <span
             className={cn(
               'inline-block rounded-[var(--radius-full)] px-4 py-1.5',
-              'bg-[var(--color-accent-primary)]/10 text-[var(--color-accent-primary)]',
-              'text-[length:var(--text-sm)] font-medium uppercase tracking-wider'
+              'bg-[var(--red-brand)] text-[var(--color-text-inverse)] shadow-sm',
+              'text-[length:var(--text-sm)] font-semibold uppercase tracking-wider'
             )}
             style={{ fontFamily: 'var(--font-heading)' }}
           >
@@ -151,9 +157,9 @@ export function StickyProjectCard({
           <span
             className={cn(
               'inline-flex items-center gap-2.5',
-              'border-b-[1.5px] border-[var(--color-text-inverse)]/40 pb-1',
+              'border-b-[1.5px] border-[var(--red-coral)] pb-1',
               'text-[length:var(--text-sm)] font-semibold uppercase tracking-[0.06em]',
-              'text-[var(--color-text-inverse)]/85'
+              'text-[var(--red-coral)]'
             )}
             style={{ fontFamily: 'var(--font-body)' }}
           >
@@ -167,6 +173,7 @@ export function StickyProjectCard({
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="transition-transform duration-300 group-hover:translate-x-1"
             >
               <path d="m7 17 9.2-9.2M17 17V8H8" />
             </svg>

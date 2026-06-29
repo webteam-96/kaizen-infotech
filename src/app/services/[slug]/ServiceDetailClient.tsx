@@ -193,7 +193,7 @@ export default function ServiceDetailClient({
 
           {/* Icon */}
           <FadeIn delay={0.1}>
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--red-soft)] text-[var(--red-brand)]">
               {serviceIcons[service.icon] ?? serviceIcons.Code}
             </div>
           </FadeIn>
@@ -229,7 +229,7 @@ export default function ServiceDetailClient({
           <div>
             <FadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Overview
@@ -277,7 +277,7 @@ export default function ServiceDetailClient({
           <div>
             <FadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 What We Deliver
@@ -319,7 +319,7 @@ export default function ServiceDetailClient({
             <div className="mb-16 text-center">
               <FadeIn>
                 <span
-                  className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                  className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   Common Questions
@@ -354,7 +354,7 @@ export default function ServiceDetailClient({
           <div className="mb-12">
             <FadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Explore More
@@ -386,7 +386,7 @@ export default function ServiceDetailClient({
                   whileHover={{ y: -4 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                 >
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--red-soft)] text-[var(--red-brand)]">
                     {serviceIconsSmall[related.icon] ?? serviceIconsSmall.Code}
                   </div>
                   <h3

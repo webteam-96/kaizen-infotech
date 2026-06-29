@@ -101,8 +101,8 @@ export default function KaizenValues() {
         <Header />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {VALUES.map((v) => (
-            <div key={v.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-8">
-              <div className="mb-5 inline-flex rounded-xl bg-sky-100 p-3 text-sky-600">{v.icon}</div>
+            <div key={v.title} className="card-red-accent overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-8">
+              <div className="mb-5 inline-flex rounded-xl bg-[var(--red-soft)] p-3 text-[var(--red-brand)]">{v.icon}</div>
               <h3 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-slate-900">{v.title}</h3>
               <p className="mt-3 text-lg leading-relaxed text-slate-600">{v.body}</p>
             </div>
@@ -153,7 +153,7 @@ export default function KaizenValues() {
             <motion.div
               key={index}
               custom={direction}
-              className="relative flex h-[460px] w-full cursor-grab flex-col rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
+              className="card-red-accent relative flex h-[460px] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
               style={{ zIndex: 20 }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
@@ -170,7 +170,7 @@ export default function KaizenValues() {
               exit="exit"
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
             >
-              <div className="mb-5 inline-flex w-fit rounded-2xl bg-sky-100 p-3 text-sky-600">
+              <div className="mb-5 inline-flex w-fit rounded-2xl bg-[var(--red-soft)] p-3 text-[var(--red-brand)]">
                 {VALUES[index].icon}
               </div>
               {/* break-words + balanced wrapping fixes the mid-word "Accountabilit-y" break */}
@@ -206,7 +206,7 @@ export default function KaizenValues() {
 function Header() {
   return (
     <div className="text-center">
-      <span className="text-[length:var(--h-eyebrow)] font-semibold uppercase tracking-[0.2em] text-sky-500">Our Values</span>
+      <span className="text-[length:var(--h-eyebrow)] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Our Values</span>
       <h2 className="mt-2 font-[family-name:var(--font-heading)] text-[length:var(--h-section)] font-bold text-slate-900">The Kaizen Way</h2>
     </div>
   );

@@ -91,6 +91,7 @@ export default function CareersPage() {
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* Hero Section */}
       <PageHero
+        align="center"
         kicker="Careers"
         title="Join Our Journey of Continuous Improvement"
         accentWords={['Continuous', 'Improvement']}
@@ -99,20 +100,21 @@ export default function CareersPage() {
       />
 
       {/* Why Kaizen — Benefits Grid */}
-      <section className="px-6 pb-24 pt-12 md:px-12 lg:px-24">
+      <section className="section-tint seam-blue relative px-6 pb-24 pt-12 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl">
           <FadeIn>
             <h2
               className="mb-12 text-[length:var(--h-section)] font-bold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Why Work at Kaizen?
+              Why Work at{' '}
+              <span className="text-[var(--red-brand)]">Kaizen?</span>
             </h2>
           </FadeIn>
 
           <StaggerChildren className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map((benefit) => (
-              <Card key={benefit.title} tilt glow className="h-full p-8">
+              <Card key={benefit.title} tilt glow className="card-accent-top h-full p-8">
                 <div className="relative z-10">
                   <h3
                     className="mb-3 text-[length:var(--h-card)] font-semibold text-[var(--color-text-primary)]"
@@ -134,14 +136,15 @@ export default function CareersPage() {
       </section>
 
       {/* Open Positions */}
-      <section className="border-t border-[var(--color-border)] px-6 py-24 md:px-12 lg:px-24">
+      <section className="section-light-aura seam-red relative px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto max-w-4xl">
           <FadeIn>
             <h2
               className="mb-12 text-[length:var(--h-section)] font-extrabold text-[var(--color-text-primary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Open Positions
+              Open{' '}
+              <span className="text-[var(--red-brand)]">Positions</span>
             </h2>
           </FadeIn>
 

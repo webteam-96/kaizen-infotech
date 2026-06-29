@@ -20,6 +20,7 @@ export default function WorkPage() {
     <main className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* ── Hero ── */}
       <PageHero
+        align="center"
         kicker="Our Work"
         title="Real-World Digital Solutions Built for Impact"
         accentWords={['Impact']}
@@ -28,7 +29,9 @@ export default function WorkPage() {
       />
 
       {/* ── Category Filter ── */}
-      <section className="px-6 pb-10 md:px-12 lg:px-24">
+      {/* Plain white (no tint, no seam) so it reads as a continuation of the
+          hero's white background. */}
+      <section className="relative bg-[var(--color-bg-primary)] px-6 pb-10 pt-12 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl">
           <ScrollFadeIn delay={0.4}>
             <div className="flex flex-wrap gap-3">
@@ -49,7 +52,7 @@ export default function WorkPage() {
                 >
                   {activeCategory === category && (
                     <motion.div
-                      className="absolute inset-0 rounded-[var(--radius-full)] bg-[var(--color-accent-primary)]"
+                      className="absolute inset-0 rounded-[var(--radius-full)] bg-[var(--red-brand)]"
                       layoutId="activeCategory"
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
@@ -75,7 +78,7 @@ export default function WorkPage() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex flex-col items-center gap-[8vh] px-4 pb-[30vh] pt-[4vh] md:px-8"
+          className="section-tint seam-blue relative flex flex-col items-center gap-[8vh] px-4 pb-[30vh] pt-[4vh] md:px-8"
         >
           {filteredProjects.map((project, idx) => (
             <StickyProjectCard
@@ -94,17 +97,18 @@ export default function WorkPage() {
       </AnimatePresence>
 
       {/* ── CTA Section ── */}
-      <section className="border-t border-[var(--color-border)] px-6 py-24 md:px-12 lg:px-24">
+      <section className="section-ink seam-red relative px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl text-center">
           <ScrollFadeIn>
             <h2
-              className="mb-6 text-[length:var(--h-section)] font-extrabold text-[var(--color-text-primary)]"
+              className="mb-6 text-[length:var(--h-section)] font-extrabold text-[var(--text-on-ink)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Let&apos;s Build the Next Success Story
+              Let&apos;s Build the Next{' '}
+              <span className="text-[var(--accent-on-ink)]">Success</span> Story
             </h2>
             <p
-              className="mx-auto mb-10 max-w-xl text-[length:var(--text-lg)] text-[var(--color-text-secondary)]"
+              className="mx-auto mb-10 max-w-xl text-[length:var(--text-lg)] text-[var(--text-on-ink-muted)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Looking to build a similar digital solution for your organisation?

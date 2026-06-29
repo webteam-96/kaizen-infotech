@@ -109,6 +109,7 @@ export default function ServicesPage() {
       {/* HERO SECTION */}
       {/* ================================================================= */}
       <PageHero
+        align="center"
         kicker="Our Services"
         title="What We Do Best"
         accentWords={['Best']}
@@ -144,11 +145,11 @@ export default function ServicesPage() {
       {/* ================================================================= */}
       {/* SERVICE CARD DECK */}
       {/* ================================================================= */}
-      <section className="relative pt-32">
-        <div className="mx-auto mb-16 max-w-7xl px-6 text-center">
+      <section className="section-tint seam-blue relative">
+        <div className="mx-auto mb-16 max-w-7xl px-6 pt-32 text-center">
           <ScrollFadeIn>
             <span
-              className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+              className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Capabilities
@@ -162,19 +163,19 @@ export default function ServicesPage() {
             End-to-End Technology Services
           </TextReveal>
         </div>
-      </section>
 
-      <ServiceCardDeck />
+        <ServiceCardDeck />
+      </section>
 
       {/* ================================================================= */}
       {/* WHY CHOOSE US */}
       {/* ================================================================= */}
-      <section className="relative px-6 py-32">
+      <section className="section-light-aura seam-red relative px-6 py-32">
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 The Kaizen Difference
@@ -191,8 +192,11 @@ export default function ServicesPage() {
 
           <div ref={whyChooseGridRef} className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
             {whyChooseUs.map((item) => (
-              <div key={item.title} className="text-center">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface-glass)] text-[var(--color-accent-primary)]">
+              <div
+                key={item.title}
+                className="card-accent-top group relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-8 text-center transition-all duration-300 hover:border-[var(--color-border-hover)] hover:shadow-[0_0_30px_var(--color-glow)] hover:-translate-y-1"
+              >
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--red-soft)] text-[var(--red-brand)]">
                   {item.icon}
                 </div>
                 <h3
@@ -216,12 +220,12 @@ export default function ServicesPage() {
       {/* ================================================================= */}
       {/* FAQ SECTION */}
       {/* ================================================================= */}
-      <section className="relative px-6 py-32">
+      <section className="section-tint seam-blue relative px-6 py-32">
         <div className="mx-auto max-w-3xl">
           <div className="mb-16 text-center">
             <ScrollFadeIn>
               <span
-                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-accent-primary)]"
+                className="mb-4 inline-block text-[length:var(--h-eyebrow)] font-medium uppercase tracking-[0.25em] text-[var(--color-text-tertiary)]"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Common Questions
@@ -237,7 +241,7 @@ export default function ServicesPage() {
           </div>
 
           <ScrollFadeIn>
-            <Accordion items={faqItems} />
+            <Accordion items={faqItems} revealOnHover />
           </ScrollFadeIn>
         </div>
       </section>
@@ -245,22 +249,23 @@ export default function ServicesPage() {
       {/* ================================================================= */}
       {/* CTA SECTION */}
       {/* ================================================================= */}
-      <section className="relative px-6 py-32">
+      <section className="section-ink seam-red relative px-6 py-32">
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
-              className="text-[length:var(--h-section)] font-extrabold leading-[1.2] text-[var(--color-text-primary)]"
+              className="text-[length:var(--h-section)] font-extrabold leading-[1.2] text-[var(--text-on-ink)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Let&apos;s Discuss Your Project
+              Let&apos;s Discuss Your{' '}
+              <span className="text-[var(--accent-on-ink)]">Project</span>
             </h2>
           </ScrollFadeIn>
           <ScrollFadeIn delay={0.15}>
             <p
-              className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--color-text-secondary)]"
+              className="mx-auto mt-6 max-w-lg text-[length:var(--text-base)] leading-relaxed text-[var(--text-on-ink-muted)]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Ready to digitise your operations? Tell us about your challenges
+              Ready to digitalize your operations? Tell us about your challenges
               and we will show you how we can help.
             </p>
           </ScrollFadeIn>

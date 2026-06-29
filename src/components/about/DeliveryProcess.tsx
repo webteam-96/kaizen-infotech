@@ -64,7 +64,7 @@ export default function DeliveryProcess({
             transition={{ duration: 0.4, ease: "easeInOut" }}
             style={{ backgroundColor: "var(--color-bg-tertiary)" }}
             className={cn(
-              "relative h-[24rem] min-w-0 shrink basis-0 cursor-pointer select-none overflow-hidden rounded-[var(--radius-lg)] border outline-none transition-colors duration-300 md:h-[26rem]",
+              "card-red-accent relative h-[24rem] min-w-0 shrink basis-0 cursor-pointer select-none overflow-hidden rounded-[var(--radius-lg)] border outline-none transition-colors duration-300 md:h-[26rem]",
               "focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)]",
               isActive
                 ? "border-[var(--color-border-hover)] shadow-[0_0_30px_var(--color-glow)]"
@@ -93,7 +93,7 @@ export default function DeliveryProcess({
                   className="absolute inset-0 flex flex-col items-center justify-between py-6"
                 >
                   <span
-                    className="text-2xl font-bold text-[var(--color-accent-primary)] opacity-85"
+                    className="text-2xl font-bold text-[var(--red-brand)] opacity-85"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {step.number}
@@ -116,7 +116,7 @@ export default function DeliveryProcess({
                   className="absolute inset-0 flex flex-col justify-end p-8"
                 >
                   <span
-                    className="mb-2 text-[clamp(2.25rem,3vw,3.25rem)] font-bold leading-none text-[var(--color-accent-primary)] opacity-30"
+                    className="mb-2 text-[clamp(2.25rem,3vw,3.25rem)] font-bold leading-none text-[var(--red-brand)] opacity-30"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {step.number}

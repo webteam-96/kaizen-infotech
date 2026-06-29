@@ -22,6 +22,11 @@ export interface CardProps {
   glowColor?: string;
   hoverScale?: number;
   as?: 'div' | 'article' | 'li';
+  // When true the inner content wrapper stretches to fill the card (flex column),
+  // so children can distribute/centre vertically instead of collapsing to the top
+  // and leaving an empty void at the bottom. Opt-in so existing Card users are
+  // unaffected.
+  fill?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -42,6 +47,7 @@ export function Card({
   glowColor = 'var(--color-accent-primary)',
   hoverScale = 1.02,
   as = 'div',
+  fill = false,
 }: CardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -184,7 +190,7 @@ export function Card({
       )}
 
       {/* Content */}
-      <div className="relative z-10">{children}</div>
+      <div className={cn('relative z-10', fill && 'flex flex-1 flex-col')}>{children}</div>
     </Component>
   );
 }

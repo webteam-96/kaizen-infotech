@@ -86,7 +86,7 @@ const TECHS: Tech[] = [
   { name: 'Node JS', slug: 'nodedotjs' },
   { name: 'Python', slug: 'python' },
   { name: 'Android', slug: 'android' },
-  { name: 'iOS', slug: 'ios' },
+  { name: 'iOS', slug: 'apple' },
   { name: 'Flutter', slug: 'flutter' },
   { name: 'React Native', node: IconMobile, tint: '#61DAFB' },
   { name: 'HTML / CSS', slug: 'html5' },

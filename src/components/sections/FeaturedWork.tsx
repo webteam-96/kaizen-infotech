@@ -202,11 +202,15 @@ export function FeaturedWork() {
                     'rounded-[var(--radius-lg)] border border-[rgba(192,0,0,0.16)]',
                     'bg-[var(--color-bg-secondary)]',
                     'shadow-[0_24px_48px_rgba(192,0,0,0.07),0_8px_16px_rgba(0,0,0,0.05)]',
-                    'flex-col md:flex-row'
+                    // Touch (phone + ALL iPads) = stacked column; only real desktop
+                    // (desk: = large screen + mouse) gets the side-by-side row.
+                    'flex-col desk:flex-row'
                   )}
                 >
-                  {/* Image side */}
-                  <div className="relative h-[200px] w-full flex-shrink-0 overflow-hidden bg-[var(--color-bg-secondary)] md:h-full md:w-1/2">
+                  {/* Image side — touch: a percentage of the card height (bigger
+                      photo than the old 200px, but scales DOWN on short phones so
+                      the text below never clips). Desktop: the original left half. */}
+                  <div className="relative w-full flex-[0_0_45%] overflow-hidden bg-[var(--color-bg-secondary)] desk:h-full desk:w-1/2 desk:flex-none">
                     <Image
                       src={project.image}
                       alt={project.title}
@@ -222,10 +226,12 @@ export function FeaturedWork() {
                     />
                   </div>
 
-                  {/* Content side */}
-                  <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
+                  {/* Content side — touch: justify-end pushes the text block toward
+                      the BOTTOM of the card (under the enlarged photo) with tighter
+                      leading + margins. Desktop keeps centred, roomier spacing. */}
+                  <div className="flex flex-1 flex-col justify-end p-8 desk:justify-center desk:p-12">
                     <h3
-                      className="mb-5 text-[length:var(--h-sub)] md:text-[length:var(--text-lg)] font-semibold leading-[1.2] tracking-tight text-[var(--color-text-primary)]"
+                      className="mb-3 text-[length:var(--h-sub)] desk:mb-5 desk:text-[length:var(--text-lg)] font-semibold leading-[1.15] desk:leading-[1.2] tracking-tight text-[var(--color-text-primary)]"
                       style={{
                         fontFamily: 'var(--font-card-heading), var(--font-display)',
                         letterSpacing: '-0.02em',
@@ -235,7 +241,7 @@ export function FeaturedWork() {
                     </h3>
 
                     {/* Category pill */}
-                    <div className="mb-5">
+                    <div className="mb-3 desk:mb-5">
                       <span
                         className={cn(
                           'inline-block rounded-[var(--radius-full)] px-3 py-1',
@@ -249,7 +255,7 @@ export function FeaturedWork() {
                     </div>
 
                     <p
-                      className="mb-9 line-clamp-3 max-w-[440px] text-[length:var(--text-base)] leading-[1.65] text-[var(--color-text-secondary)]"
+                      className="mb-5 line-clamp-3 max-w-[440px] text-[length:var(--text-base)] leading-[1.45] desk:mb-9 desk:leading-[1.65] text-[var(--color-text-secondary)]"
                       style={{ fontFamily: 'var(--font-body)' }}
                     >
                       {project.description}

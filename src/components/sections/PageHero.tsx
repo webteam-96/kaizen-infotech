@@ -160,7 +160,7 @@ export function PageHero({
         )}
 
         {children && (
-          <div data-ph-rest className="mt-6 opacity-0">
+          <div data-ph-rest className={cn('mt-6 opacity-0', centered && 'flex justify-center')}>
             {children}
           </div>
         )}

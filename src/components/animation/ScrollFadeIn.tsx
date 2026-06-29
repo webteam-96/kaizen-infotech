@@ -81,6 +81,25 @@ export function ScrollFadeIn({
 
       const offset = directionOffsets[direction] ?? directionOffsets.none;
 
+      // ── Reverse-on-scroll-up for touch (phones + ALL iPads) ──────────────
+      // On touch we make the reveal SCRUBBED so scroll-up is the exact reverse of
+      // scroll-down: opacity + offset are tied directly to scroll progress over a
+      // short band, so the element fades/rises in on the way down and
+      // fades/sinks back out on the way up — and it's self-correcting (never
+      // stuck). The default timed reveal (toggleActions) can't mirror reliably
+      // because it uses immediateRender:false (resting opacity 1), so leave-back
+      // has nothing to reverse to. Desktop keeps its established timed one-way
+      // reveal. Callers that already opt into `scrub` keep their own settings.
+      const isTouch =
+        typeof window !== 'undefined' &&
+        !window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches;
+      const explicitScrub = scrub !== false && scrub !== undefined;
+      const touchScrub = !explicitScrub && isTouch;        // we force scrub on touch
+      const effScrub: boolean | number = explicitScrub ? scrub : (touchScrub ? true : false);
+      // Reveal completes over a short band (top 85% → top 55% of viewport) then
+      // holds; the same band plays in reverse on the way up.
+      const effEnd = explicitScrub ? end : (touchScrub ? 'top 55%' : end);
+
       gsap.fromTo(
         targets,
         {
@@ -93,20 +112,20 @@ export function ScrollFadeIn({
           x: 0,
           y: 0,
           duration,
-          delay: scrub ? 0 : delay,
+          delay: effScrub ? 0 : delay,
           ease: ANIMATION_CONFIG.ease.snappy,
           stagger: stagger || 0,
           // Non-scrub reveals: don't apply the {opacity:0} from-state at load,
           // so if the trigger misfires on fast scroll the element stays visible.
           // Scrub tweens map opacity to scroll position and are self-correcting.
-          immediateRender: scrub ? undefined : false,
+          immediateRender: effScrub ? undefined : false,
           scrollTrigger: {
             trigger: containerRef.current,
             start,
-            end: scrub ? end : undefined,
-            scrub: scrub === true ? ANIMATION_CONFIG.scrub.smooth : scrub || false,
-            toggleActions: scrub ? undefined : ANIMATION_CONFIG.scrollTrigger.toggleActions,
-            once: scrub ? false : once,
+            end: effScrub ? effEnd : undefined,
+            scrub: effScrub === true ? ANIMATION_CONFIG.scrub.smooth : effScrub || false,
+            toggleActions: effScrub ? undefined : ANIMATION_CONFIG.scrollTrigger.toggleActions,
+            once: effScrub ? false : once,
           },
         }
       );
