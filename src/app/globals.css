@@ -255,8 +255,59 @@ html {
   background: var(--color-text-tertiary);
 }
 
-/* (The custom right-edge .kz-scrollbar rail was removed — the native OS
-   scrollbar above is the page scrollbar now, for reliable cross-device scroll.) */
+/* custom scrollbar v2 */
+/* ── Custom right-edge scrollbar (.kz-scrollbar, driven by CustomScrollbar.tsx) ──
+   On fine-pointer (desktop) devices we hide the native PAGE scrollbar and show
+   the brand rail instead. Inner scroll containers keep the thin native scrollbar
+   from the rules above; touch devices keep the native page scrollbar (the rail
+   isn't rendered there). */
+@media (pointer: fine) {
+  html { scrollbar-width: none; }
+  html::-webkit-scrollbar { width: 0; height: 0; display: none; }
+}
+.kz-scrollbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 100vh;
+  /* One above the sticky navbar so the thumb stays grabbable at the top of the
+     page (else the navbar, painted later at the same z, intercepts the pointer);
+     still below overlays/modals/toasts. */
+  z-index: calc(var(--z-sticky) + 1);
+  cursor: pointer;
+}
+.kz-scrollbar__fill {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  width: 4px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--color-accent-secondary), var(--color-accent-primary));
+  opacity: 0.28;
+  pointer-events: none;
+}
+.kz-scrollbar__thumb {
+  position: absolute;
+  top: 0;
+  right: 3px;
+  width: 6px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-primary);
+  cursor: grab;
+  will-change: transform; /* transform is per-frame; NO transition on it → no lag */
+  transition: width 0.18s ease, background-color 0.18s ease;
+}
+.kz-scrollbar:hover .kz-scrollbar__thumb { width: 8px; }
+.kz-scrollbar.is-dragging .kz-scrollbar__thumb {
+  width: 9px;
+  cursor: grabbing;
+  background: var(--color-accent-warm);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kz-scrollbar__thumb { transition: none; }
+}
 
 body {
   background-color: var(--color-bg-primary);
