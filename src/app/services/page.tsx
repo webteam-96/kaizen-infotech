@@ -9,6 +9,7 @@ import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
 import { PageHero } from '@/components/sections/PageHero';
 import { ServiceCardDeck } from '@/components/sections/ServiceCardDeck';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 // Short keywords for hero rotation
 const keywords = ['Software', 'Mobile', 'Events', 'Portals', 'Marketing'];
@@ -104,7 +105,8 @@ export default function ServicesPage() {
   }, []);
 
   return (
-    <main className="relative overflow-x-clip bg-[var(--color-bg-primary)]">
+    <main className="relative isolate overflow-x-clip bg-[var(--color-bg-primary)]">
+      <VideoBackdrop variant="white" fixed />
       {/* ================================================================= */}
       {/* HERO SECTION */}
       {/* ================================================================= */}
@@ -249,7 +251,8 @@ export default function ServicesPage() {
       {/* ================================================================= */}
       {/* CTA SECTION */}
       {/* ================================================================= */}
-      <section className="section-ink seam-red relative px-6 py-32">
+      <section className="section-ink seam-red relative isolate px-6 py-32">
+        <VideoBackdrop variant="ink" />
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2

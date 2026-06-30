@@ -27,6 +27,7 @@ import { BrowserMockup } from '@/components/work/BrowserMockup';
 import { getFeatureIcon } from '@/components/work/featureIcons';
 import { useReducedMotion } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 import type { Project, ProjectMetric } from '@/types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -43,7 +44,8 @@ export default function ProjectDetailClient({
   nextProject,
 }: ProjectDetailClientProps) {
   return (
-    <main className="min-h-screen bg-[var(--color-bg-primary)]">
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
+      <VideoBackdrop variant="white" fixed />
       <ReadingProgress />
 
       {/* ---- Hero — dramatic dark cover band ---- */}

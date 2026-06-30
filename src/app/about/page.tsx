@@ -11,6 +11,7 @@ import { PinnedSection } from '@/components/animation/PinnedSection';
 import { PageHero } from '@/components/sections/PageHero';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { Button } from '@/components/ui/Button';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -72,7 +73,8 @@ export default function AboutPage() {
   });
 
   return (
-    <main className="relative overflow-x-clip bg-[var(--color-bg-primary)]">
+    <main className="relative isolate overflow-x-clip bg-[var(--color-bg-primary)]">
+      <VideoBackdrop variant="white" fixed />
       {/* ================================================================= */}
       {/* HERO SECTION */}
       {/* ================================================================= */}
@@ -218,10 +220,11 @@ export default function AboutPage() {
       {/* MISSION & VISION — PINNED SCROLL TRANSITION */}
       {/* ================================================================= */}
       <PinnedSection
-        className="section-ink seam-red relative flex min-h-screen items-center justify-center px-6"
+        className="section-ink seam-red relative isolate flex min-h-screen items-center justify-center px-6"
         onProgress={setMissionVisionProgress}
         duration="+=150%"
       >
+        <VideoBackdrop variant="ink" />
         <div className="mx-auto max-w-4xl text-center">
           <AnimatePresence mode="wait">
             {missionVisionProgress < 0.5 ? (
@@ -408,7 +411,8 @@ export default function AboutPage() {
       {/* ================================================================= */}
       {/* CTA SECTION */}
       {/* ================================================================= */}
-      <section className="section-ink seam-red relative px-6 py-32">
+      <section className="section-ink seam-red relative isolate px-6 py-32">
+        <VideoBackdrop variant="ink" />
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2

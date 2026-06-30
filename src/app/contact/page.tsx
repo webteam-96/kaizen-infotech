@@ -11,9 +11,10 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
-import { Turnstile } from '@/components/ui/Turnstile';
+import { Captcha, type CaptchaHandle } from '@/components/ui/Captcha';
 import { socialLinks } from '@/content/navigation';
 import { SITE_CONFIG } from '@/lib/utils/constants';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 // ---------------------------------------------------------------------------
 // Select options
@@ -56,7 +57,8 @@ const contactInfo = [
   {
     label: 'Address',
     value: 'Centrum Business Square, A 406, Road No. 16, Nehru Nagar, Wagle Industrial Estate, Thane West, Thane, Maharashtra 400604',
-    href: null,
+    // Opens the address in Google Maps (new tab).
+    href: 'https://maps.app.goo.gl/E3AMLk3rY7wdxHzG7',
     copyable: false,
   },
 ];
@@ -84,8 +86,15 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaError, setCaptchaError] = useState(false);
-  const [captchaKey, setCaptchaKey] = useState(0); // bump to reset the widget
+  const captchaRef = useRef<CaptchaHandle>(null);
+
+  const handleCaptchaChange = useCallback((token: string, answer: string) => {
+    setCaptchaToken(token);
+    setCaptchaAnswer(answer);
+    if (answer) setCaptchaError(false);
+  }, []);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [selectErrors, setSelectErrors] = useState<{
     budget?: string;
@@ -144,8 +153,8 @@ export default function ContactPage() {
       }
       setSelectErrors({});
 
-      // Block submission until the CAPTCHA is solved.
-      if (!captchaToken) {
+      // Block submission until the captcha code is typed.
+      if (!captchaAnswer.trim()) {
         setCaptchaError(true);
         return;
       }
@@ -158,7 +167,7 @@ export default function ContactPage() {
         const res = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...formState, turnstileToken: captchaToken }),
+          body: JSON.stringify({ ...formState, captchaToken, captchaAnswer }),
         });
 
         if (res.ok) {
@@ -172,27 +181,31 @@ export default function ContactPage() {
             projectType: '',
             message: '',
           });
-          // Tokens are single-use — reset the widget for any further submission.
-          setCaptchaToken('');
-          setCaptchaKey((k) => k + 1);
+          captchaRef.current?.reset(); // single-use — fetch a fresh code
         } else {
-          setSubmitStatus('error');
-          setCaptchaToken('');
-          setCaptchaKey((k) => k + 1);
+          // Distinguish a wrong captcha (inline message + new code) from other errors.
+          const data = await res.json().catch(() => ({}));
+          const isCaptcha = /captcha|code/i.test(String(data?.error ?? ''));
+          captchaRef.current?.reset();
+          if (isCaptcha) {
+            setCaptchaError(true);
+          } else {
+            setSubmitStatus('error');
+          }
         }
       } catch {
         setSubmitStatus('error');
-        setCaptchaToken('');
-        setCaptchaKey((k) => k + 1);
+        captchaRef.current?.reset();
       } finally {
         setIsSubmitting(false);
       }
     },
-    [formState, captchaToken]
+    [formState, captchaToken, captchaAnswer]
   );
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg-primary)]">
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
+      <VideoBackdrop variant="white" fixed />
       {/* Hero Section */}
       <PageHero
         align="center"
@@ -279,25 +292,8 @@ export default function ContactPage() {
               </fieldset>
             </div>
 
-            {/* Spam protection — Cloudflare Turnstile CAPTCHA */}
-            <div>
-              <Turnstile
-                key={captchaKey}
-                onVerify={(t) => {
-                  setCaptchaToken(t);
-                  if (t) setCaptchaError(false);
-                }}
-                onExpire={() => setCaptchaToken('')}
-              />
-              {captchaError && (
-                <p
-                  className="mt-2 text-[length:var(--text-sm)] text-[var(--color-accent-warm)]"
-                  style={{ fontFamily: 'var(--font-body)' }}
-                >
-                  Please complete the verification below the form.
-                </p>
-              )}
-            </div>
+            {/* Spam protection — alphanumeric image captcha (verified server-side) */}
+            <Captcha ref={captchaRef} onChange={handleCaptchaChange} error={captchaError} />
 
             <div className="flex items-center gap-4">
               <Button type="submit" size="lg" isLoading={isSubmitting}>
@@ -337,7 +333,7 @@ export default function ContactPage() {
           {/* Contact Info Sidebar */}
           <ScrollFadeIn direction="right">
             <ParallaxLayer speed={0.1}>
-              <div className="section-ink card-accent-ring relative overflow-hidden space-y-10 rounded-2xl p-8">
+              <div className="section-ink card-accent-ring relative isolate overflow-hidden space-y-10 rounded-2xl p-8">
                 <div className="space-y-8">
                   {contactInfo.map((item) => (
                     <div key={item.label}>
@@ -368,6 +364,8 @@ export default function ContactPage() {
                         {item.href ? (
                           <a
                             href={item.href}
+                            target={item.href?.startsWith('http') ? '_blank' : undefined}
+                            rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
                             className="focus-ring text-[length:var(--text-base)] text-[var(--text-on-ink)] transition-colors hover:text-[var(--accent-on-ink)]"
                             style={{ fontFamily: 'var(--font-body)' }}
                           >
@@ -474,6 +472,7 @@ export default function ContactPage() {
                     </div>
                   </>
                 )}
+                <VideoBackdrop variant="ink" />
               </div>
             </ParallaxLayer>
           </ScrollFadeIn>

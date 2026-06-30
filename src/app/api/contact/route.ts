@@ -1,42 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyCaptcha } from '@/lib/captcha';
 
 // Contact form → email via Resend (https://resend.com) REST API. No SDK needed.
 // Configure in .env.local: RESEND_API_KEY (required to actually send),
 // CONTACT_TO, CONTACT_FROM. Needs a server runtime (works on `next dev` and any
 // Node host). If no API key is set, the submission is logged and the form still
 // reports success, so local development isn't blocked.
+//
+// Spam protection: a server-verified alphanumeric image captcha (see
+// src/lib/captcha.ts + /api/captcha). The typed answer must match the code in
+// the image; the code never reaches the page, the token can't be forged, and a
+// solved captcha is single-use.
 
 export const runtime = 'nodejs';
 
 const TO = process.env.CONTACT_TO ?? 'connect@kaizeninfotech.com';
 const FROM = process.env.CONTACT_FROM ?? 'Kaizen Website <onboarding@resend.dev>';
-
-// Cloudflare Turnstile secret. Default = Cloudflare's TEST secret (always
-// passes) so the flow works locally; set TURNSTILE_SECRET_KEY to your real
-// secret for production. Set it to an empty string to disable the check.
-const TURNSTILE_SECRET =
-  process.env.TURNSTILE_SECRET_KEY ?? '1x0000000000000000000000000000000AA';
-
-/** Verify the Turnstile token with Cloudflare. Returns true if the check passes
- *  or is disabled. This runs server-side, so a bot can't bypass it. */
-async function verifyCaptcha(token: string, ip?: string): Promise<boolean> {
-  if (!TURNSTILE_SECRET) return true; // explicitly disabled
-  if (!token) return false;
-  try {
-    const form = new URLSearchParams();
-    form.append('secret', TURNSTILE_SECRET);
-    form.append('response', token);
-    if (ip) form.append('remoteip', ip);
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      body: form,
-    });
-    const data = (await res.json()) as { success?: boolean };
-    return data.success === true;
-  } catch {
-    return false;
-  }
-}
 
 function esc(v: unknown): string {
   return String(v ?? '')
@@ -74,11 +53,13 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Spam protection: verify the CAPTCHA before doing anything else ──
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const captchaOk = await verifyCaptcha(String(body.turnstileToken ?? ''), ip);
+  const captchaOk = verifyCaptcha(
+    String(body.captchaToken ?? ''),
+    String(body.captchaAnswer ?? ''),
+  );
   if (!captchaOk) {
     return NextResponse.json(
-      { success: false, error: 'Captcha verification failed. Please try again.' },
+      { success: false, error: 'Incorrect captcha code. Please try again.' },
       { status: 400 },
     );
   }

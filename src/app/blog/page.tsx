@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { blogCategories } from '@/content/blog';
 import { usePublicBlogs } from '@/lib/blog/usePublicBlogs';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('All');
@@ -54,7 +55,8 @@ export default function BlogPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg-primary)]">
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
+      <VideoBackdrop variant="white" fixed />
       {/* Hero Section */}
       <PageHero
         align="center"
@@ -271,7 +273,8 @@ export default function BlogPage() {
       </section>
 
       {/* Newsletter CTA */}
-      <section className="section-ink seam-red relative px-6 py-24 md:px-12 lg:px-24">
+      <section className="section-ink seam-red relative isolate px-6 py-24 md:px-12 lg:px-24">
+        <VideoBackdrop variant="ink" />
         <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
             <h2

@@ -229,9 +229,9 @@ html {
   color: var(--color-text-inverse);
 }
 
-/* Scrollbar styling — inner scroll containers keep a thin brand-tinted bar.
-   The native PAGE scrollbar is hidden below; it's replaced by the custom
-   .kz-scrollbar progress rail (see CustomScrollbar.tsx). */
+/* Scrollbar styling — a thin brand-tinted native scrollbar on the page and all
+   inner scroll containers. (The page scrollbar is the real OS one — guaranteed
+   to work on every device. We no longer hide it / replace it with a custom rail.) */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-hover) transparent;
@@ -255,78 +255,8 @@ html {
   background: var(--color-text-tertiary);
 }
 
-/* Hide the native page scrollbar — the custom rail takes over on the root
-   scroller. Inner overflow containers keep the thin bar styled above. */
-html {
-  scrollbar-width: none;
-}
-html::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-/* ===== Custom scroll progress rail =====
-   Right-edge vertical scrollbar. The bright gradient fill + thumb show how far
-   the reader has reached; the faint track behind shows what's left. Draggable
-   thumb + click-to-jump track are wired up in CustomScrollbar.tsx. */
-.kz-scrollbar {
-  position: fixed;
-  top: 14px;
-  bottom: 14px;
-  right: 6px;
-  width: 10px;
-  z-index: var(--z-sticky);
-  border-radius: var(--radius-full);
-  /* Track = what's left to scroll (faint brand tint). */
-  background: linear-gradient(180deg, var(--accent-10), rgba(135, 206, 235, 0.10));
-  box-shadow: inset 0 0 0 1px var(--accent-10);
-  cursor: pointer;
-  opacity: 0.5;
-  transition: opacity var(--transition-base), width var(--transition-base);
-}
-.kz-scrollbar:hover,
-.kz-scrollbar.is-dragging {
-  opacity: 1;
-  width: 12px;
-}
-
-/* Filled trail = how far the reader has reached. */
-.kz-scrollbar__fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 0;
-  border-radius: var(--radius-full);
-  background: linear-gradient(180deg, var(--color-accent-secondary), var(--color-accent-primary));
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-/* The draggable handle sitting at the reached/left boundary. */
-.kz-scrollbar__thumb {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(180deg, var(--color-accent-primary), #1565C0);
-  box-shadow:
-    0 0 12px rgba(33, 150, 243, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  cursor: grab;
-  will-change: transform;
-}
-.kz-scrollbar.is-dragging .kz-scrollbar__thumb {
-  cursor: grabbing;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .kz-scrollbar {
-    transition: none;
-  }
-}
+/* (The custom right-edge .kz-scrollbar rail was removed — the native OS
+   scrollbar above is the page scrollbar now, for reliable cross-device scroll.) */
 
 body {
   background-color: var(--color-bg-primary);
@@ -1292,6 +1222,51 @@ html.has-custom-cursor * {
 }
 
 /* ============================================================================
+   VIDEO BACKDROP  (<VideoBackdrop> behind flat white / dark-blue sections)
+   Full-bleed cover, 50% opacity; host keeps its solid colour as the base.
+   Hidden entirely under reduced motion (section falls back to its plain colour).
+   ========================================================================== */
+.video-backdrop-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fill every screen size — never cropped-to-smaller / letterboxed */
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .video-backdrop { display: none !important; }
+}
+
+/* ============================================================================
+   FOOTER "sky" variant — light-blue MOVING gradient (home/about/services/work/
+   blog). Careers + Contact keep the dark-blue video footer. Redefining the
+   on-ink text tokens to dark keeps the existing footer markup readable on the
+   light surface; dividers/outlines flip to a faint navy.
+   ========================================================================== */
+.footer-sky {
+  --text-on-ink: #0e1b2c;
+  --text-on-ink-muted: #334155;
+  --accent-on-ink: #1565c0;
+  --surface-ink-soft: rgba(255, 255, 255, 0.6); /* newsletter input bg */
+  background: linear-gradient(120deg, #eaf3fb, #cbe5f8, #a9d3f0, #87ceeb, #cbe5f8, #eaf3fb);
+  background-size: 300% 300%;
+  animation: footer-sky-pan 16s ease-in-out infinite;
+}
+@keyframes footer-sky-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.footer-sky .h-px { background-color: rgba(13, 71, 161, 0.18); }
+.footer-sky .border-t { border-color: rgba(13, 71, 161, 0.16); }
+.footer-sky input { border-color: rgba(13, 71, 161, 0.22); }
+.footer-sky a[target='_blank'] { border-color: rgba(13, 71, 161, 0.22); }
+@media (prefers-reduced-motion: reduce) {
+  .footer-sky { animation: none; }
+}
+
+/* ============================================================================
    SCROLL-REVEAL PRIMITIVES  (useScrollReveal + <Reveal> + /work polish)
    Animate transform + opacity ONLY (no layout-affecting props) so it stays
    smooth at every breakpoint. Easing matches the brand cubic-bezier(.4,0,.2,1).
@@ -1416,6 +1391,12 @@ html.has-custom-cursor * {
   grid-template-columns: 1fr 1fr; /* 50/50 two-column interior */
   gap: 20px;
   align-items: center;
+  /* Stretch to the full column, not shrink-to-content: with `margin:0 auto`
+     a grid item otherwise sizes to its content, so later cards (shorter
+     headlines) render NARROWER opaque panels that fail to cover the wider
+     card beneath → its ghost letters/dashes bleed through at the left gutter.
+     width:100% makes every panel a uniform min(viewport, --container-max). */
+  width: 100%;
   max-width: var(--container-max);
   margin: 0 auto;
   padding: clamp(2rem, 4vw, 4rem) var(--container-padding);
@@ -1463,7 +1444,7 @@ html.has-custom-cursor * {
 .sia-image-wrap {
   position: relative;
   display: block;
-  width: 65%;
+  width: 82%;
   aspect-ratio: 4 / 3;
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -1475,7 +1456,7 @@ html.has-custom-cursor * {
 @media (hover: hover) {
   .sia-image-wrap:hover { transform: translateY(-6px); }
 }
-.sia-image { object-fit: contain; padding: 7%; }
+.sia-image { object-fit: contain; padding: 4%; }
 .sia-spark {
   position: absolute;
   bottom: 10%;
@@ -1608,31 +1589,59 @@ html.has-custom-cursor * {
     overflow: visible;
   }
   .sia-media-inner { opacity: 1 !important; transform: none !important; }
-  .sia-crisp { clip-path: none !important; }
+  /* crisp text must flow (static) so the line keeps its height once ghost is hidden */
+  .sia-crisp {
+    clip-path: none !important;
+    position: static !important;
+    inset: auto !important;
+    white-space: normal !important;
+    padding: 0 !important;
+  }
   .sia-ghost, .sia-hl { display: none !important; }
   .sia-bullets li, .sia-closing { opacity: 1 !important; transform: none !important; animation: none !important; }
 }
 
-/* ── Mobile (<768px): same static collapse, single column, media on top.
-   The stacking mechanic is JS-gated to ≥768px, so no scrub runs here. ─────── */
-@media (max-width: 767px) {
-  .sia-card { grid-template-rows: none; display: block; }
-  .sia-card + .sia-card { margin-top: 0; }
-  .sia-sticky {
-    position: static;
-    height: auto;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    overflow: visible;
-    padding: clamp(2rem, 8vw, 3rem) var(--container-padding);
+/* Animate the cards on mobile + iPad (≤1024px), just like desktop, but
+   single-column with a wrapping headline so nothing clips. Gated to motion-OK
+   so the (prefers-reduced-motion: reduce) block ABOVE still wins for RM users
+   (it comes earlier in source, so without this gate the mobile block would
+   override it and re-break the static fallback). */
+@media (max-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .sia-card {
+    grid-template-rows: 100vh 100vh;   /* keep the 200vh scroll stage */
+    display: grid;
   }
+  .sia-card + .sia-card { margin-top: -100vh; }   /* keep card stacking */
+
+  .sia-sticky {
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow: hidden;
+    grid-template-columns: 1fr;        /* single column */
+    grid-auto-rows: auto;
+    align-content: center;
+    gap: clamp(1rem, 4vw, 2rem);
+    padding: clamp(1.25rem, 5vw, 3rem) var(--container-padding);
+  }
+
+  /* normalize ordering so image sits above the copy on every card */
   .sia-media-right .sia-media,
   .sia-media-right .sia-content { order: 0; }
-  .sia-media-inner { opacity: 1 !important; transform: none !important; }
-  .sia-media { min-height: 44vh; }
-  .sia-image-wrap { width: 86%; }
-  .sia-headline { font-size: clamp(2.25rem, 9vw, 3rem); }
-  .sia-crisp { clip-path: none !important; }
-  .sia-ghost, .sia-hl { display: none !important; }
-  .sia-bullets li, .sia-closing { opacity: 1 !important; transform: none !important; animation: none !important; }
+
+  .sia-media { min-height: 30vh; height: auto; }
+  .sia-image-wrap { width: 78%; }
+  .sia-headline { font-size: clamp(2rem, 8vw, 3rem); }
+
+  /* headline reveal must keep working, but allow wrapping so it never clips */
+  .sia-line { white-space: normal; width: fit-content; }
+  .sia-ghost { display: inline; color: #0000002e; }   /* re-show ghost */
+  .sia-crisp {
+    position: absolute;
+    inset: 0;
+    white-space: normal;
+    clip-path: inset(0 calc((1 - var(--hl, 0)) * 100%) 0 0);  /* keep the reveal */
+    padding: 0 .05em;
+  }
+  .sia-hl { display: block; }   /* re-show the highlight bar */
 }

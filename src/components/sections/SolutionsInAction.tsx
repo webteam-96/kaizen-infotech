@@ -143,9 +143,12 @@ export function SolutionsInAction() {
     () => {
       const mm = gsap.matchMedia();
 
-      // ONE gate: build the scroll mechanic only on real desktop + motion-OK.
-      // Mobile (<768px) and reduced-motion get the CSS static fallback (no JS).
-      mm.add('(min-width: 768px) and (prefers-reduced-motion: no-preference)', () => {
+      // ONE gate: build the scroll mechanic on EVERY motion-OK screen — desktop,
+      // iPad, AND phones (single-column wrapping layout via the CSS below). Only
+      // reduced-motion gets the static CSS fallback (no JS). gsap.matchMedia()
+      // re-evaluates on resize/orientation change, so rotating a tablet or
+      // crossing a breakpoint automatically re-runs this setup.
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
         const cards = cardRefs.current.filter(Boolean) as HTMLElement[];
 
         const triggers = cards.map((cardEl) => {
@@ -201,6 +204,10 @@ export function SolutionsInAction() {
           render(0);
           return st;
         });
+
+        // Recompute pin/scrub start-end now that this breakpoint's (possibly
+        // single-column) layout is applied.
+        ScrollTrigger.refresh();
 
         return () => triggers.forEach((t) => t.kill());
       });

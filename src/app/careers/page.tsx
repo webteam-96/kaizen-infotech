@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { PageHero } from '@/components/sections/PageHero';
 import { SITE_CONFIG } from '@/lib/utils/constants';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 // ---------------------------------------------------------------------------
 // Benefits data
@@ -88,7 +89,8 @@ export default function CareersPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg-primary)]">
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
+      <VideoBackdrop variant="white" fixed />
       {/* Hero Section */}
       <PageHero
         align="center"

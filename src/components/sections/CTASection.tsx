@@ -9,6 +9,7 @@ import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { useParallax, useReducedMotion } from '@/hooks';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 export function CTASection() {
   const orb1Ref = useRef<HTMLDivElement>(null);
@@ -81,8 +82,9 @@ export function CTASection() {
   return (
     <section
       data-section-index={9}
-      className="section-ink seam-blue relative flex min-h-screen items-center justify-center overflow-hidden"
+      className="section-ink seam-blue relative isolate flex min-h-screen items-center justify-center overflow-hidden"
     >
+      <VideoBackdrop variant="ink" />
       {/* Parallax orbs */}
       <div
         ref={orb1Ref}

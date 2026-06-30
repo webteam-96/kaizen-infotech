@@ -3,12 +3,14 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { useReducedMotion } from '@/hooks';
 import { footerLinkGroups, socialLinks } from '@/content/navigation';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 type NewsletterStatus = 'idle' | 'pending' | 'success' | 'error';
 
@@ -17,6 +19,12 @@ export function Footer() {
   const topBorderRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prefersReducedMotion = useReducedMotion();
+
+  // Careers + Contact keep the dark-blue video footer; every other page gets a
+  // light-blue moving-gradient footer (`.footer-sky` redefines the on-ink text
+  // tokens to dark so the same markup stays readable on the light background).
+  const pathname = usePathname();
+  const darkFooter = pathname === '/careers' || pathname === '/contact';
 
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<NewsletterStatus>('idle');
@@ -112,7 +120,8 @@ export function Footer() {
   }
 
   return (
-    <footer className="section-ink relative">
+    <footer className={`section-ink relative isolate${darkFooter ? '' : ' footer-sky'}`}>
+      {darkFooter && <VideoBackdrop variant="ink" />}
       {/* Animated top border */}
       <div
         ref={topBorderRef}

@@ -125,9 +125,25 @@ export function CountdownLoader() {
 
     const startTimer = setTimeout(showNext, 400);
 
+    // Hard safety net: the digit chain bails (returns without advancing) if a
+    // digit element is missing, which would leave body.loader-active — and its
+    // overflow:hidden — stuck, freezing the whole page. Force the loader to
+    // finish after a max duration so the page is NEVER left unscrollable.
+    const safetyTimer = setTimeout(() => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      cancelled = true;
+      document.body.classList.remove('loader-active');
+      const ov = overlayRef.current;
+      if (ov) ov.style.display = 'none';
+      setComplete();
+      ScrollTrigger.refresh();
+    }, 9000);
+
     return () => {
       cancelled = true;
       clearTimeout(startTimer);
+      clearTimeout(safetyTimer);
       document.body.classList.remove('loader-active');
     };
   }, [finish, setComplete]);

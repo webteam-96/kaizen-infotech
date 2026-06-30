@@ -13,12 +13,13 @@ import { services } from '@/content/services';
 // detail panel, clicking a side card brings it to the front. Pure React + CSS 3D
 // transforms — no animation libraries. The SAME animation runs on phone, iPad and
 // desktop (pointer drag + `touch-action: pan-y`, capability-independent), only the
-// ring radius scales down. Styled in our brand: blue/red accents on the ink
+// ring radius scales down. Styled in our brand: light-blue accents on the ink
 // surface, our display + body fonts.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Per-card brand accent (blue ↔ red alternating) + a short tag.
-const ACCENTS = ['#2196F3', '#C00000', '#5AB6F7', '#E5546B', '#1976D2'];
+// Card highlight accent — a single light blue (the brand on-ink light blue) for
+// EVERY card, so capabilities are highlighted in light blue only (no red/dark-blue).
+const ACCENTS = ['#5AB6F7', '#5AB6F7', '#5AB6F7', '#5AB6F7', '#5AB6F7'];
 const TAGS = ['Software', 'Mobile', 'Events', 'Web Portals', 'Marketing'];
 
 const CARDS = services.map((s, i) => ({
@@ -118,7 +119,7 @@ export function ServiceCardDeck() {
         const vh = window.innerHeight;
         const travel = rect.height - vh;
         const progress = travel > 0 ? clamp(-rect.top / travel, 0, 1) : 0;
-        scrollRotRef.current = -progress * 720; // two full turns across the section
+        scrollRotRef.current = -progress * 360; // one full turn across the section
         apply();
       });
     };
@@ -283,8 +284,8 @@ const styles = `
 }
 .oc-root *{box-sizing:border-box;}
 
-/* tall section so scroll has room to spin the ring; inner stage is sticky */
-.oc-section{position:relative;height:320vh;}
+/* tall section so scroll has room to spin the ring ONE full turn; inner stage is sticky */
+.oc-section{position:relative;height:210vh;}
 .oc-sticky{
   position:sticky;top:0;height:100vh;
   display:flex;flex-direction:column;align-items:center;justify-content:center;

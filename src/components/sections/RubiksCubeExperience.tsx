@@ -1392,17 +1392,38 @@ export function RubiksCubeExperience() {
     let autoplaying = false;
 
     // ── Freeze the page at the top until the user begins ──
-    // The dive must ALWAYS be started by a key/tap — never by a plain scroll. So
-    // we lock the page at the very top on load and only release it once the dive
-    // has played. lenis.stop() is required (preventDefault alone won't stop it —
-    // Lenis reads the wheel delta itself); the native blockers cover touch + any
-    // window before Lenis is ready.
+    // The page is held at the very top on load so the intro dive plays as one
+    // clean shot. A plain scroll/swipe (as well as Enter/Space/tap) STARTS the
+    // dive — scrolling is never silently swallowed. lenis.stop() is required
+    // (preventDefault alone won't stop it — Lenis reads the wheel delta itself);
+    // the native blockers cover touch + any window before Lenis is ready.
     scrollLockedRef.current = true;
-    function blockWheel(e: WheelEvent) { if (scrollLockedRef.current) e.preventDefault(); }
-    function blockTouchMove(e: TouchEvent) { if (scrollLockedRef.current) e.preventDefault(); }
+    // If the user scrolls before the loader clears, remember it and auto-start
+    // the instant it does (see tick()).
+    let pendingStart = false;
+    function startFromGesture() {
+      if (loaderCompleteRef.current) playIntro();
+      else pendingStart = true;
+    }
+    function blockWheel(e: WheelEvent) {
+      if (!scrollLockedRef.current) return;
+      e.preventDefault();
+      if (e.deltaY > 0) startFromGesture(); // downward scroll = begin
+    }
+    function blockTouchMove(e: TouchEvent) {
+      if (!scrollLockedRef.current) return;
+      e.preventDefault();
+      startFromGesture(); // any swipe = begin
+    }
     window.addEventListener('wheel', blockWheel, { passive: false });
     window.addEventListener('touchmove', blockTouchMove, { passive: false });
     if (lenisRef.current) lenisRef.current.stop();
+
+    // Safety net: never leave the page frozen if the loader/autoplay path
+    // mis-fires — force-unlock after a few seconds (unless the dive is running).
+    const safetyUnlock = window.setTimeout(() => {
+      if (scrollLockedRef.current && !autoplaying) unlock();
+    }, 9000);
 
     function unlock() {
       if (!scrollLockedRef.current) return;
@@ -1468,7 +1489,7 @@ export function RubiksCubeExperience() {
 
     // Reflect the new interaction in the hook cue.
     const cueEl = introInnerRef.current?.querySelector('.rc-scroll-cue span');
-    if (cueEl) cueEl.textContent = isTouch ? 'Tap to begin' : 'Press Enter to begin';
+    if (cueEl) cueEl.textContent = isTouch ? 'Tap to begin' : 'Scroll to begin';
 
     // GSAP ticker drives the loop (single source of truth, lockstep with
     // Lenis + ScrollTrigger). Pass the function reference so we can remove
@@ -1478,6 +1499,12 @@ export function RubiksCubeExperience() {
       // tab-switch pause can't dump a huge dt into the smoothing math.
       lastDt = Math.min(0.05, Math.max(0.001, deltaTime / 1000));
       elapsed += lastDt;
+
+      // If the user tried to scroll while the loader was still up, begin now.
+      if (scrollLockedRef.current && pendingStart && loaderCompleteRef.current) {
+        pendingStart = false;
+        playIntro();
+      }
 
       // Skip the heavy three.js work entirely when the section is fully
       // out of view. Cards/UI/visibility checks are cheap so still run.
@@ -1559,6 +1586,7 @@ export function RubiksCubeExperience() {
 
     return () => {
       gsap.ticker.remove(tick);
+      clearTimeout(safetyUnlock);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('wheel', blockWheel);

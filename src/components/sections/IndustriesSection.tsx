@@ -4,6 +4,7 @@ import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { cn } from '@/lib/utils/cn';
 import MagicBento, { type BentoCardData } from '@/components/ui/MagicBento';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 const industries: BentoCardData[] = [
   {
@@ -44,8 +45,9 @@ export function IndustriesSection() {
   return (
     <section
       data-section-index={6}
-      className="section-ink seam-red py-[var(--space-section)]"
+      className="section-ink seam-red py-[var(--space-section)] relative isolate"
     >
+      <VideoBackdrop variant="ink" />
       <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)]">
         {/* Header */}
         <div className="mb-16 text-center">

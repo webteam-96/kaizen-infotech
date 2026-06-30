@@ -1,11 +1,13 @@
 import { Reveal } from '@/components/animation/Reveal';
 import { PageHero } from '@/components/sections/PageHero';
 import { SolutionsInAction } from '@/components/sections/SolutionsInAction';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 import { Button } from '@/components/ui/Button';
 
 export default function WorkPage() {
   return (
-    <main className="min-h-screen bg-[var(--color-bg-primary)]">
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
+      <VideoBackdrop variant="white" fixed />
       {/* ── Hero ── */}
       <PageHero
         align="center"
@@ -20,7 +22,8 @@ export default function WorkPage() {
       <SolutionsInAction />
 
       {/* ── CTA Section ── */}
-      <section className="section-ink seam-red relative px-6 py-24 md:px-12 lg:px-24">
+      <section className="section-ink seam-red relative isolate overflow-hidden px-6 py-24 md:px-12 lg:px-24">
+        <VideoBackdrop variant="ink" />
         <div className="mx-auto max-w-7xl text-center">
           <Reveal variant="up">
             <h2

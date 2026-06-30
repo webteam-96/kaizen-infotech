@@ -7,7 +7,6 @@ import SmoothScroll from '@/components/layout/SmoothScroll';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import ScrollProgress from '@/components/layout/ScrollProgress';
-import CustomScrollbar from '@/components/layout/CustomScrollbar';
 
 // Chooses the page shell by route. The /admin area is a standalone tool — it
 // renders WITHOUT the marketing navbar/footer, Lenis smooth-scroll, custom
@@ -32,7 +31,6 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
           Skip to main content
         </a>
         <ScrollProgress />
-        <CustomScrollbar />
         <Navbar />
         <div id="main-content">{children}</div>
         <Footer />

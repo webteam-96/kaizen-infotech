@@ -8,6 +8,7 @@ import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { CountUp } from '@/components/animation/CountUp';
 import { useReducedMotion } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
+import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
 
 const stats = [
   { number: 10, suffix: '+', label: 'Years of Experience' },
@@ -90,8 +91,9 @@ export function StatsGrid() {
     <section
       ref={sectionRef}
       data-section-index={3}
-      className="section-ink seam-blue relative flex items-center justify-center overflow-hidden py-20"
+      className="section-ink seam-blue relative isolate flex items-center justify-center overflow-hidden py-20"
     >
+      <VideoBackdrop variant="ink" />
       {/* Decorative dot grid */}
       <div
         ref={dotGridRef}

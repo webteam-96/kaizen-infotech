@@ -10,8 +10,13 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--color-text-inverse, #fff);
-  mix-blend-mode: difference;
+  /* Solid brand-blue dot, visible on both light and dark sections. The previous
+     mix-blend-mode:difference auto-inverted for contrast but forced the browser
+     to read back + re-blend the pixels under the dot every frame — over the live
+     fixed video backdrop that spiked frame time whenever the mouse moved while
+     scrolling. A flat colour composites on the GPU fast-path with no read-back. */
+  background-color: var(--color-accent-primary, #2196F3);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55);
   position: fixed;
   top: 0;
   left: 0;

@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -59,30 +58,30 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // ── Shared: keep ScrollTrigger positions correct across late layout shifts ──
-    // Refresh after web fonts swap in (next/font display:swap shifts text metrics
-    // and therefore every pinned section's start/end), after window load (late
-    // images), and on resize (debounced). invalidateOnRefresh on the triggers
-    // themselves recomputes their distance functions on each refresh.
-    let fontsLoaded = false;
-    const refreshAfterFonts = () => {
-      if (fontsLoaded) return;
-      fontsLoaded = true;
-      ScrollTrigger.refresh();
+    // ScrollTrigger.refresh() is a synchronous, main-thread-blocking recompute of
+    // EVERY pinned/scrubbed trigger. On a cold load it would otherwise be called
+    // several times within ~1s (fonts.ready + window load + a rAF + the loader +
+    // Spline onLoad) — that burst is a big first-second jank source. Coalesce all
+    // of them into ONE debounced refresh. invalidateOnRefresh on the triggers
+    // recomputes their distance functions each refresh.
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefresh = () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        ScrollTrigger.refresh();
+      }, 120);
     };
     if (typeof document !== 'undefined' && 'fonts' in document) {
-      document.fonts.ready.then(refreshAfterFonts).catch(() => {});
+      document.fonts.ready.then(scheduleRefresh).catch(() => {});
     }
-    const onLoad = () => ScrollTrigger.refresh();
+    const onLoad = () => scheduleRefresh();
     if (document.readyState === 'complete') {
-      requestAnimationFrame(() => ScrollTrigger.refresh());
+      scheduleRefresh();
     } else {
       window.addEventListener('load', onLoad, { once: true });
     }
-    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
-    const onResize = () => {
-      if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => ScrollTrigger.refresh(), 200);
-    };
+    const onResize = () => scheduleRefresh();
     window.addEventListener('resize', onResize);
 
     // ── Reduced motion: NO Lenis, NO smoothing — native browser scroll. ──
@@ -104,7 +103,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
         window.removeEventListener('scroll', onNativeScroll);
         window.removeEventListener('load', onLoad);
         window.removeEventListener('resize', onResize);
-        if (resizeTimer) clearTimeout(resizeTimer);
+        if (refreshTimer) clearTimeout(refreshTimer);
       };
     }
 
@@ -124,9 +123,22 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     // Sync Lenis scroll with ScrollTrigger
     instance.on('scroll', ScrollTrigger.update);
 
-    // Drive Lenis from the GSAP ticker (no double rAF loop).
+    // Drive Lenis from the GSAP ticker (single rAF source) and CLAMP the
+    // per-frame advance fed to Lenis. lagSmoothing(0) keeps ScrollTrigger in sync
+    // with Lenis, but it also means a heavy/dropped frame (GC, 3D/Spline init,
+    // route change, or a backgrounded tab regaining focus) would hand Lenis a
+    // huge dt — its damping saturates and SNAPS the page in one frame (the
+    // "scroll suddenly jumps" symptom). Feeding Lenis a virtual clock that never
+    // advances more than ~50ms (~3 frames) per tick removes the jump while the
+    // motion stays smooth — Lenis just catches up over the next few frames.
+    let lastMs = 0;
+    let virtualMs = 0;
     const tickerCallback = (time: number) => {
-      instance.raf(time * 1000);
+      const ms = time * 1000;
+      if (lastMs === 0) lastMs = ms;
+      virtualMs += Math.min(50, ms - lastMs);
+      lastMs = ms;
+      instance.raf(virtualMs);
     };
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
@@ -186,7 +198,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       lenisRef.current = null;
       window.removeEventListener('load', onLoad);
       window.removeEventListener('resize', onResize);
-      if (resizeTimer) clearTimeout(resizeTimer);
+      if (refreshTimer) clearTimeout(refreshTimer);
 
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
@@ -194,17 +206,22 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     };
   }, [setScrollY, setScrollDirection, setScrollProgress, setScrollVelocity, setIsScrolling]);
 
-  // Scroll restoration on route change
-  const handleRouteChange = useCallback(() => {
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo(0, { immediate: true });
-      ScrollTrigger.refresh();
-    }
-  }, []);
-
+  // Scroll restoration on route change. Reset to top immediately, but DEFER the
+  // ScrollTrigger.refresh() out of the React commit (a synchronous refresh there
+  // blocks the main thread right at navigation = the "scroll dead for a beat
+  // after clicking a link" feel), and run a SECOND refresh after the new route's
+  // late images/fonts have laid out — otherwise pins/scrubs are computed against
+  // a half-settled DOM and stay mis-placed until a resize.
   useEffect(() => {
-    handleRouteChange();
-  }, [pathname, handleRouteChange]);
+    if (!lenisRef.current) return;
+    lenisRef.current.scrollTo(0, { immediate: true });
+    const r1 = requestAnimationFrame(() => ScrollTrigger.refresh());
+    const r2 = setTimeout(() => ScrollTrigger.refresh(), 450);
+    return () => {
+      cancelAnimationFrame(r1);
+      clearTimeout(r2);
+    };
+  }, [pathname]);
 
   return (
     <LenisContext.Provider value={{ lenis }}>
