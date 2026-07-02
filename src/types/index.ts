@@ -130,6 +130,8 @@ export interface ManagedBlog {
   mainImage?: BlogImage;
   gallery: BlogImage[];
   status: BlogStatus;
+  /** At most ONE blog is featured — it pins to the top of the public blog list. */
+  featured?: boolean;
   seo?: { metaTitle?: string; metaDescription?: string };
   /** ISO timestamps, managed automatically. */
   createdAt: string;

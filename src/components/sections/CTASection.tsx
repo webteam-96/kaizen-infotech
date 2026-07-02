@@ -6,22 +6,15 @@ import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
-import { useParallax, useReducedMotion } from '@/hooks';
+import { useReducedMotion } from '@/hooks';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { CtaGlowBackdrop } from '@/components/shared/CtaGlowBackdrop';
 
 export function CTASection() {
-  const orb1Ref = useRef<HTMLDivElement>(null);
-  const orb2Ref = useRef<HTMLDivElement>(null);
-  const orb3Ref = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const hrRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
-
-  useParallax(orb1Ref, { speed: 0.3 });
-  useParallax(orb2Ref, { speed: -0.2 });
-  useParallax(orb3Ref, { speed: 0.15 });
 
   registerGSAPPlugins();
 
@@ -82,37 +75,9 @@ export function CTASection() {
   return (
     <section
       data-section-index={9}
-      className="section-ink seam-blue relative isolate flex min-h-screen items-center justify-center overflow-hidden"
+      className="section-ink cta-glow-host seam-blue relative isolate flex min-h-screen items-center justify-center overflow-hidden"
     >
-      <VideoBackdrop variant="ink" />
-      {/* Parallax orbs */}
-      <div
-        ref={orb1Ref}
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(33, 150, 243, 0.14) 0%, transparent 70%)',
-        }}
-      />
-      <div
-        ref={orb2Ref}
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 40% 60% at 70% 40%, rgba(135, 206, 235, 0.12) 0%, transparent 60%)',
-        }}
-      />
-      <div
-        ref={orb3Ref}
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 34% 34% at 20% 72%, rgba(192, 0, 0, 0.12) 0%, transparent 55%)',
-        }}
-      />
+      <CtaGlowBackdrop />
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-[var(--container-max)] px-[var(--container-padding)] text-center">

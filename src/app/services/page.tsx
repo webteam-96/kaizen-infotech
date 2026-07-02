@@ -8,8 +8,8 @@ import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
 import { PageHero } from '@/components/sections/PageHero';
-import { ServiceCardDeck } from '@/components/sections/ServiceCardDeck';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { HexGridBackground } from '@/components/shared/HexGridBackground';
+import { ServiceCardDeck } from '@/components/sections/ServiceCardDeck';import { CtaGlowBackdrop } from '@/components/shared/CtaGlowBackdrop';
 
 // Short keywords for hero rotation
 const keywords = ['Software', 'Mobile', 'Events', 'Portals', 'Marketing'];
@@ -105,42 +105,53 @@ export default function ServicesPage() {
   }, []);
 
   return (
-    <main className="relative isolate overflow-x-clip bg-[var(--color-bg-primary)]">
-      <VideoBackdrop variant="white" fixed />
-      {/* ================================================================= */}
+    <main className="relative isolate overflow-x-clip bg-[var(--color-bg-primary)]">      {/* ================================================================= */}
       {/* HERO SECTION */}
       {/* ================================================================= */}
       <PageHero
         align="center"
+        backdrop={<HexGridBackground />}
         kicker="Our Services"
         title="What We Do Best"
         accentWords={['Best']}
         description="From custom enterprise software and mobile apps to event management systems and digital marketing - we deliver complete digital solutions designed to simplify operations, improve engagement, and drive measurable results."
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services' }]}
       >
-        {/* Animated keyword rotation — keep AnimatePresence for interaction-driven animation */}
-        <div className="flex flex-wrap items-center gap-3">
-          <span
-            className="text-[length:var(--h-section)] text-[var(--color-text-secondary)]"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
+        {/* "We specialize in <rotating keyword>" — one shared font-size drives
+            both parts so they align. The keyword sits in a FIXED-width slot
+            (sized in em to the longest word) and is LEFT-aligned, so the prefix
+            stays put at a standard spot and each word grows rightward from the
+            same left edge — no drift. The slot is vertically centred to match the
+            label and clips the slide, and its width never crops any word. */}
+        <div
+          className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
+          style={{ fontSize: 'var(--h-section)', lineHeight: 1.1 }}
+        >
+          <span className="text-[var(--color-text-secondary)]" style={{ fontFamily: 'var(--font-body)' }}>
             We specialize in
           </span>
-          <div className="relative h-12 w-56 overflow-hidden">
-            <AnimatePresence mode="wait">
+          <span className="relative inline-flex h-[1.55em] w-[4.9em] items-center justify-start overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
               <motion.span
                 key={keywords[keywordIndex]}
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -30, opacity: 0 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute left-0 top-0 text-[length:var(--h-section)] font-semibold text-[var(--color-accent-primary)]"
-                style={{ fontFamily: 'var(--font-heading)' }}
+                initial={{ y: '0.7em', opacity: 0, scale: 0.92 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: '-0.7em', opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="origin-left whitespace-nowrap font-semibold"
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  backgroundImage: 'linear-gradient(135deg, var(--color-accent-primary), #1565C0)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  WebkitTextFillColor: 'transparent',
+                }}
               >
                 {keywords[keywordIndex]}
               </motion.span>
             </AnimatePresence>
-          </div>
+          </span>
         </div>
       </PageHero>
 
@@ -251,8 +262,8 @@ export default function ServicesPage() {
       {/* ================================================================= */}
       {/* CTA SECTION */}
       {/* ================================================================= */}
-      <section className="section-ink seam-red relative isolate px-6 py-32">
-        <VideoBackdrop variant="ink" />
+      <section className="section-ink cta-glow-host seam-red relative isolate px-6 py-32">
+        <CtaGlowBackdrop />
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2

@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { PageHero } from '@/components/sections/PageHero';
+import { HexGridBackground } from '@/components/shared/HexGridBackground';
 import { BlogCover } from '@/components/ui/BlogCover';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { blogCategories } from '@/content/blog';
-import { usePublicBlogs } from '@/lib/blog/usePublicBlogs';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { usePublicBlogs } from '@/lib/blog/usePublicBlogs';import { CtaGlowBackdrop } from '@/components/shared/CtaGlowBackdrop';
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('All');
@@ -55,11 +55,10 @@ export default function BlogPage() {
   );
 
   return (
-    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
-      <VideoBackdrop variant="white" fixed />
-      {/* Hero Section */}
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">      {/* Hero Section */}
       <PageHero
         align="center"
+        backdrop={<HexGridBackground />}
         kicker="Insights & Perspectives"
         title="Technology, Business & Digital Transformation"
         accentWords={['Digital', 'Transformation']}
@@ -273,8 +272,8 @@ export default function BlogPage() {
       </section>
 
       {/* Newsletter CTA */}
-      <section className="section-ink seam-red relative isolate px-6 py-24 md:px-12 lg:px-24">
-        <VideoBackdrop variant="ink" />
+      <section className="section-ink cta-glow-host seam-red relative isolate px-6 py-24 md:px-12 lg:px-24">
+        <CtaGlowBackdrop />
         <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
             <h2

@@ -116,11 +116,13 @@ export function Navbar() {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
               <Image
-                src="/images/logos/kaizen-logo.png"
+                src="/images/logos/kaizen-logo.svg"
                 alt="Kaizen Infotech Solutions"
-                width={120}
-                height={36}
-                className="h-7 w-auto sm:h-9"
+                width={602}
+                height={376}
+                // `h-*!` overrides the global `img { height: auto }` reset (globals.css),
+                // which is unlayered and would otherwise collapse this SVG logo to 0.
+                className="h-7! w-auto sm:h-9!"
                 priority
               />
             </motion.div>

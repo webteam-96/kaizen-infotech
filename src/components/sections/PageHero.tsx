@@ -30,6 +30,12 @@ interface PageHeroProps {
   align?: 'left' | 'center';
   /** Extra content under the description (e.g. rotating keyword). */
   children?: React.ReactNode;
+  /**
+   * Replaces the default gradient-mesh backdrop for this hero (e.g. an
+   * interactive canvas). Rendered inside the `-z-10` backdrop layer, behind the
+   * hero copy. When omitted, the default drifting gradient blobs + grain show.
+   */
+  backdrop?: React.ReactNode;
 }
 
 const GRAIN =
@@ -43,6 +49,7 @@ export function PageHero({
   stats,
   align = 'left',
   children,
+  backdrop,
 }: PageHeroProps) {
   const rootRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -89,28 +96,33 @@ export function PageHero({
       ref={rootRef}
       className="relative flex min-h-[72vh] items-end overflow-hidden px-6 pb-[clamp(3rem,6vw,6rem)] pt-[clamp(8rem,14vh,11rem)]"
     >
-      {/* Gradient mesh backdrop */}
+      {/* Backdrop layer — a custom slot (e.g. the interactive hex grid) when
+          provided, otherwise the default drifting gradient mesh. */}
       <div aria-hidden className="absolute inset-0 -z-10">
-        <div
-          className="ph-blob absolute left-[-12%] top-[-18%] h-[55vmax] w-[55vmax] rounded-full opacity-60 blur-3xl"
-          style={{
-            background:
-              'radial-gradient(circle at 35% 35%, var(--accent-20), transparent 65%)',
-            animation: 'ph-drift-a 22s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="ph-blob absolute bottom-[-25%] right-[-10%] h-[48vmax] w-[48vmax] rounded-full opacity-50 blur-3xl"
-          style={{
-            background:
-              'radial-gradient(circle at 60% 60%, rgba(135, 206, 235, 0.25), transparent 65%)',
-            animation: 'ph-drift-b 26s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="absolute inset-0 opacity-[0.035] mix-blend-multiply"
-          style={{ backgroundImage: GRAIN }}
-        />
+        {backdrop ?? (
+          <>
+            <div
+              className="ph-blob absolute left-[-12%] top-[-18%] h-[55vmax] w-[55vmax] rounded-full opacity-60 blur-3xl"
+              style={{
+                background:
+                  'radial-gradient(circle at 35% 35%, var(--accent-20), transparent 65%)',
+                animation: 'ph-drift-a 22s ease-in-out infinite',
+              }}
+            />
+            <div
+              className="ph-blob absolute bottom-[-25%] right-[-10%] h-[48vmax] w-[48vmax] rounded-full opacity-50 blur-3xl"
+              style={{
+                background:
+                  'radial-gradient(circle at 60% 60%, rgba(135, 206, 235, 0.25), transparent 65%)',
+                animation: 'ph-drift-b 26s ease-in-out infinite',
+              }}
+            />
+            <div
+              className="absolute inset-0 opacity-[0.035] mix-blend-multiply"
+              style={{ backgroundImage: GRAIN }}
+            />
+          </>
+        )}
       </div>
 
       <div className={cn('mx-auto w-full max-w-7xl', centered && 'text-center')}>

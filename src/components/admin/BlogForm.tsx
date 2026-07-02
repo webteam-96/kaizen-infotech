@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, X, Wand2, AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
 import type { ManagedBlog, BlogStatus } from '@/types';
@@ -12,6 +12,11 @@ import { sanitizeHtml } from '@/lib/blog/markdown';
 import { saveBlog, slugify, estimateReadingTime, getLocal } from '@/lib/blog/adminStore';
 
 const CATEGORIES = blogCategories.filter((c) => c !== 'All');
+const OTHER = '__other__';
+// Case- and whitespace-insensitive key so "Enterprise Software", "enterprise
+// software" and "Enterprise  Software " all collapse to the same category.
+const normalizeCategory = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+
 const STATUSES: { value: BlogStatus; label: string }[] = [
   { value: 'published', label: 'Published (public)' },
   { value: 'draft', label: 'Draft (not public)' },
@@ -37,6 +42,48 @@ export function BlogForm({ initial, mode }: { initial: ManagedBlog; mode: 'new' 
 
   const set = <K extends keyof ManagedBlog>(key: K, val: ManagedBlog[K]) =>
     setBlog((b) => ({ ...b, [key]: val }));
+
+  // ── Category options: the presets PLUS every category already used by a post,
+  //    deduped case/space-insensitively (existing casing wins). "Other" reveals a
+  //    text box to add a new one; if what's typed matches an existing category
+  //    (any case / spacing) it snaps back to that one instead of duplicating. ──
+  // Categories pulled from the store on mount, so the full list is available even
+  // when localStorage is empty (e.g. opening /admin/blogs/new via a direct link).
+  const [remoteCategories, setRemoteCategories] = useState<string[]>([]);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/admin/blogs', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (active && Array.isArray(d.blogs)) {
+          setRemoteCategories(d.blogs.map((b: ManagedBlog) => b.category).filter(Boolean));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+  const knownCategories = useMemo(() => {
+    const byNorm = new Map<string, string>();
+    const add = (raw: string) => {
+      const n = normalizeCategory(raw);
+      if (n && !byNorm.has(n)) byNorm.set(n, raw.trim().replace(/\s+/g, ' '));
+    };
+    CATEGORIES.forEach(add);
+    getLocal().forEach((b) => add(b.category));
+    remoteCategories.forEach(add);
+    return [...byNorm.values()];
+  }, [remoteCategories]);
+  const categoryLookup = useMemo(
+    () => new Map(knownCategories.map((c) => [normalizeCategory(c), c])),
+    [knownCategories],
+  );
+  /** Canonical category: an existing one if it matches (case/space-insensitive), else tidied. */
+  const resolveCategory = (raw: string) =>
+    categoryLookup.get(normalizeCategory(raw)) ?? raw.trim().replace(/\s+/g, ' ');
+  const [otherMode, setOtherMode] = useState(
+    () => !categoryLookup.has(normalizeCategory(initial.category)),
+  );
+  const liveMatch = otherMode ? categoryLookup.get(normalizeCategory(blog.category)) : undefined;
 
   const onTitle = (title: string) => {
     setBlog((b) => ({ ...b, title, slug: slugEdited ? b.slug : slugify(title) }));
@@ -65,6 +112,8 @@ export function BlogForm({ initial, mode }: { initial: ManagedBlog; mode: 'new' 
       slug: uniqueSlug(blog.slug || blog.title),
       bodyHtml: sanitizeHtml(blog.bodyHtml),
       tags: blog.tags.map((t) => t.trim()).filter(Boolean),
+      // Snap to an existing category (any case/spacing) so we never duplicate one.
+      category: resolveCategory(blog.category) || knownCategories[0] || 'Enterprise Software',
     };
     if (overrideStatus) set('status', overrideStatus);
     const res = await saveBlog(finalBlog);
@@ -203,16 +252,54 @@ export function BlogForm({ initial, mode }: { initial: ManagedBlog; mode: 'new' 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
             <Label>Category</Label>
-            <input
-              type="text"
-              list="blog-categories"
-              value={blog.category}
-              onChange={(e) => set('category', e.target.value)}
+            <select
+              value={otherMode ? OTHER : (categoryLookup.get(normalizeCategory(blog.category)) ?? OTHER)}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === OTHER) {
+                  setOtherMode(true);
+                  set('category', '');
+                } else {
+                  setOtherMode(false);
+                  set('category', v);
+                }
+              }}
               className={inputCls}
-            />
-            <datalist id="blog-categories">
-              {CATEGORIES.map((c) => <option key={c} value={c} />)}
-            </datalist>
+            >
+              {knownCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+              <option value={OTHER}>Other — write a new category…</option>
+            </select>
+
+            {otherMode && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  value={blog.category}
+                  autoFocus
+                  onChange={(e) => set('category', e.target.value)}
+                  onBlur={() => {
+                    // If the typed name matches an existing category (ignoring
+                    // case / extra spaces), snap to it; else keep it as a tidy new one.
+                    const match = categoryLookup.get(normalizeCategory(blog.category));
+                    if (match) {
+                      set('category', match);
+                      setOtherMode(false);
+                    } else {
+                      set('category', blog.category.trim().replace(/\s+/g, ' '));
+                    }
+                  }}
+                  placeholder="New category name…"
+                  className={inputCls}
+                />
+                {liveMatch && (
+                  <p className="mt-1 text-[length:var(--text-xs)] text-[var(--color-accent-primary)]">
+                    Matches existing category &ldquo;{liveMatch}&rdquo; — that one will be used.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <Label>Status</Label>

@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { ManagedBlog } from '@/types';
-import { getBlogsFromFile, saveBlogsToFile } from '@/lib/blog/serverStore';
+import { getBlogs, saveBlogs, STORE_BACKEND } from '@/lib/blog/serverStore';
 
-// Node runtime (default) — needs the filesystem to write public/data/blogs.json.
+// Node runtime (default) — the file backend writes public/data/blogs.json; the
+// KV backend writes over the network (works on serverless / read-only hosts).
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const TOKEN =
   process.env.ADMIN_TOKEN ?? process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'kaizen-admin-2026';
 
-// GET /api/admin/blogs → the full set (lazily seeds the file if missing).
+// GET /api/admin/blogs → the full set (lazily seeds the store if missing).
 export async function GET() {
-  const blogs = await getBlogsFromFile();
-  return NextResponse.json({ blogs }, { headers: { 'Cache-Control': 'no-store' } });
+  const blogs = await getBlogs();
+  return NextResponse.json({ blogs, backend: STORE_BACKEND }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 // POST /api/admin/blogs → overwrite public/data/blogs.json with the full set.
@@ -35,13 +36,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    await saveBlogsToFile(blogs as ManagedBlog[]);
-    return NextResponse.json({ ok: true, count: blogs.length });
+    await saveBlogs(blogs as ManagedBlog[]);
+    return NextResponse.json({ ok: true, count: blogs.length, backend: STORE_BACKEND });
   } catch (err) {
-    // Read-only filesystem (e.g. serverless) — report so the client can fall
-    // back to the Export-JSON download.
+    // File backend on a read-only FS (e.g. Vercel with no KV configured) — report
+    // so the client can warn and fall back to the Export-JSON download.
     return NextResponse.json(
-      { error: 'write failed', detail: String(err instanceof Error ? err.message : err) },
+      { error: 'write failed', backend: STORE_BACKEND, detail: String(err instanceof Error ? err.message : err) },
       { status: 500 },
     );
   }

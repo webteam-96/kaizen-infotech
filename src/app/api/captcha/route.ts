@@ -1,61 +1,80 @@
 import { NextResponse } from 'next/server';
-import sharp from 'sharp';
-import { generateCode, makeToken } from '@/lib/captcha';
+import svgCaptcha from 'svg-captcha';
+import { makeToken } from '@/lib/captcha';
 
-// Generates a fresh distorted captcha. Returns { token, image } where image is a
-// rasterised PNG data-URL (the code lives only in pixels, never as text) and
-// token is the opaque HMAC binding (no readable code). Node runtime for sharp.
+// Generates a fresh distorted captcha. Returns { token, image }:
+//  • image — a path-based SVG data-URL. Every character is drawn as vector
+//    <path> outlines (never as <text>), so the code can't be scraped from the
+//    markup — the same guarantee the old rasterised PNG gave.
+//  • token — the opaque HMAC binding (no readable code); verified server-side on
+//    submit (see src/lib/captcha.ts + /api/contact).
+//
+// Pure JS: svg-captcha bundles its own font, so there is NO native image
+// dependency and this runs on any serverless runtime, Vercel included. The
+// previous version rasterised the SVG with `sharp` (a libvips native module);
+// that binary loads on a local Node install but fails on Vercel's serverless
+// runtime, which is why the captcha image came back blank/"Unavailable" in
+// production. Rendering the SVG directly removes that failure point entirely.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const W = 200;
-const H = 70;
-// Greyscale glyphs — subtle shade variation, no bright/rainbow colours. Mid-grey
-// so they stay readable on the light background after the blur.
-const COLORS = ['#5e646e', '#6b7280', '#777e8a', '#646b76', '#70767f'];
+// Greyscale palette: dark-grey glyphs on a light-grey field, with muted-grey
+// noise lines — high enough contrast to stay readable for people, while a gentle
+// baked-in blur softens the edges to trip up OCR bots.
+const GLYPH = '#3a3a3a'; // dark-grey characters
+const NOISE = '#9a9a9a'; // muted-grey distraction lines
+const BG = '#e6e6e6'; // light-grey background
+const BLUR = 0.6; // Gaussian blur radius — hazy for bots, legible for humans
 
-const rnd = (min: number, max: number) => min + Math.random() * (max - min);
-const pick = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// svg-captcha paints glyphs and noise in random colours. Recolour them to the
+// greyscale palette and wrap the glyph/noise layer (not the flat background) in
+// a Gaussian-blur filter, so the delivered image itself is blurred.
+function styleCaptcha(svg: string): string {
+  let out = svg
+    // glyph <path>s carry a solid colour fill → dark grey. (noise <path>s use
+    // fill="none", so they're skipped; the <rect> background is untouched.)
+    .replace(/(<path\b[^>]*?)fill="#[0-9a-fA-F]{3,8}"/g, `$1fill="${GLYPH}"`)
+    // noise line colours → muted grey.
+    .replace(/stroke="#[0-9a-fA-F]{3,8}"/g, `stroke="${NOISE}"`);
 
-function buildSvg(code: string): string {
-  const chars = code.split('');
-  const slot = (W - 36) / chars.length;
-
-  const glyphs = chars
-    .map((ch, i) => {
-      const x = 22 + i * slot + rnd(-3, 3);
-      const y = 46 + rnd(-6, 6);
-      const rot = rnd(-22, 22);
-      const fs = rnd(31, 40);
-      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-family="Arial, 'DejaVu Sans', 'Liberation Sans', sans-serif" font-size="${fs.toFixed(1)}" font-weight="700" fill="${pick(COLORS)}" transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})">${esc(ch)}</text>`;
-    })
-    .join('');
-
-  let lines = '';
-  for (let i = 0; i < 5; i++) {
-    const x1 = rnd(0, W), y1 = rnd(0, H), x2 = rnd(0, W), y2 = rnd(0, H);
-    lines += `<path d="M${x1.toFixed(0)} ${y1.toFixed(0)} Q ${rnd(0, W).toFixed(0)} ${rnd(0, H).toFixed(0)} ${x2.toFixed(0)} ${y2.toFixed(0)}" stroke="rgba(120,126,136,0.32)" stroke-width="1.3" fill="none"/>`;
+  const defs = `<defs><filter id="cap-blur" x="-6%" y="-6%" width="112%" height="112%"><feGaussianBlur stdDeviation="${BLUR}"/></filter></defs>`;
+  const rect = out.match(/<rect\b[^>]*\/>/);
+  if (rect) {
+    out = out
+      .replace(/(<svg\b[^>]*?>)/, `$1${defs}`)
+      .replace(rect[0], `${rect[0]}<g filter="url(#cap-blur)">`)
+      .replace('</svg>', '</g></svg>');
   }
-  let dots = '';
-  for (let i = 0; i < 45; i++) {
-    dots += `<circle cx="${rnd(0, W).toFixed(0)}" cy="${rnd(0, H).toFixed(0)}" r="${rnd(0.6, 1.4).toFixed(1)}" fill="rgba(110,116,126,0.22)"/>`;
-  }
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
-    + `<rect width="100%" height="100%" rx="8" fill="#eef3f9"/>`
-    + lines + dots + glyphs
-    + `</svg>`;
+  return out;
 }
 
 export async function GET() {
-  const code = generateCode(6);
-  const token = makeToken(code);
-  const svg = buildSvg(code);
+  try {
+    const captcha = svgCaptcha.create({
+      size: 6,
+      // Drop ambiguous glyphs (0/O, 1/l/I) so humans aren't tripped up.
+      ignoreChars: '0oO1lI',
+      noise: 3,
+      color: false,
+      background: BG,
+      width: 200,
+      height: 70,
+      fontSize: 54,
+    });
 
-  // Gentle blur — enough to hinder OCR bots while staying readable for people.
-  const png = await sharp(Buffer.from(svg)).blur(0.8).png().toBuffer();
-  const image = `data:image/png;base64,${png.toString('base64')}`;
+    const token = makeToken(captcha.text);
+    const svg = styleCaptcha(captcha.data);
+    const image = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 
-  return NextResponse.json({ token, image }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ token, image }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (err) {
+    // Surface the real cause in the server logs (e.g. a missing bundled font)
+    // instead of an opaque 500, and hand the widget a clean JSON error so it can
+    // show "Unavailable" rather than choke on an HTML error page.
+    console.error('[captcha] generation failed', err);
+    return NextResponse.json(
+      { token: '', image: '', error: 'captcha_unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
 }

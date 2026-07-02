@@ -4,8 +4,9 @@ import crypto from 'node:crypto';
 // Stateless, server-verified alphanumeric CAPTCHA (Aadhaar-style).
 //
 // Security model:
-//  • The code is generated server-side and only ever leaves as a rasterised
-//    image — never as text in the page/JSON — so it can't be scraped.
+//  • The code is generated server-side and only ever leaves as an image whose
+//    glyphs are vector <path> outlines — never as text in the page/JSON — so it
+//    can't be scraped.
 //  • The client gets an opaque token = `exp.HMAC(secret, code:exp)`. The code
 //    is NOT in the token; the HMAC is one-way, so it can't be reversed.
 //  • On submit the server recomputes HMAC(secret, answer:exp) and compares

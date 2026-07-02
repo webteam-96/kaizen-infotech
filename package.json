@@ -21,6 +21,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sharp": "^0.33.5",
+    "svg-captcha": "^1.4.0",
     "tailwind-merge": "^3.4.0",
     "three": "^0.183.1",
     "zustand": "^4.5.7"

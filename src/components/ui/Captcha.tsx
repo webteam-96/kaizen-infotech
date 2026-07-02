@@ -3,8 +3,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 
-// Aadhaar-style alphanumeric captcha. The image (a distorted PNG) and an opaque
-// token come from /api/captcha; the user types the characters they see. The
+// Aadhaar-style alphanumeric captcha. The image (a distorted, path-based SVG)
+// and an opaque token come from /api/captcha; the user types what they see. The
 // answer + token are reported to the parent and verified server-side on submit
 // (see /api/contact + src/lib/captcha.ts) — the code is never exposed to the page.
 
@@ -72,7 +72,7 @@ export const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(function Captcha(
         Security check <span className="text-[var(--red-brand)]">*</span>
       </label>
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex h-[70px] w-[200px] items-center justify-center overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[#eef3f9]">
+        <div className="flex h-[70px] w-[200px] items-center justify-center overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[#e6e6e6]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {image ? (
             <img src={image} alt="Captcha — characters to type" width={200} height={70} className="select-none" draggable={false} />

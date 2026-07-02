@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
@@ -20,12 +19,9 @@ export function Footer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  // Careers + Contact keep the dark-blue video footer; every other page gets a
-  // light-blue moving-gradient footer (`.footer-sky` redefines the on-ink text
-  // tokens to dark so the same markup stays readable on the light background).
-  const pathname = usePathname();
-  const darkFooter = pathname === '/careers' || pathname === '/contact';
-
+  // Every page uses the same footer: the dark-blue `section-ink` surface with
+  // the looping dark-blue video backdrop, for one consistent footer identity
+  // site-wide.
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<NewsletterStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -120,8 +116,8 @@ export function Footer() {
   }
 
   return (
-    <footer className={`section-ink relative isolate${darkFooter ? '' : ' footer-sky'}`}>
-      {darkFooter && <VideoBackdrop variant="ink" />}
+    <footer className="section-ink relative isolate">
+      <VideoBackdrop variant="ink" />
       {/* Animated top border */}
       <div
         ref={topBorderRef}
@@ -139,11 +135,13 @@ export function Footer() {
           <div className="lg:col-span-3">
             <Link href="/" className="focus-ring inline-block rounded-lg bg-white p-2">
               <Image
-                src="/images/logos/kaizen-logo.png"
+                src="/images/logos/kaizen-logo.svg"
                 alt="Kaizen Infotech Solutions"
-                width={160}
-                height={40}
-                className="h-10 w-auto"
+                width={602}
+                height={376}
+                // `h-10!` overrides the unlayered global `img { height: auto }` reset
+                // (globals.css) that would otherwise collapse this SVG logo to 0.
+                className="h-10! w-auto"
               />
             </Link>
           </div>

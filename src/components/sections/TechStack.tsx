@@ -4,6 +4,7 @@
 import {
   useRef,
   useEffect,
+  useState,
   type CSSProperties,
   type ReactNode,
   type PointerEvent as RPointerEvent,
@@ -110,15 +111,22 @@ const BASE_VELOCITY = 42; // px per second
 // Single logo chip — B&W by default, full colour + lift on hover.
 // ---------------------------------------------------------------------------
 
-function Chip({ tech }: { tech: Tech }) {
+// `active` mirrors the desktop :hover state for touch devices — a tap toggles it
+// (see useMarquee), and it lights the chip exactly like hover would. Conflicting
+// utilities are resolved by `cn` (tailwind-merge), so the active classes cleanly
+// override the resting ones.
+function Chip({ tech, index, active }: { tech: Tech; index?: number; active?: boolean }) {
   return (
     <div
+      data-chip-index={index}
       className={cn(
         'group mr-5 flex shrink-0 select-none items-center gap-4 rounded-full',
         'border border-[var(--color-border)] bg-white px-8 py-5',
         'shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition duration-300',
         'hover:-translate-y-0.5 hover:border-[var(--color-border-hover)]',
-        'hover:shadow-[0_10px_28px_rgba(0,0,0,0.10)]'
+        'hover:shadow-[0_10px_28px_rgba(0,0,0,0.10)]',
+        active &&
+          '-translate-y-0.5 border-[var(--color-border-hover)] shadow-[0_10px_28px_rgba(0,0,0,0.10)]'
       )}
       style={{ '--tint': tech.tint ?? 'var(--color-accent-primary)' } as CSSProperties}
     >
@@ -131,7 +139,10 @@ function Chip({ tech }: { tech: Tech }) {
             height={44}
             loading="lazy"
             draggable={false}
-            className="h-11 w-11 rounded-[9px] object-contain opacity-60 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+            className={cn(
+              'h-11 w-11 rounded-[9px] object-contain opacity-60 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0',
+              active && 'opacity-100 grayscale-0'
+            )}
           />
         ) : tech.slug ? (
           <img
@@ -141,16 +152,27 @@ function Chip({ tech }: { tech: Tech }) {
             height={44}
             loading="lazy"
             draggable={false}
-            className="h-11 w-11 object-contain opacity-60 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+            className={cn(
+              'h-11 w-11 object-contain opacity-60 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0',
+              active && 'opacity-100 grayscale-0'
+            )}
           />
         ) : (
-          <span className="flex h-11 w-11 items-center justify-center text-[#9aa3af] transition-colors duration-300 group-hover:text-[var(--tint)]">
+          <span
+            className={cn(
+              'flex h-11 w-11 items-center justify-center text-[#9aa3af] transition-colors duration-300 group-hover:text-[var(--tint)]',
+              active && 'text-[var(--tint)]'
+            )}
+          >
             {tech.node}
           </span>
         )}
       </span>
       <span
-        className="whitespace-nowrap text-[length:var(--text-base)] font-medium text-[var(--color-text-tertiary)] transition-colors duration-300 group-hover:text-[var(--color-text-primary)]"
+        className={cn(
+          'whitespace-nowrap text-[length:var(--text-base)] font-medium text-[var(--color-text-tertiary)] transition-colors duration-300 group-hover:text-[var(--color-text-primary)]',
+          active && 'text-[var(--color-text-primary)]'
+        )}
         style={{ fontFamily: 'var(--font-heading)' }}
       >
         {tech.name}
@@ -173,6 +195,11 @@ function useMarquee(baseVelocity: number) {
   const last = useRef({ x: 0, t: 0 });
   const speed = useRef(1);
   const targetSpeed = useRef(1);
+  // Tap-to-activate (touch/pen): a press that never becomes a drag toggles the
+  // pressed chip's lit state — the touch equivalent of a desktop hover.
+  const startX = useRef(0);
+  const dragged = useRef(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const measure = () => {
@@ -205,7 +232,9 @@ function useMarquee(baseVelocity: number) {
 
   const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
     dragging.current = true;
+    dragged.current = false;
     dragVel.current = 0;
+    startX.current = e.clientX;
     last.current = { x: e.clientX, t: e.timeStamp };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
@@ -215,29 +244,47 @@ function useMarquee(baseVelocity: number) {
     const dtMs = Math.max(8, e.timeStamp - last.current.t);
     baseX.set(baseX.get() + dx); // 1:1 finger tracking
     dragVel.current = (dx / dtMs) * 1000; // px/s → carried as momentum on release
+    if (Math.abs(e.clientX - startX.current) > 8) dragged.current = true; // it's a scrub, not a tap
     last.current = { x: e.clientX, t: e.timeStamp };
   };
-  const endDrag = (e: RPointerEvent<HTMLDivElement>) => {
+  // Release/cancel cleanup only — no tap handling (used for cancel + leave).
+  const finishDrag = (e: RPointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
     dragging.current = false;
     e.currentTarget.releasePointerCapture?.(e.pointerId);
+  };
+  const onPointerUp = (e: RPointerEvent<HTMLDivElement>) => {
+    const wasTap = dragging.current && !dragged.current;
+    finishDrag(e);
+    // Touch/pen tap (mouse already has hover): toggle the chip under the finger.
+    if (wasTap && e.pointerType !== 'mouse' && typeof document !== 'undefined') {
+      const chip = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest(
+        '[data-chip-index]',
+      );
+      const idx = chip?.getAttribute('data-chip-index');
+      if (idx != null && idx !== '') {
+        const n = Number(idx);
+        setActiveIndex((cur) => (cur === n ? null : n));
+      }
+    }
   };
   const onPointerEnter = (e: RPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse') targetSpeed.current = 0.18;
   };
   const onPointerLeave = (e: RPointerEvent<HTMLDivElement>) => {
     targetSpeed.current = 1;
-    endDrag(e);
+    finishDrag(e);
   };
 
   return {
     trackRef,
     x,
+    activeIndex,
     handlers: {
       onPointerDown,
       onPointerMove,
-      onPointerUp: endDrag,
-      onPointerCancel: endDrag,
+      onPointerUp,
+      onPointerCancel: finishDrag,
       onPointerEnter,
       onPointerLeave,
     },
@@ -245,7 +292,7 @@ function useMarquee(baseVelocity: number) {
 }
 
 function MarqueeRow({ items, baseVelocity }: { items: Tech[]; baseVelocity: number }) {
-  const { trackRef, x, handlers } = useMarquee(baseVelocity);
+  const { trackRef, x, activeIndex, handlers } = useMarquee(baseVelocity);
   return (
     <div
       {...handlers}
@@ -259,7 +306,7 @@ function MarqueeRow({ items, baseVelocity }: { items: Tech[]; baseVelocity: numb
     >
       <motion.div ref={trackRef} className="flex w-max px-2" style={{ x }}>
         {[...items, ...items].map((t, i) => (
-          <Chip key={`${t.name}-${i}`} tech={t} />
+          <Chip key={`${t.name}-${i}`} tech={t} index={i} active={i === activeIndex} />
         ))}
       </motion.div>
     </div>
@@ -292,9 +339,6 @@ function Header() {
       >
         Reliable and proven technologies
       </TextReveal>
-      <p className="mx-auto mt-4 max-w-[42ch] text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
-        Hover a logo to bring it to life — drag a row to scrub.
-      </p>
     </div>
   );
 }

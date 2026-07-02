@@ -7,6 +7,7 @@ import { SectionDivider } from '@/components/animation/SectionDivider';
 import { ParallaxLayer } from '@/components/animation/ParallaxLayer';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { PageHero } from '@/components/sections/PageHero';
+import { HexGridBackground } from '@/components/shared/HexGridBackground';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
@@ -14,18 +15,16 @@ import { Button } from '@/components/ui/Button';
 import { Captcha, type CaptchaHandle } from '@/components/ui/Captcha';
 import { socialLinks } from '@/content/navigation';
 import { SITE_CONFIG } from '@/lib/utils/constants';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
-
 // ---------------------------------------------------------------------------
 // Select options
 // ---------------------------------------------------------------------------
 
 const budgetOptions = [
   { value: 'under-5l', label: 'Under ₹5 Lakhs' },
-  { value: '5l-15l', label: '₹5–15 Lakhs' },
-  { value: '15l-50l', label: '₹15–50 Lakhs' },
+  { value: '5l-10l', label: '₹5–10 Lakhs' },
+  { value: '10l-20l', label: '₹10–20 Lakhs' },
+  { value: '20l-50l', label: '₹20–50 Lakhs' },
   { value: '50l-plus', label: '₹50 Lakhs+' },
-  { value: 'not-decided', label: 'Not decided yet - let\'s discuss' },
 ];
 
 const projectTypeOptions = [
@@ -44,22 +43,25 @@ const projectTypeOptions = [
 const contactInfo = [
   {
     label: 'Email',
-    value: 'connect@kaizeninfotech.com',
-    href: 'mailto:connect@kaizeninfotech.com',
+    value: 'communication@kaizeninfotech.com',
+    href: 'mailto:communication@kaizeninfotech.com',
     copyable: true,
+    externalLink: false,
   },
   {
     label: 'Calls & WhatsApp',
     value: '+91 93721 30855',
     href: 'tel:+919372130855',
     copyable: true,
+    externalLink: false,
   },
   {
     label: 'Address',
-    value: 'Centrum Business Square, A 406, Road No. 16, Nehru Nagar, Wagle Industrial Estate, Thane West, Thane, Maharashtra 400604',
+    value: 'A 406, Centrum Business Square, Road No. 16, Wagle Industrial Estate, Thane West, Thane, Maharashtra, India - 400604',
     // Opens the address in Google Maps (new tab).
     href: 'https://maps.app.goo.gl/E3AMLk3rY7wdxHzG7',
     copyable: false,
+    externalLink: true,
   },
 ];
 
@@ -204,11 +206,10 @@ export default function ContactPage() {
   );
 
   return (
-    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
-      <VideoBackdrop variant="white" fixed />
-      {/* Hero Section */}
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">      {/* Hero Section */}
       <PageHero
         align="center"
+        backdrop={<HexGridBackground />}
         kicker="Contact"
         title="Let's Start a Conversation"
         accentWords={['Conversation']}
@@ -439,6 +440,40 @@ export default function ContactPage() {
                             </AnimatePresence>
                           </button>
                         )}
+
+                        {item.externalLink && item.href && (
+                          <a
+                            href={item.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="focus-ring shrink-0 cursor-pointer rounded-[var(--radius-sm)] p-1.5 text-[var(--text-on-ink-muted)] transition-colors hover:bg-[rgba(245,248,252,0.1)] hover:text-[var(--text-on-ink)]"
+                            aria-label={`Open ${item.label} in Google Maps (new tab)`}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                              <path
+                                d="M6.5 3.5H4A1.5 1.5 0 0 0 2.5 5v7A1.5 1.5 0 0 0 4 13.5h7A1.5 1.5 0 0 0 12.5 12V9.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M9.5 2.5H13.5V6.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M13 3L7.5 8.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </a>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -472,7 +507,6 @@ export default function ContactPage() {
                     </div>
                   </>
                 )}
-                <VideoBackdrop variant="ink" />
               </div>
             </ParallaxLayer>
           </ScrollFadeIn>

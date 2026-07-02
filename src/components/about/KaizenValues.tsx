@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import {
   motion,
   AnimatePresence,
@@ -51,17 +51,45 @@ export default function KaizenValues() {
   const prefersReduced = useReducedMotion();
   const [[index, direction], setIndex] = useState<[number, number]>([0, 0]);
 
-  const paginate = useCallback((dir: number) => {
-    setIndex(([cur]) => {
-      const next = cur + dir;
-      if (next < 0 || next > VALUES.length - 1) return [cur, dir];
-      return [next, dir];
-    });
+  // ---- Serialized card sequencing ----
+  // Cards are driven by scroll, drag, keyboard, AND dots — often faster than a
+  // single spring transition can finish. Committing a new transition on every
+  // one of those events lets framer's popLayout stack several in-flight cards on
+  // top of each other, which is the intermittent "cards glitch / flicker". (A
+  // fresh load that happens to be scrolled slowly never stacks them — hence it
+  // "works after a refresh".) Fix: SERIALIZE. Only one transition runs at a
+  // time, and it always jumps straight to the LATEST requested index, skipping
+  // any intermediates. `indexRef` mirrors the committed index so the helpers
+  // below stay pure (no state reads inside a setState updater).
+  const indexRef = useRef(0);
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
+  const targetRef = useRef(0); // newest desired index
+  const busyRef = useRef(false); // a card transition is currently animating
+
+  const applyTarget = useCallback(() => {
+    if (busyRef.current) return;
+    const cur = indexRef.current;
+    const t = targetRef.current;
+    if (t === cur) return;
+    busyRef.current = true;
+    setIndex([t, t > cur ? 1 : -1]);
   }, []);
 
-  const goTo = useCallback((i: number) => {
-    setIndex(([cur]) => [i, i > cur ? 1 : -1]);
-  }, []);
+  const requestIndex = useCallback(
+    (i: number) => {
+      targetRef.current = Math.min(VALUES.length - 1, Math.max(0, i));
+      applyTarget();
+    },
+    [applyTarget]
+  );
+
+  const paginate = useCallback(
+    (dir: number) => requestIndex(targetRef.current + dir),
+    [requestIndex]
+  );
+  const goTo = useCallback((i: number) => requestIndex(i), [requestIndex]);
 
   // ---- Scroll-driven sequencing ----
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -75,12 +103,30 @@ export default function KaizenValues() {
     [0, VALUES.length - 1]
   );
 
-  useMotionValueEvent(progressToIndex, "change", (v) => {
-    if (prefersReduced) return;
-    const rounded = Math.min(VALUES.length - 1, Math.max(0, Math.round(v)));
-    setIndex(([cur]) =>
-      rounded === cur ? [cur, 0] : [rounded, rounded > cur ? 1 : -1]
+  // Only let scroll drive the cards while the section is actually on screen. On
+  // a client-side navigation the section mounts far below the fold while Lenis
+  // is still resetting scroll and the content/fonts above are settling; a
+  // measurement taken then can momentarily report a non-zero progress and snap
+  // the deck to the wrong card (the glitch a plain refresh avoids). Gating on
+  // visibility means the first index we honour is measured against a settled,
+  // in-view layout.
+  const engagedRef = useRef(false);
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        engagedRef.current = entry.isIntersecting;
+      },
+      { threshold: 0 }
     );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useMotionValueEvent(progressToIndex, "change", (v) => {
+    if (prefersReduced || !engagedRef.current) return;
+    requestIndex(Math.round(v));
   });
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -149,11 +195,22 @@ export default function KaizenValues() {
           })}
 
           {/* Active card — fixed height so every card is uniform regardless of copy length */}
-          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <AnimatePresence
+            initial={false}
+            custom={direction}
+            mode="popLayout"
+            onExitComplete={() => {
+              // The prior card finished leaving — release the lock and jump to
+              // wherever scroll/drag has moved the target since. This is what
+              // keeps transitions strictly one-at-a-time (no pile-up).
+              busyRef.current = false;
+              applyTarget();
+            }}
+          >
             <motion.div
               key={index}
               custom={direction}
-              className="card-red-accent relative flex h-[460px] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
+              className="card-red-accent relative flex h-[520px] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
               style={{ zIndex: 20 }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}

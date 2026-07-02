@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  Pencil, Trash2, EyeOff, Globe, Plus, Download, Upload, RotateCcw, AlertTriangle,
+  Pencil, Trash2, EyeOff, Globe, Plus, Download, Upload, RotateCcw, AlertTriangle, Star,
 } from 'lucide-react';
 import type { ManagedBlog } from '@/types';
 import {
-  loadAdminBlogs, subscribe, getLocal, deleteBlog, setStatus, replaceAll,
+  loadAdminBlogs, subscribe, getLocal, deleteBlog, setStatus, setFeatured, replaceAll,
 } from '@/lib/blog/adminStore';
+import { sortBlogs } from '@/lib/blog/order';
 import { cloneSeed } from '@/lib/blog/seed';
 
 const STATUS_STYLE: Record<string, string> = {
@@ -38,6 +39,10 @@ export default function ManageBlogsPage() {
 
   const toggle = async (b: ManagedBlog) => {
     flash(await setStatus(b.id, b.status === 'published' ? 'hidden' : 'published'));
+  };
+  const feature = async (b: ManagedBlog) => {
+    // Single-select: featuring one clears the flag on every other post.
+    flash(await setFeatured(b.id, !b.featured));
   };
   const del = async (b: ManagedBlog) => {
     if (window.confirm(`Delete "${b.title}"? This cannot be undone.`)) flash(await deleteBlog(b.id));
@@ -82,7 +87,7 @@ export default function ManageBlogsPage() {
         <div>
           <h1 className="text-[length:var(--h-card)] font-bold text-[var(--color-text-primary)]">Manage Blogs</h1>
           <p className="text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
-            {blogs.length} post{blogs.length === 1 ? '' : 's'} · saved to your browser and published to <code>public/data/blogs.json</code>
+            {blogs.length} post{blogs.length === 1 ? '' : 's'} · saved to your browser and published to the live blog store
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -117,10 +122,20 @@ export default function ManageBlogsPage() {
               </tr>
             </thead>
             <tbody>
-              {blogs.map((b) => (
-                <tr key={b.id} className="border-b border-[var(--color-border)] last:border-0">
+              {sortBlogs(blogs).map((b) => (
+                <tr
+                  key={b.id}
+                  className={`border-b border-[var(--color-border)] last:border-0 ${b.featured ? 'bg-amber-50/70' : ''}`}
+                >
                   <td className="px-4 py-3">
-                    <p className="font-medium text-[var(--color-text-primary)]">{b.title || '(untitled)'}</p>
+                    <p className="flex flex-wrap items-center gap-2 font-medium text-[var(--color-text-primary)]">
+                      {b.title || '(untitled)'}
+                      {b.featured && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[length:var(--text-xs)] font-semibold text-amber-700">
+                          <Star size={11} fill="currentColor" /> Featured
+                        </span>
+                      )}
+                    </p>
                     <p className="text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]">/blog/{b.slug}</p>
                   </td>
                   <td className="px-4 py-3 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">{b.category}</td>
@@ -129,6 +144,17 @@ export default function ManageBlogsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => feature(b)}
+                        title={b.featured ? 'Featured blog — click to remove' : 'Make this the Featured blog (pinned first on /blog)'}
+                        className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[length:var(--text-xs)] font-semibold ${
+                          b.featured
+                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-amber-600'
+                        }`}
+                      >
+                        <Star size={15} fill={b.featured ? 'currentColor' : 'none'} /> {b.featured ? 'Featured' : 'Feature'}
+                      </button>
                       {b.status === 'published' ? (
                         <button onClick={() => toggle(b)} title="Unpublish — remove from the public blog page" className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[length:var(--text-xs)] font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)]">
                           <EyeOff size={15} /> Unpublish

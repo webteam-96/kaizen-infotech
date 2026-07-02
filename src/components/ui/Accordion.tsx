@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils/cn';
 
 export interface AccordionItem {
   title: string;
-  content: string;
+  /** Plain text or rich JSX (e.g. a description plus a link/button). */
+  content: React.ReactNode;
 }
 
 export interface AccordionProps {

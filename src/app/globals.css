@@ -425,19 +425,90 @@ body.loader-active {
 .rc-side-center { left: 50%; top: 50%; text-align: center; align-items: center; }
 .rc-wide { max-width: 540px; }
 
-/* Opening hook line (left side) */
-.rc-hook-card { max-width: 460px; }
-.rc-hook-inner { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
-.rc-hook-title {
-  font-family: var(--font-card-heading), var(--font-display);
-  font-weight: 500;
-  font-size: var(--h-hero);
-  line-height: 1.08;
-  letter-spacing: -0.015em;
-  color: #1a1a1a;
-  max-width: 13ch;
+/* Opening hook line (left side).
+   The glass-card chrome is intentionally stripped here — the enlarged headline
+   sits directly on the page with no card behind it. `introCardRef` still
+   positions and fades this box on scroll, so the element is kept (just made
+   fully transparent). Widened so the doubled headline stacks cleanly without
+   wrapping mid-word. */
+.rc-hook-card { max-width: min(94vw, 900px); }
+.rc-glass-card.rc-hook-card {
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
-.rc-hook-title em { font-style: italic; color: var(--color-accent-primary); }
+.rc-glass-card.rc-hook-card::before,
+.rc-glass-card.rc-hook-card::after { display: none; }
+.rc-hook-inner { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+/* Two-line poster treatment: heavy condensed uppercase (gradient + 3D drop
+   shadow) over a flowing gold script — a light-background adaptation of the
+   "COME FOR THE MUSIC / Stay for the Cause" look. */
+.rc-hook-title {
+  display: flex;
+  flex-direction: column;
+  /* Fluid master size — grows with the viewport (notably bigger on laptop /
+     desktop / large screens), capped so "YOUR VISION" always fits its box.
+     Both lines scale in em off this. Small screens use the overrides below. */
+  font-size: clamp(5.25rem, 10.5vw, 12rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #1a1a1a;
+}
+/* Line 1 — YOUR VISION: heavy condensed poster caps, dark metallic gradient,
+   soft drop shadow for the raised/3D feel. */
+.rc-hook-t1 {
+  display: block;
+  overflow: visible;
+  font-family: var(--font-poster), var(--font-display), sans-serif;
+  font-weight: 400; /* Anton is already ultra-bold */
+  text-transform: uppercase;
+  letter-spacing: 0.006em;
+  line-height: 0.92;
+  /* Brand BLUE gradient */
+  background: linear-gradient(180deg, #4FA9F6 0%, var(--color-accent-primary) 50%, #1565C0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.22));
+}
+/* Line 2 — Our Code: elegant RED script, overlapping the caps a touch. Given
+   generous line-height + padding so the tall Great Vibes glyphs and swashes are
+   never clipped. */
+.rc-hook-t2 {
+  display: block;
+  overflow: visible;
+  font-family: var(--font-script), cursive;
+  font-style: normal; /* the script is inherently slanted */
+  font-weight: 600; /* semi-bold (synthesised — Great Vibes ships weight 400 only) */
+  font-size: 1.3em; /* scripts read small — bump to balance the caps */
+  line-height: 1.16;
+  margin-top: -0.34em; /* pull the script UP so it overlaps the bottom of the caps */
+  padding-bottom: 0.3em; /* room for descenders/swashes so they don't clip */
+  position: relative;
+  z-index: 1; /* red script paints ON TOP of the blue caps where they overlap */
+  /* "Written" reveal: JS animates --tw 0→1 and this sweeps the right clip edge
+     left→right. Negative top/bottom/left insets keep descenders, the caps
+     overlap and the drop shadow from ever being clipped. --tw:1 = fully shown. */
+  --tw: 1;
+  clip-path: inset(-40% calc((1 - var(--tw)) * 107% - 7%) -40% -3%);
+  letter-spacing: 0;
+  /* Brand RED gradient */
+  background: linear-gradient(180deg, #E5484D 0%, var(--red-brand) 55%, #8B0000 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
+}
+.rc-hook-title { overflow: visible; }
+.rc-hook-t1, .rc-hook-t2 { text-shadow: none; }
+/* "Tap to begin" cue — shown only on touch/small (phone + iPad) layouts, where
+   the CRT's "Press Enter" prompt isn't the right affordance. Hidden on desktop. */
+.rc-tap-cue { display: none; }
 
 /* Typography */
 .rc-overline {
@@ -703,6 +774,19 @@ html, body { max-width: 100%; overflow-x: clip; }
   }
 }
 
+/* Tablet LANDSCAPE (769–1024 wide): the monitor sits on the RIGHT here, so keep
+   the (now enlarged) hook heading LEFT-aligned and size-capped — centering it
+   would push the big title over the monitor. */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+  .rc-glass-card.rc-hook-card {
+    left: 4vw !important;
+    right: auto !important;
+    margin-inline: 0 !important;
+    max-width: 58vw !important;
+  }
+  .rc-hook-title { font-size: clamp(3.25rem, 7.4vw, 6rem); }
+}
+
 /* ---------------------------------------------------------------------
    LARGE PHONE / SMALL TABLET  (≤ 768px)
    --------------------------------------------------------------------- */
@@ -723,9 +807,9 @@ html, body { max-width: 100%; overflow-x: clip; }
     margin-bottom: 0.75rem;
   }
 
-  /* Hero title sizing for phone */
+  /* Hero title sizing for phone — doubled */
   .rc-hook-title {
-    font-size: clamp(1.75rem, 7vw, 2.5rem);
+    font-size: clamp(3.5rem, 14vw, 5rem);
     max-width: 100%;
     line-height: 1.12;
   }
@@ -758,7 +842,7 @@ html, body { max-width: 100%; overflow-x: clip; }
     letter-spacing: 0.12em;
     font-size: 0.5625rem;
   }
-  .rc-hook-title { font-size: clamp(1.6rem, 8.5vw, 2rem); }
+  .rc-hook-title { font-size: clamp(3.2rem, 17vw, 4rem); }
   .rc-headline  { font-size: clamp(1.15rem, 6vw, 1.5rem); }
 }
 
@@ -781,7 +865,7 @@ html, body { max-width: 100%; overflow-x: clip; }
     left: 0 !important;
     right: 0 !important;
     margin-inline: auto !important;
-    transform: translateY(0) !important; /* centre the monitor vertically in the viewport */
+    transform: translateY(-9%) !important; /* nudged UP so the copy + cue sit below */
     pointer-events: none !important;        /* never blocks taps / scrolling */
   }
 
@@ -789,8 +873,10 @@ html, body { max-width: 100%; overflow-x: clip; }
      band below the monitor (not jammed at the very bottom). JS still drives its
      fade; only position/skin are overridden here. */
   .rc-glass-card.rc-hook-card {
-    top: auto !important;
-    bottom: 5% !important;
+    /* Span the lower band: the headline sits just below the (raised) monitor and
+       the "Tap to begin" cue is pushed to the very bottom via space-between. */
+    top: 66% !important;
+    bottom: 3% !important;
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
@@ -809,7 +895,26 @@ html, body { max-width: 100%; overflow-x: clip; }
   .rc-hook-card .rc-hook-inner {
     align-items: center !important;
     text-align: center !important;
-    gap: 0.15rem;
+    height: 100% !important;
+    justify-content: space-between !important; /* headline top, cue bottom */
+    gap: 0.5rem;
+  }
+  /* "Tap to begin" pill at the bottom on touch layouts. */
+  .rc-hook-card .rc-tap-cue {
+    display: inline-block;
+    align-self: center;
+    padding: 0.6rem 1.5rem;
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-accent-primary);
+    background: rgba(33, 150, 243, 0.08);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.12);
+    animation: rc-cue-pulse 2.4s ease-in-out infinite;
   }
 
   /* Overline hidden on phone / portrait-tablet — the big monitor is the
@@ -820,7 +925,7 @@ html, body { max-width: 100%; overflow-x: clip; }
      busy hexagon texture behind it */
   .rc-hook-card .rc-hook-title {
     font-weight: 600;
-    font-size: clamp(2rem, 10vw, 2.85rem) !important;
+    font-size: clamp(4rem, 20vw, 5.7rem) !important;
     line-height: 1.05;
     letter-spacing: -0.02em;
     text-shadow: 0 1px 18px rgba(245,245,245,0.9), 0 1px 2px rgba(245,245,245,0.9);
@@ -877,7 +982,7 @@ html, body { max-width: 100%; overflow-x: clip; }
    --------------------------------------------------------------------- */
 @media (max-width: 768px) and (max-height: 700px) {
   .rc-glass-card { padding-block: 1.1rem; }
-  .rc-hook-title { font-size: 1.5rem; }
+  .rc-hook-title { font-size: 3rem; }
 }
 
 /* ===== Ink dark-band system =====
@@ -1287,6 +1392,75 @@ html.has-custom-cursor * {
 }
 @media (prefers-reduced-motion: reduce) {
   .video-backdrop { display: none !important; }
+}
+
+/* ============================================================================
+   CTA GLOW BACKDROP  (<CtaGlowBackdrop> behind the five dark-blue CTA bands)
+   One consistent CTA identity: the dark-blue `.section-ink` base plus soft
+   LIGHT-BLUE lights that sit still + dim at rest, then brighten and drift
+   around while the section (`.cta-glow-host`) is hovered. Reduced motion keeps
+   the lights but disables the drift.
+   ========================================================================== */
+.cta-glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.22;
+  will-change: transform, opacity;
+  transition: opacity 0.7s ease;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-play-state: paused; /* still until the section is hovered */
+}
+.cta-glow-host:hover .cta-glow-orb {
+  opacity: 0.6;
+  animation-play-state: running; /* lights drift around on hover */
+}
+
+.cta-glow-orb--a {
+  width: 34rem;
+  height: 34rem;
+  top: -10rem;
+  left: -8rem;
+  background: radial-gradient(circle, rgba(135, 206, 235, 0.6) 0%, rgba(135, 206, 235, 0) 70%);
+  animation-name: cta-drift-a;
+  animation-duration: 16s;
+}
+.cta-glow-orb--b {
+  width: 26rem;
+  height: 26rem;
+  top: 18%;
+  right: -6rem;
+  background: radial-gradient(circle, rgba(135, 206, 235, 0.5) 0%, rgba(135, 206, 235, 0) 70%);
+  animation-name: cta-drift-b;
+  animation-duration: 21s;
+}
+.cta-glow-orb--c {
+  width: 22rem;
+  height: 22rem;
+  bottom: -9rem;
+  left: 32%;
+  background: radial-gradient(circle, rgba(135, 206, 235, 0.45) 0%, rgba(135, 206, 235, 0) 70%);
+  animation-name: cta-drift-c;
+  animation-duration: 25s;
+}
+
+@keyframes cta-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  33% { transform: translate3d(10rem, 6rem, 0); }
+  66% { transform: translate3d(4rem, 12rem, 0); }
+}
+@keyframes cta-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-12rem, 8rem, 0); }
+}
+@keyframes cta-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(8rem, -10rem, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-glow-orb { animation: none !important; }
 }
 
 /* ============================================================================

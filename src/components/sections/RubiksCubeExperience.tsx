@@ -252,23 +252,44 @@ export function RubiksCubeExperience() {
     return () => io.disconnect();
   }, [mounted, prefersReducedMotion]);
 
-  /* Hook-line entrance: rises bottom → center once the loader has cleared.
-     Plays a single time; scroll-out is handled separately in the render loop. */
+  /* Hook-line entrance (plays once after the loader clears; scroll-out is handled
+     separately in the render loop):
+       1. "Your Vision" fades in while rising from below to its resting place.
+       2. Once it settles, "Our Code" is "written" — a left→right clip reveal that,
+          on the cursive script, reads like the words being handwritten in view.
+       3. The "Tap to begin" cue fades up last. */
   useEffect(() => {
     if (!mounted || !loaderComplete || !introInnerRef.current) return;
     const reduce =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const el = introInnerRef.current;
+    const t1 = el.querySelector<HTMLElement>('.rc-hook-t1');
+    const t2 = el.querySelector<HTMLElement>('.rc-hook-t2');
+    const cue = el.querySelector<HTMLElement>('.rc-tap-cue');
+
     if (reduce) {
-      gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.8, ease: 'power2.out' });
+      gsap.set(el, { opacity: 1 });
+      if (t1) gsap.set(t1, { opacity: 1, yPercent: 0 });
+      if (t2) gsap.set(t2, { opacity: 1, '--tw': 1 });
+      if (cue) gsap.set(cue, { opacity: 1, y: 0 });
       return;
     }
-    gsap.fromTo(
-      el,
-      { opacity: 0, y: '38vh', filter: 'blur(10px)' },
-      { opacity: 1, y: '0vh', filter: 'blur(0px)', duration: 1.5, ease: 'expo.out', delay: 0.15 }
-    );
+
+    // The write is driven by `--tw` (0 = hidden … 1 = fully written); the CSS
+    // clip-path in .rc-hook-t2 turns it into a left→right sweep.
+    gsap.set(el, { opacity: 1 });
+    if (t1) gsap.set(t1, { opacity: 0, yPercent: 80 });
+    if (t2) gsap.set(t2, { opacity: 0, '--tw': 0 });
+    if (cue) gsap.set(cue, { opacity: 0, y: 14 });
+
+    const tl = gsap.timeline({ delay: 0.2 });
+    if (t1) tl.to(t1, { opacity: 1, yPercent: 0, duration: 0.9, ease: 'expo.out' });
+    if (t2) {
+      tl.to(t2, { opacity: 1, duration: 0.25 }, '>-0.02'); // ink appears as writing starts
+      tl.to(t2, { '--tw': 1, duration: 1.5, ease: 'power1.inOut' }, '<');
+    }
+    if (cue) tl.to(cue, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.35');
   }, [mounted, loaderComplete]);
 
   useGSAP(() => {
@@ -535,7 +556,12 @@ export function RubiksCubeExperience() {
     // hook card — but it's still clamped to the available height so it is never
     // cropped vertically. Compact (phones + iPad-portrait) keeps the prior fit
     // untouched, so the card and stacked layout there are unchanged.
-    const SPLINE_ENLARGE = 1.32;
+    const SPLINE_ENLARGE = 1.5;
+    // How far the (aspect-locked) frame may exceed the available height on
+    // desktop. The frame carries transparent top/bottom margins, so a little
+    // overflow enlarges the visible COMPUTER while only trimming empty space and
+    // the very bottom of the keyboard — never the monitor itself.
+    const SPLINE_H_OVERFLOW = 1.16;
     function computeSplineScale() {
       const navbarReserve = compact ? 130 : 96;
       // Compact (phones + iPad-portrait): let the monitor grow well past the
@@ -547,7 +573,7 @@ export function RubiksCubeExperience() {
       const availW = colWidth * fill;
       const availH = (innerHeight - navbarReserve) * fill;
       let s = Math.min(compact ? 1.8 : 1.7, availW / SPLINE_DESIGN_W, availH / SPLINE_DESIGN_H);
-      if (!compact) s = Math.min(s * SPLINE_ENLARGE, availH / SPLINE_DESIGN_H);
+      if (!compact) s = Math.min(s * SPLINE_ENLARGE, (availH / SPLINE_DESIGN_H) * SPLINE_H_OVERFLOW);
       return s;
     }
 
@@ -1392,28 +1418,37 @@ export function RubiksCubeExperience() {
     let autoplaying = false;
 
     // ── Freeze the page at the top until the user begins ──
-    // The page is held at the very top on load so the intro dive plays as one
-    // clean shot. A plain scroll/swipe (as well as Enter/Space/tap) STARTS the
-    // dive — scrolling is never silently swallowed. lenis.stop() is required
-    // (preventDefault alone won't stop it — Lenis reads the wheel delta itself);
-    // the native blockers cover touch + any window before Lenis is ready.
+    // The page is held at the very top on load / refresh so the intro dive plays
+    // as one clean shot. Scrolling and swiping are fully SWALLOWED while frozen —
+    // they do NOT start the dive. Only Enter / Space (desktop) — or a tap on
+    // touch devices, which have no keyboard — begins the motion. The on-screen
+    // CRT already reads "Press Enter to begin…", so scroll is intentionally inert
+    // here. lenis.stop() is required (preventDefault alone won't stop it — Lenis
+    // reads the wheel delta itself); the native blockers cover touch + any window
+    // before Lenis is ready.
     scrollLockedRef.current = true;
-    // If the user scrolls before the loader clears, remember it and auto-start
-    // the instant it does (see tick()).
+    // If the user presses begin before the loader clears, remember it and
+    // auto-start the instant it does (see tick()).
     let pendingStart = false;
     function startFromGesture() {
       if (loaderCompleteRef.current) playIntro();
       else pendingStart = true;
     }
+    function reassertFreeze() {
+      // preventDefault alone can't stop Lenis (it reads wheel deltas itself), and
+      // a stray refresh/resize may have resumed it — so re-stop it right here.
+      const l = lenisRef.current;
+      if (l && !l.isStopped) l.stop();
+    }
     function blockWheel(e: WheelEvent) {
       if (!scrollLockedRef.current) return;
-      e.preventDefault();
-      if (e.deltaY > 0) startFromGesture(); // downward scroll = begin
+      e.preventDefault(); // scroll is inert while frozen; Enter/Space/tap begins
+      reassertFreeze();
     }
     function blockTouchMove(e: TouchEvent) {
       if (!scrollLockedRef.current) return;
-      e.preventDefault();
-      startFromGesture(); // any swipe = begin
+      e.preventDefault(); // swipe is inert while frozen; a tap begins
+      reassertFreeze();
     }
     window.addEventListener('wheel', blockWheel, { passive: false });
     window.addEventListener('touchmove', blockTouchMove, { passive: false });
@@ -1442,12 +1477,18 @@ export function RubiksCubeExperience() {
       if (span <= 0) return;
       const targetY = scrollTrigger.start + AUTOPLAY_TO * span;
       autoplaying = true;
+      // Release the freeze BEFORE scrolling: a STOPPED Lenis runs the scrollTo
+      // animation but never writes it to the page (its scroll setter is gated on
+      // isStopped — `force` only bypasses the entry guard, not the write). So we
+      // start Lenis + drop the wheel/touch blockers first, then run the dive with
+      // `lock:true` — Lenis ignores wheel/touch nudges while locked, so it still
+      // reads as one clean shot, and its completion resets the lock automatically.
+      unlock();
       lenisInstance.scrollTo(targetY, {
         duration: 3,
         easing: easeInOutCubic,
-        force: true,  // scroll even though Lenis is stopped by the lock
         lock: true,   // ignore wheel/touch nudges mid-play so it reads as one clean shot
-        onComplete: () => { autoplaying = false; unlock(); },
+        onComplete: () => { autoplaying = false; },
       });
     }
 
@@ -1464,9 +1505,9 @@ export function RubiksCubeExperience() {
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
           tag === 'BUTTON' || tag === 'A') return;
-      if (!loaderCompleteRef.current || scrollState.progress > 0.03) return;
+      if (scrollState.progress > 0.03) return; // only from the very start
       e.preventDefault(); // stop Space/Enter from native page-scroll
-      playIntro();
+      startFromGesture(); // begins now, or the instant the loader clears
     }
     window.addEventListener('keydown', onKeyDown);
 
@@ -1487,10 +1528,6 @@ export function RubiksCubeExperience() {
       window.addEventListener('touchend', onTouchEnd, { passive: true });
     }
 
-    // Reflect the new interaction in the hook cue.
-    const cueEl = introInnerRef.current?.querySelector('.rc-scroll-cue span');
-    if (cueEl) cueEl.textContent = isTouch ? 'Tap to begin' : 'Scroll to begin';
-
     // GSAP ticker drives the loop (single source of truth, lockstep with
     // Lenis + ScrollTrigger). Pass the function reference so we can remove
     // it cleanly on unmount.
@@ -1504,6 +1541,19 @@ export function RubiksCubeExperience() {
       if (scrollLockedRef.current && pendingStart && loaderCompleteRef.current) {
         pendingStart = false;
         playIntro();
+      }
+
+      // ── Hold the freeze every frame while locked ──
+      // A single lenis.stop() isn't durable: a late ScrollTrigger.refresh (heavy
+      // Spline scene finishing), a resize, or a dev remount can silently RESUME
+      // Lenis while we're still meant to be frozen — and then the wheel scrolls
+      // the page even though scrollLockedRef is true (blockWheel's preventDefault
+      // can't stop Lenis; only lenis.stop() can). Re-assert it here so the page
+      // truly can't move until Enter/Space/tap begins. Skipped while autoplaying
+      // so the dive's forced scrollTo can run.
+      if (scrollLockedRef.current && !autoplaying) {
+        const l = lenisRef.current;
+        if (l && !l.isStopped) l.stop();
       }
 
       // Skip the heavy three.js work entirely when the section is fully
@@ -1907,14 +1957,11 @@ export function RubiksCubeExperience() {
             style={{ opacity: 1, transform: 'translateY(-50%)' }}
           >
             <div ref={introInnerRef} className="rc-hook-inner" style={{ opacity: 0 }}>
-              <div className="rc-overline">Kaizen Infotech Solutions</div>
               <h1 className="rc-hook-title">
-                Your Vision <em>Our Code</em>
+                <span className="rc-hook-t1">Your Vision</span>
+                <em className="rc-hook-t2">Our Code</em>
               </h1>
-              <div className="rc-scroll-cue">
-                <span>Scroll to begin</span>
-                <div className="rc-scroll-line" />
-              </div>
+              <span className="rc-tap-cue" aria-hidden="true">Tap to begin</span>
             </div>
           </div>
 

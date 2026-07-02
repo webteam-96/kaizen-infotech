@@ -12,6 +12,8 @@ import { PageHero } from '@/components/sections/PageHero';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { Button } from '@/components/ui/Button';
 import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { HexGridBackground } from '@/components/shared/HexGridBackground';
+import { CtaGlowBackdrop } from '@/components/shared/CtaGlowBackdrop';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -74,12 +76,12 @@ export default function AboutPage() {
 
   return (
     <main className="relative isolate overflow-x-clip bg-[var(--color-bg-primary)]">
-      <VideoBackdrop variant="white" fixed />
       {/* ================================================================= */}
-      {/* HERO SECTION */}
+      {/* HERO SECTION — interactive hex-grid backdrop (replaces the video) */}
       {/* ================================================================= */}
       <PageHero
         align="center"
+        backdrop={<HexGridBackground />}
         kicker="About Kaizen Infotech"
         title="A Technology Partner Focused on Solving Real Business Problems"
         accentWords={['Solving', 'Real']}
@@ -411,8 +413,8 @@ export default function AboutPage() {
       {/* ================================================================= */}
       {/* CTA SECTION */}
       {/* ================================================================= */}
-      <section className="section-ink seam-red relative isolate px-6 py-32">
-        <VideoBackdrop variant="ink" />
+      <section className="section-ink cta-glow-host seam-red relative isolate px-6 py-32">
+        <CtaGlowBackdrop />
         <div className="mx-auto max-w-3xl text-center">
           <ScrollFadeIn>
             <h2
@@ -434,10 +436,22 @@ export default function AboutPage() {
           </ScrollFadeIn>
           <ScrollFadeIn delay={0.3}>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button variant="primary" size="lg" href="/contact">
+              {/* Equal-width buttons on mobile (stacked, w-full) and iPad (row,
+                  flex-1) so the pair looks balanced; natural widths on desktop. */}
+              <Button
+                variant="primary"
+                size="lg"
+                href="/contact"
+                className="w-full sm:flex-1 lg:w-auto lg:flex-none"
+              >
                 Contact Us
               </Button>
-              <Button variant="secondary" size="lg" href="/work" className="on-ink-secondary">
+              <Button
+                variant="secondary"
+                size="lg"
+                href="/work"
+                className="on-ink-secondary w-full sm:flex-1 lg:w-auto lg:flex-none"
+              >
                 View Our Work
               </Button>
             </div>

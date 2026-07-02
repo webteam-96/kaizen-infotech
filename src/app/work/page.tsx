@@ -1,16 +1,15 @@
 import { Reveal } from '@/components/animation/Reveal';
 import { PageHero } from '@/components/sections/PageHero';
-import { SolutionsInAction } from '@/components/sections/SolutionsInAction';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { HexGridBackground } from '@/components/shared/HexGridBackground';
+import { SolutionsInAction } from '@/components/sections/SolutionsInAction';import { CtaGlowBackdrop } from '@/components/shared/CtaGlowBackdrop';
 import { Button } from '@/components/ui/Button';
 
 export default function WorkPage() {
   return (
-    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
-      <VideoBackdrop variant="white" fixed />
-      {/* ── Hero ── */}
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">      {/* ── Hero ── */}
       <PageHero
         align="center"
+        backdrop={<HexGridBackground />}
         kicker="Our Work"
         title="Real-World Digital Solutions Built for Impact"
         accentWords={['Impact']}
@@ -22,8 +21,8 @@ export default function WorkPage() {
       <SolutionsInAction />
 
       {/* ── CTA Section ── */}
-      <section className="section-ink seam-red relative isolate overflow-hidden px-6 py-24 md:px-12 lg:px-24">
-        <VideoBackdrop variant="ink" />
+      <section className="section-ink cta-glow-host seam-red relative isolate overflow-hidden px-6 py-24 md:px-12 lg:px-24">
+        <CtaGlowBackdrop />
         <div className="mx-auto max-w-7xl text-center">
           <Reveal variant="up">
             <h2

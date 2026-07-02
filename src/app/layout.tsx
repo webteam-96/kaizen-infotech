@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Jost, Lato, JetBrains_Mono, Bricolage_Grotesque } from 'next/font/google';
+import { Jost, Lato, JetBrains_Mono, Bricolage_Grotesque, Anton, Great_Vibes } from 'next/font/google';
 import './globals.css';
 import { AppFrame } from '@/components/layout/AppFrame';
 
@@ -27,6 +27,22 @@ const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-card-heading',
+  display: 'swap',
+});
+
+// Heavy condensed poster display (for the "YOUR VISION" line — bold uppercase).
+const anton = Anton({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-poster',
+  display: 'swap',
+});
+
+// Elegant flowing script (for the gold "Our Code" line).
+const greatVibes = Great_Vibes({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-script',
   display: 'swap',
 });
 
@@ -76,7 +92,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} antialiased`}
+        className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} ${anton.variable} ${greatVibes.variable} antialiased`}
       >
         <AppFrame>{children}</AppFrame>
       </body>

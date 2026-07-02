@@ -9,9 +9,8 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { PageHero } from '@/components/sections/PageHero';
+import { HexGridBackground } from '@/components/shared/HexGridBackground';
 import { SITE_CONFIG } from '@/lib/utils/constants';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
-
 // ---------------------------------------------------------------------------
 // Benefits data
 // TODO(client): add flexible-working policy copy when provided
@@ -47,12 +46,78 @@ const positions: {
   department: string;
   location: string;
   type: string;
+  experience: string;
   description: string;
-}[] = [];
+  /** Public path to the full Job Description PDF (in /public/careers). */
+  jdUrl: string;
+}[] = [
+  {
+    title: 'Business Development Manager – IT Services',
+    department: 'Business Development',
+    location: 'Wagle Estate, Thane',
+    type: 'Full-time',
+    experience: '3–5 years',
+    description:
+      'A results-driven role to identify new business opportunities, acquire clients, and grow revenue across our IT service offerings — selling web, mobile, software, and digital marketing services and building long-term B2B relationships.',
+    jdUrl: '/careers/business-development-manager-jd.pdf',
+  },
+  {
+    title: 'Relationship Manager',
+    department: 'Sales / Client Relations',
+    location: 'Wagle Estate, Thane',
+    type: 'Full-time',
+    experience: '3–5 years',
+    description:
+      'Build, manage, and strengthen long-term client relationships — ensuring satisfaction and retention, spotting upsell opportunities, and acting as the key point of contact between the company and its clients.',
+    jdUrl: '/careers/relationship-manager-jd.pdf',
+  },
+  {
+    title: 'Onboarding & Query Resolution Executive',
+    department: 'Client Support / Operations',
+    location: 'Wagle Estate, Thane',
+    type: 'Full-time',
+    experience: 'Fresher / 0–1 years',
+    description:
+      'Help our client organisations onboard their members onto our digital platforms and resolve their queries promptly over email, phone, and WhatsApp. Ideal for a friendly, detail-oriented communicator — freshers welcome.',
+    jdUrl: '/careers/onboarding-query-resolution-executive-jd.pdf',
+  },
+];
 
 const accordionItems = positions.map((pos) => ({
-  title: `${pos.title} — ${pos.department} — ${pos.location} — ${pos.type}`,
-  content: pos.description,
+  title: pos.title,
+  content: (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[length:var(--text-xs)] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+        <span>{pos.department}</span>
+        <span aria-hidden>·</span>
+        <span>{pos.location}</span>
+        <span aria-hidden>·</span>
+        <span>{pos.type}</span>
+        <span aria-hidden>·</span>
+        <span>{pos.experience}</span>
+      </div>
+      <p>{pos.description}</p>
+      <a
+        href={pos.jdUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-accent-primary)]/40 px-4 py-2 text-[length:var(--text-sm)] font-medium text-[var(--color-accent-primary)] transition-colors hover:border-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary)]/5"
+      >
+        View full job description (PDF)
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M6.5 3.5H4A1.5 1.5 0 0 0 2.5 5v7A1.5 1.5 0 0 0 4 13.5h7A1.5 1.5 0 0 0 12.5 12V9.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path d="M9.5 2.5H13.5V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M13 3L7.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </a>
+    </div>
+  ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -89,11 +154,10 @@ export default function CareersPage() {
   );
 
   return (
-    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
-      <VideoBackdrop variant="white" fixed />
-      {/* Hero Section */}
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">      {/* Hero Section */}
       <PageHero
         align="center"
+        backdrop={<HexGridBackground />}
         kicker="Careers"
         title="Join Our Journey of Continuous Improvement"
         accentWords={['Continuous', 'Improvement']}

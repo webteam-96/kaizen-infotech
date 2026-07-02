@@ -134,6 +134,20 @@ export async function setStatus(id: string, status: BlogStatus): Promise<Persist
   return commit(all);
 }
 
+/**
+ * Mark one blog as the Featured post (or clear it). Enforces a SINGLE featured
+ * blog: the target is set, every other blog's `featured` flag is cleared.
+ */
+export async function setFeatured(id: string, featured: boolean): Promise<PersistResult> {
+  const now = new Date().toISOString();
+  const all = getLocal().map((b) => {
+    if (b.id === id) return { ...b, featured, updatedAt: now };
+    if (b.featured) return { ...b, featured: false, updatedAt: now }; // demote any other
+    return b;
+  });
+  return commit(all);
+}
+
 /** Replace the whole set (JSON import). */
 export async function replaceAll(blogs: ManagedBlog[]): Promise<PersistResult> {
   return commit(blogs);
@@ -187,6 +201,7 @@ export function emptyBlog(): ManagedBlog {
     // Default to published so a newly added blog appears on /blog immediately.
     // Authors can switch to Draft / Hidden in the form when they don't want it live.
     status: 'published',
+    featured: false,
     seo: {},
     createdAt: now,
     updatedAt: now,
