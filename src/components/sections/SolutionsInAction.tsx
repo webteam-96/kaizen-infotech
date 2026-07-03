@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { useRef } from 'react';
 import { gsap, ScrollTrigger, useGSAP, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { cn } from '@/lib/utils/cn';
@@ -284,6 +285,18 @@ export function SolutionsInAction() {
                   <u>{card.closing.key}</u>
                   {card.closing.post}
                 </p>
+
+                {/* CTA — same destination as the photo card. Rides the same
+                    discrete entrance stagger (.sia-bullets-in) as bullets/closing
+                    so it never fights the scroll animation. */}
+                <Link
+                  href={`/work/${card.slug}`}
+                  className="sia-cta focus-ring"
+                  aria-label={`Know more about ${card.title}`}
+                >
+                  Know More
+                  <ArrowRight className="sia-cta-icon" aria-hidden />
+                </Link>
               </div>
             </div>
           </article>

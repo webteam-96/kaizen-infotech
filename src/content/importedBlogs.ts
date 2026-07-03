@@ -1025,12 +1025,74 @@ const SOURCES: Src[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Image handling. These posts were imported from the old WordPress site, so
+// their banners/inline images pointed at https://kaizeninfotech.com/wp-content/…
+// That media library no longer exists (the domain now serves THIS app), so those
+// URLs 404. We therefore:
+//   • map the case studies that have a bundled cover in /public/images/projects
+//     to that local file, and
+//   • drop any remaining dead WordPress URL so the branded <BlogCover> renders
+//     instead of a broken-image icon.
+// Add a new slug→local path here whenever a matching asset is bundled.
+// ---------------------------------------------------------------------------
+// Each post's ORIGINAL banner, recovered from the retired WordPress media library
+// (the "Old Content" WP backup) and self-hosted under public/images/blog/. These
+// are the real, purpose-made blog banners — 16:9 for every post except the JITO
+// case study, whose original featured image is a portrait phone mockup.
+const LOCAL_BANNER: Record<string, string> = {
+  'case-study-how-kaizen-infotechs-z-funds-is-digitally-transforming-the-ngo-ecosystem-in-india':
+    '/images/blog/zfunds.png',
+  'aaykar-kutumb-digitized-handbook-for-50000-income-tax-officers':
+    '/images/blog/aaykar-kutumb.png',
+  'agni-foundation-building-global-community-one-member-at-a-time':
+    '/images/blog/agni-foundation.png',
+  'how-mbpt-eseva-is-revolutionizing-port-operations-through-digital-transformation':
+    '/images/blog/mbpt-eseva.png',
+  'kaizen-infotech-solutions-proven-approach-to-solving-complex-tech-challenges':
+    '/images/blog/proven-approach.png',
+  'case-study-empowering-jain-unity-through-technology-the-jito-app-by-kaizen-infotech-solutions':
+    '/images/blog/jito-world.png',
+  'our-culture-of-innovation-how-we-train-developers-to-think-like-entrepreneurs':
+    '/images/blog/culture-of-innovation.png',
+  'mobile-apps-that-do-more-than-just-sell-improving-internal-ops-via-apps':
+    '/images/blog/mobile-apps-internal-ops.png',
+  'the-rise-of-industry-specific-mobile-apps-in-india-transforming-retail-logistics-healthcare':
+    '/images/blog/industry-specific-apps.png',
+  'best-practices-for-qa-testing-delivering-high-quality-software-with-confidence':
+    '/images/blog/qa-best-practices.png',
+};
+
+/** A dead reference to the retired WordPress media library. */
+const isDeadWpUrl = (url: string) => /wp-content|kaizeninfotech\.com/i.test(url);
+
+function resolveBanner(slug: string, url: string, title: string) {
+  const local = LOCAL_BANNER[slug];
+  if (local) return { url: local, alt: title };
+  if (!url || isDeadWpUrl(url)) return undefined; // → branded BlogCover fallback
+  return { url, alt: title };
+}
+
+/**
+ * Rehydrate inline <img> tags. The originals pointed at the retired WordPress
+ * media library (kaizeninfotech.com/wp-content/uploads/…); those exact files have
+ * been copied into public/images/blog/uploads/ preserving their path, so a plain
+ * host→local prefix swap restores every in-body image. (Was stripDeadImages,
+ * which deleted them because the remote URLs 404 after the WP site was retired.)
+ */
+function localizeInlineImages(html: string): string {
+  return html.replace(
+    /(?:https?:)?\/\/(?:www\.)?kaizeninfotech\.com\/wp-content\/uploads\//gi,
+    '/images/blog/uploads/',
+  );
+}
+
 export const IMPORTED_BLOGS: ManagedBlog[] = SOURCES.map((s) => ({
   id: s.id,
   slug: s.slug,
   title: s.title,
   excerpt: s.excerpt,
-  bodyHtml: s.bodyHtml,
+  bodyHtml: localizeInlineImages(s.bodyHtml),
   category: s.category,
   tags: s.tags,
   authorName: AUTHOR.name,
@@ -1038,7 +1100,7 @@ export const IMPORTED_BLOGS: ManagedBlog[] = SOURCES.map((s) => ({
   authorBio: AUTHOR.bio,
   readingTime: rt(s.bodyHtml),
   publishedAt: s.date,
-  mainImage: { url: s.image, alt: s.title },
+  mainImage: resolveBanner(s.slug, s.image, s.title),
   gallery: [],
   status: 'published',
   seo: { metaTitle: s.title, metaDescription: s.excerpt },

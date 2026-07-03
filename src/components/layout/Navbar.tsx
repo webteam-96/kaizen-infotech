@@ -122,7 +122,8 @@ export function Navbar() {
                 height={376}
                 // `h-*!` overrides the global `img { height: auto }` reset (globals.css),
                 // which is unlayered and would otherwise collapse this SVG logo to 0.
-                className="h-7! w-auto sm:h-9!"
+                // 2× the prior size (was h-7 / sm:h-9).
+                className="h-14! w-auto sm:h-18!"
                 priority
               />
             </motion.div>

@@ -669,10 +669,16 @@ export function ServicesScroll() {
             </div>
           </div>
 
-          {/* Deck — sized to one card so GSAP transforms are centred */}
+          {/* Deck — sized to one card so GSAP transforms are centred.
+              `deck-shortfit`: on SHORT desktop viewports the header (top-anchored)
+              and dots (bottom-anchored) squeeze the viewport-centred card until it
+              collides with the heading. That class (globals.css) nudges the deck
+              into the band between them and shrinks it to clear both — a parent
+              transform that COMPOSES with the GSAP per-card transforms, so the
+              animation is untouched. Tall viewports get no transform (identity). */}
           <div
             ref={deckRef}
-            className="relative"
+            className="deck-shortfit relative"
             style={{ width: metrics.w, height: metrics.h }}
           >
             {services.map((service, i) => (

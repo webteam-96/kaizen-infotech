@@ -85,7 +85,10 @@
   --space-section: clamp(8rem, 6rem + 5vw, 14rem);
 
   /* LAYOUT */
-  --container-max: 1440px;
+  /* rem (not px) so the container grows with the big-screen root-font scaling
+     below — otherwise content stays pinned at 1440px and huge monitors get vast
+     empty side gutters. 90rem = 1440px at the 16px base. */
+  --container-max: 90rem;
   --container-padding: clamp(1.5rem, 1rem + 2vw, 4rem);
   --grid-columns: 12;
   --grid-gutter: clamp(1rem, 0.5rem + 1.5vw, 2rem);
@@ -195,6 +198,19 @@
     --h-eyebrow: clamp(0.75rem,  0.72rem + 0.12vw, 0.875rem);  /* ~12 → 14 px  (was 16) */
   }
 }
+
+/* ── BIG-SCREEN SCALING ───────────────────────────────────────────────────────
+   The whole layout is rem-based (Tailwind spacing + max-w-* + the clamp() type
+   scale), so nudging the root font-size up on large monitors proportionally
+   grows the container width, spacing, type AND cards together — filling the
+   screen instead of stranding a 1440px column in a sea of white. Breakpoints are
+   px (Tailwind screens are px too), so this never shifts a media-query boundary.
+   Kept modest so text never looks cartoonish. */
+@media (min-width: 1536px) { html { font-size: 16.5px; } }
+@media (min-width: 1728px) { html { font-size: 17.5px; } }
+@media (min-width: 1920px) { html { font-size: 18.5px; } }
+@media (min-width: 2400px) { html { font-size: 20.5px; } }
+@media (min-width: 3200px) { html { font-size: 24px; } }
 
 /* Tailwind v4 theme integration */
 @theme inline {
@@ -1082,6 +1098,32 @@ html, body { max-width: 100%; overflow-x: clip; }
   .seam-red::before { box-shadow: none; }
 }
 
+/* ServicesScroll short-viewport deck fit (see rule below). */
+/* ===== ServicesScroll pinned deck — short-viewport fit ======================
+   The pinned spotlight deck is centred in the FULL viewport height, but its
+   heading is anchored to the top (absolute top-8) and its dots to the bottom
+   (absolute bottom-20). On a SHORT desktop window the viewport-centred card no
+   longer fits the band between them and rides UP into the heading ("cards
+   overlapping the heading"). These queries nudge the deck down into that band
+   and shrink it just enough to clear the heading AND the dots. The transform is
+   on the deck WRAPPER, so it composes with — never overrides — the GSAP
+   per-card transforms (the scroll animation is unchanged). transform-style is
+   preserved so the cards keep their subtle 3D. Guarded to mouse + ≥1024px, so
+   the touch/compact path (already viewport-fitted) and tall desktop windows
+   (the norm) are left exactly as they were. */
+@media (min-width: 1024px) and (max-height: 780px) and (hover: hover) and (pointer: fine) {
+  .deck-shortfit {
+    transform: translateY(28px) scale(0.9);
+    transform-style: preserve-3d;
+  }
+}
+@media (min-width: 1024px) and (max-height: 640px) and (hover: hover) and (pointer: fine) {
+  .deck-shortfit { transform: translateY(20px) scale(0.8); }
+}
+@media (min-width: 1024px) and (max-height: 560px) and (hover: hover) and (pointer: fine) {
+  .deck-shortfit { transform: translateY(14px) scale(0.7); }
+}
+
 /* ===== Per-section card identities =====
    Each card-bearing section gets a signature edge accent so its cards read as
    one set, yet clearly differ from neighbouring sections. These touch only
@@ -1785,13 +1827,47 @@ html.has-custom-cursor * {
   text-underline-offset: 4px;
 }
 
-/* Bullets + closing: discrete CSS keyframe stagger, latched by .sia-bullets-in. */
+/* ── "Know More" CTA — links to the same case study as the photo card ──────── */
+.sia-cta {
+  align-self: flex-start; /* left-aligned pill, not a full-width stretch */
+  display: inline-flex;
+  flex-direction: row; /* text + icon side by side (defeats preflight's block svg) */
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  margin-top: 0.2rem;
+  line-height: 1;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-accent-primary);
+  text-decoration: none;
+  opacity: 0; /* seed hidden; entrance below (or reset for reduced-motion) */
+  transform: translateY(10px);
+  will-change: opacity, transform;
+  transition: gap var(--transition-base), color var(--transition-base);
+}
+.sia-cta-icon {
+  flex: none; /* never shrink/wrap the icon */
+  width: 1.15em;
+  height: 1.15em;
+  transition: transform var(--transition-base);
+}
+@media (hover: hover) {
+  .sia-cta:hover { gap: 0.75rem; color: var(--red-brand); }
+  .sia-cta:hover .sia-cta-icon { transform: translateX(4px); }
+}
+
+/* Bullets + closing + CTA: discrete CSS keyframe stagger, latched by .sia-bullets-in. */
 .sia-bullets-in .sia-bullets li {
   animation: sia-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   animation-delay: calc(var(--i) * 0.1s);
 }
 .sia-bullets-in .sia-closing {
   animation: sia-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+}
+.sia-bullets-in .sia-cta {
+  animation: sia-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.42s forwards;
 }
 @keyframes sia-rise {
   to { opacity: 1; transform: translateY(0); }
@@ -1823,7 +1899,7 @@ html.has-custom-cursor * {
     padding: 0 !important;
   }
   .sia-ghost, .sia-hl { display: none !important; }
-  .sia-bullets li, .sia-closing { opacity: 1 !important; transform: none !important; animation: none !important; }
+  .sia-bullets li, .sia-closing, .sia-cta { opacity: 1 !important; transform: none !important; animation: none !important; }
 }
 
 /* Animate the cards on mobile + iPad (≤1024px), just like desktop, but

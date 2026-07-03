@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { FadeIn } from '@/components/animation/FadeIn';
-import { BlogCover } from '@/components/ui/BlogCover';
+import { BlogImage } from '@/components/ui/BlogImage';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -74,16 +74,13 @@ export function BlogPostDetail({ post, relatedPosts }: Props) {
         <div className="mx-auto max-w-3xl">
           <FadeIn delay={0.35}>
             <div className="relative aspect-[21/9] overflow-hidden rounded-[var(--radius-lg)]">
-              {post.mainImage?.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={post.mainImage.url}
-                  alt={post.mainImage.alt || post.title}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <BlogCover slug={post.slug} category={post.category} className="absolute inset-0" />
-              )}
+              <BlogImage
+                url={post.mainImage?.url}
+                alt={post.mainImage?.alt || post.title}
+                slug={post.slug}
+                category={post.category}
+                imgClassName="absolute inset-0 h-full w-full object-cover"
+              />
             </div>
           </FadeIn>
         </div>
@@ -127,8 +124,13 @@ export function BlogPostDetail({ post, relatedPosts }: Props) {
                 <FadeIn key={i}>
                   <figure className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)]">
                     <div className="relative aspect-[4/3]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img.url} alt={img.alt || `Gallery image ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
+                      <BlogImage
+                        url={img.url}
+                        alt={img.alt || `Gallery image ${i + 1}`}
+                        slug={`${post.slug}-g${i}`}
+                        category={post.category}
+                        imgClassName="absolute inset-0 h-full w-full object-cover"
+                      />
                     </div>
                     {img.caption && (
                       <figcaption className="px-3 py-2 text-[length:var(--text-sm)] text-[var(--color-text-tertiary)]">
@@ -185,12 +187,13 @@ export function BlogPostDetail({ post, relatedPosts }: Props) {
                   <Link href={`/blog/${related.slug}`} className="group block">
                     <Card tilt={false} glow className="h-full overflow-hidden p-0">
                       <div className="relative aspect-[16/10]">
-                        {related.mainImage?.url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={related.mainImage.url} alt={related.mainImage.alt || related.title} className="absolute inset-0 h-full w-full object-cover" />
-                        ) : (
-                          <BlogCover slug={related.slug} category={related.category} className="absolute inset-0" />
-                        )}
+                        <BlogImage
+                          url={related.mainImage?.url}
+                          alt={related.mainImage?.alt || related.title}
+                          slug={related.slug}
+                          category={related.category}
+                          imgClassName="absolute inset-0 h-full w-full object-cover"
+                        />
                       </div>
                       <div className="relative z-10 p-6">
                         <div className="mb-3 flex items-center gap-3">

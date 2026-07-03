@@ -139,9 +139,10 @@ export function Footer() {
                 alt="Kaizen Infotech Solutions"
                 width={602}
                 height={376}
-                // `h-10!` overrides the unlayered global `img { height: auto }` reset
+                // `h-*!` overrides the unlayered global `img { height: auto }` reset
                 // (globals.css) that would otherwise collapse this SVG logo to 0.
-                className="h-10! w-auto"
+                // 4× the prior size (was h-10).
+                className="h-40! w-auto"
               />
             </Link>
           </div>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { PageHero } from '@/components/sections/PageHero';
 import { HexGridBackground } from '@/components/shared/HexGridBackground';
-import { BlogCover } from '@/components/ui/BlogCover';
+import { BlogImage } from '@/components/ui/BlogImage';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
@@ -126,20 +126,13 @@ export default function BlogPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2">
                       {/* Cover — uploaded main image, else generated cover art */}
                       <div className="relative aspect-[16/10] md:aspect-auto">
-                        {featuredPost.mainImage?.url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={featuredPost.mainImage.url}
-                            alt={featuredPost.mainImage.alt || featuredPost.title}
-                            className="absolute inset-0 h-full w-full object-cover"
-                          />
-                        ) : (
-                          <BlogCover
-                            slug={featuredPost.slug}
-                            category={featuredPost.category}
-                            className="absolute inset-0"
-                          />
-                        )}
+                        <BlogImage
+                          url={featuredPost.mainImage?.url}
+                          alt={featuredPost.mainImage?.alt || featuredPost.title}
+                          slug={featuredPost.slug}
+                          category={featuredPost.category}
+                          imgClassName="absolute inset-0 h-full w-full object-cover"
+                        />
                       </div>
 
                       <div className="relative z-10 flex flex-col justify-center p-8 md:p-12">
@@ -208,20 +201,13 @@ export default function BlogPage() {
                           backdrop, with a fixed height so portrait images stay
                           small and never bleed over the text. */}
                       <div className="relative flex h-52 items-center justify-center overflow-hidden bg-[var(--color-bg-tertiary)] p-2">
-                        {post.mainImage?.url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={post.mainImage.url}
-                            alt={post.mainImage.alt || post.title}
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        ) : (
-                          <BlogCover
-                            slug={post.slug}
-                            category={post.category}
-                            className="absolute inset-0"
-                          />
-                        )}
+                        <BlogImage
+                          url={post.mainImage?.url}
+                          alt={post.mainImage?.alt || post.title}
+                          slug={post.slug}
+                          category={post.category}
+                          imgClassName="max-h-full max-w-full object-contain"
+                        />
                       </div>
 
                       <div className="relative z-10 bg-[var(--color-bg-tertiary)] p-6">

@@ -177,7 +177,7 @@ export function CountdownLoader() {
           animation: 'rc-cdBrandIn 0.8s 0.3s ease forwards',
         }}
       >
-        Kaizen Infotech Solutions
+        Kaizen Infotech Solutions Pvt. Ltd.
       </div>
     </div>
   );
