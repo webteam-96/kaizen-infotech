@@ -9,6 +9,7 @@ import { useReducedMotion } from '@/hooks';
 import { useLenis } from '@/components/layout/SmoothScroll';
 import type Lenis from 'lenis';
 import Spline from '@splinetool/react-spline';
+import { HexGridBackground } from '@/components/shared/HexGridBackground';
 
 /* ══════════════════════════════════════════════════════════════
    RubiksCubeExperience — 3D Rubik's Cube scroll narrative
@@ -168,10 +169,12 @@ export function RubiksCubeExperience() {
   const diveVignetteRef = useRef<HTMLDivElement>(null);
   const streaksRef = useRef<HTMLDivElement>(null);
   const backdropVideoRef = useRef<HTMLVideoElement>(null);
-  // Continuous "Landing Page Background" video behind the opening act (the hook
-  // card + Spline computer). Visible at full strength during the intro, fades
-  // out as the dive leaves the intro so it never bleeds into the cube narrative.
-  const introBgVideoRef = useRef<HTMLVideoElement>(null);
+  // Animated hex-grid backdrop behind the opening act (the hook card + Spline
+  // computer) — a tiny, light-grey honeycomb with a 3D light-blue water-ripple
+  // flowing left→right, replacing the old "Landing Page Background" video.
+  // Visible at full strength during the intro, fades out (and hard-hides) as the
+  // dive leaves the intro so its canvas idles for the rest of the cube narrative.
+  const introBgFxRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   // Lazy-mount guard for the Spline WebGL scene: only kept in the tree while the
   // hero section is near the viewport, so its GPU/WebGL context is freed once the
@@ -204,12 +207,14 @@ export function RubiksCubeExperience() {
   useEffect(() => {
     loaderCompleteRef.current = loaderComplete;
     if (!loaderComplete) return;
-    // Loader has cleared: everything was preloaded under the overlay and is now
-    // allowed to PLAY. Start the buffered background videos (preload="auto", no
-    // autoPlay → they sat ready, paused, during the countdown) and resume the
-    // Spline scene — it loaded fully sharp under the overlay but was frozen, so
-    // its typing intro now animates in view, as the computer comes alive.
-    introBgVideoRef.current?.play().catch(() => {});
+    // Loader has cleared. Start the narrative backdrop video — with
+    // preload="metadata" this is when it begins buffering (it stays invisible
+    // until deep in the narrative, so there's ample time), keeping its multi-MB
+    // download OUT of the cold first-load window — and resume the Spline scene,
+    // which loaded sharp under the overlay but was frozen, so its typing intro now
+    // animates in view. (The hex-grid backdrop is a self-animating canvas — and it
+    // only activates now, via active={loaderComplete}, so it never competes with
+    // the Spline/Three.js boot.)
     backdropVideoRef.current?.play().catch(() => {});
     splineStartRef.current?.();
   }, [loaderComplete]);
@@ -1592,18 +1597,25 @@ export function RubiksCubeExperience() {
           lerp01(rawP, INTRO_END, INTRO_END + 0.03) * 0.3
         );
       }
-      // Landing-page background video: full strength while the computer sits at
-      // rest, then fades out AS THE COMPUTER ZOOMS IN — the dive into the screen
-      // runs across introT ~0.32→0.70, so the backdrop recedes with it and is
-      // gone by the time the screen fills. Whether the dive is driven by scroll
-      // or by the Enter/Space "play like a video" autoplay, both feed the same
-      // scroll progress, so the fade follows either trigger. Reverses on
-      // scroll-up; pinned at 0 once past the intro.
-      if (introBgVideoRef.current) {
+      // Hex-grid backdrop: full strength while the computer sits at rest, then
+      // fades out AS THE COMPUTER ZOOMS IN — the dive into the screen runs across
+      // introT ~0.32→0.70, so the backdrop recedes with it and is gone by the
+      // time the screen fills. Whether the dive is driven by scroll or by the
+      // Enter/Space "play like a video" autoplay, both feed the same scroll
+      // progress, so the fade follows either trigger. Reverses on scroll-up.
+      // Past the intro it's display:none'd so its canvas rAF idles (the
+      // IntersectionObserver inside HexGridBackground stops the loop) for the
+      // whole rest of the cube narrative.
+      if (introBgFxRef.current) {
         const introT = rawP / INTRO_END;
-        introBgVideoRef.current.style.opacity = String(
-          0.5 * Math.max(0, 1 - lerp01(introT, 0.30, 0.62))
-        );
+        const op = rawP < INTRO_END ? Math.max(0, 1 - lerp01(introT, 0.30, 0.62)) : 0;
+        introBgFxRef.current.style.opacity = String(op);
+        // Hard-hide the moment it's invisible (op reaches 0 at introT≈0.62, well
+        // before INTRO_END) so HexGridBackground's IntersectionObserver idles its
+        // rAF — instead of the canvas rendering unseen for ~46vh of the dive and
+        // then the whole cube narrative. Restores to block (and restarts) on
+        // scroll back up as soon as op climbs above 0.
+        introBgFxRef.current.style.display = op > 0 ? 'block' : 'none';
       }
 
       if (rawP < INTRO_END) {
@@ -1712,25 +1724,29 @@ export function RubiksCubeExperience() {
     <div ref={containerRef} className="relative" style={{ background: BG_COLOR }}>
       {/* All fixed elements wrapped in a single layer for visibility control */}
       <div ref={fixedLayerRef} className="transition-opacity duration-300" style={{ willChange: 'opacity' }}>
-        {/* Landing-page background video — continuous, full-bleed backdrop for the
-            opening act, sitting behind the Spline computer and the hook card.
-            objectFit:'cover' scales the 16:9 frame UP to fill the whole viewport at
-            every screen size (no letterbox gaps). Inline width/height/maxWidth beat
-            the unlayered `video{height:auto}` reset (same reason as the narrative
-            backdrop below). Capped at 50% opacity; the scroll-driven fade in the
-            tick scales within that ceiling. */}
-        <video
-          ref={introBgVideoRef}
-          preload="auto"
-          muted
-          loop
-          playsInline
+        {/* Landing-page hex-grid backdrop — continuous, full-bleed animated
+            honeycomb for the opening act, sitting behind the Spline computer and
+            the hook card (replaces the old background video). Tiny grey lattice
+            over the #f5f5f5 stage with a 3D light-blue water-ripple flowing
+            left→right and a per-tile micro-animation under the cursor. pointer-events-
+            none so the computer/scroll stay interactive — the hex still reacts to
+            the pointer because HexGridBackground tracks it on `window`. The
+            wrapper's opacity + display are scroll-driven (fades/hard-hides on the
+            dive). */}
+        <div
+          ref={introBgFxRef}
           aria-hidden
           className="pointer-events-none fixed inset-0 z-[-1]"
-          style={{ opacity: 0.5, width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center', background: BG_COLOR }}
+          // Soft blue-white stage so the WHITE honeycomb reads and the field feels
+          // "white and blue". Fades out (opacity→0) during the dive, revealing the
+          // #f5f5f5 container beneath, so there is no lasting colour shift.
+          style={{ opacity: 1, background: '#e9eef8' }}
         >
-          <source src="/videos/landing-background.mp4" type="video/mp4" />
-        </video>
+          {/* active gated on loaderComplete: the honeycomb stays inert behind the
+              countdown loader so it never competes with the Spline/Three.js boot
+              on a cold load — it starts the moment the hero reveals. */}
+          <HexGridBackground variant="mono" waveDirection="radial" active={loaderComplete} />
+        </div>
 
         {/* Continuous video backdrop — sits behind every layer, including Spline.
             Full-bleed cover at EVERY device size. The width/height are set inline
@@ -1744,7 +1760,11 @@ export function RubiksCubeExperience() {
             fill phones / iPad-portrait (and every other size) with no gaps. */}
         <video
           ref={backdropVideoRef}
-          preload="auto"
+          // preload="metadata" (not "auto") so the multi-MB narrative video does
+          // NOT eagerly download during the cold first-load window (competing with
+          // the Spline scene). It's invisible until deep in the narrative; play()
+          // at loaderComplete kicks off buffering then, with ample time to fill.
+          preload="metadata"
           muted
           loop
           playsInline
