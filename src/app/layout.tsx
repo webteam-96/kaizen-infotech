@@ -11,7 +11,10 @@ const jost = Jost({
 
 const lato = Lato({
   subsets: ['latin'],
-  weight: ['300', '400', '700', '900'],
+  // 900 was never used anywhere (globals.css maxes at 700; no font-black); 300 IS
+  // used (MagicBento card descriptions). Dropping 900 trims a woff2 off the
+  // critical path with zero visual change.
+  weight: ['300', '400', '700'],
   variable: '--font-body',
   display: 'swap',
 });
@@ -21,6 +24,8 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ['400', '500'],
   variable: '--font-mono',
   display: 'swap',
+  // Mono only appears below the fold — don't race it onto the cold critical path.
+  preload: false,
 });
 
 const bricolage = Bricolage_Grotesque({
@@ -91,6 +96,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Warm the cross-origin connection to the Spline CDN early (the home hero
+            fetches its scene from prod.spline.design). React hoists these; harmless
+            hints on routes that don't use Spline (browsers drop unused preconnects). */}
+        <link rel="preconnect" href="https://prod.spline.design" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://prod.spline.design" />
+      </head>
       <body
         className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} ${anton.variable} ${greatVibes.variable} antialiased`}
       >

@@ -20,6 +20,9 @@ export { useMediaQuery } from './useMediaQuery';
 
 export { useReducedMotion } from './useReducedMotion';
 
+export { useDeviceCapability } from './useDeviceCapability';
+export type { DeviceCapability } from './useDeviceCapability';
+
 export { usePageTransition } from './usePageTransition';
 export type { TransitionState } from './usePageTransition';
 

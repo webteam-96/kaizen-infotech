@@ -1,5 +1,5 @@
 import { CountdownLoader } from '@/components/sections/CountdownLoader';
-import { RubiksCubeExperience } from '@/components/sections/RubiksCubeExperience';
+import { RubiksHero } from '@/components/sections/RubiksHero';
 import { BrandPromise } from '@/components/sections/BrandPromise';
 import { ServicesScroll } from '@/components/sections/ServicesScroll';
 import { StatsGrid } from '@/components/sections/StatsGrid';
@@ -14,7 +14,7 @@ export default function HomePage() {
   return (
     <main>
       <CountdownLoader />
-      <RubiksCubeExperience />
+      <RubiksHero />
       <BrandPromise />
       <ServicesScroll />
       <StatsGrid />

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils/cn';
+import { useDeviceCapability } from '@/hooks';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VideoBackdrop — a subtle looping video behind a flat-colour section/page.
@@ -50,13 +51,21 @@ interface VideoBackdropProps {
 
 export function VideoBackdrop({ variant, className, overlayOpacity = 0.45, fixed = false }: VideoBackdropProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cap = useDeviceCapability();
+
+  // Only ever mount (and therefore download/decode) the multi-MB video on capable,
+  // un-metered devices. Constrained / Save-Data / reduced-motion / low-end devices
+  // get just the solid same-colour overlay — which is this component's designed base
+  // layer ("if the video never loads nothing breaks"), so the section keeps its exact
+  // colour identity and only loses the subtle 45%-opacity motion. `cap.ready` is false
+  // during SSR + first client render → video is withheld until we know the device can
+  // take it (no hydration mismatch, and weak devices never create the element).
+  const enableVideo = cap.ready && !cap.liteExperience;
 
   useEffect(() => {
+    if (!enableVideo) return;
     const video = videoRef.current;
     if (!video) return;
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return; // never autoplay under reduced motion
-    }
 
     // Play ONLY when the tab is visible AND the backdrop is in its useful range.
     // Decoding + compositing a full-screen video every frame is the single
@@ -102,7 +111,7 @@ export function VideoBackdrop({ variant, className, overlayOpacity = 0.45, fixed
       io?.disconnect();
       if (onScroll) window.removeEventListener('scroll', onScroll);
     };
-  }, [fixed]);
+  }, [fixed, enableVideo]);
 
   return (
     <div
@@ -113,18 +122,20 @@ export function VideoBackdrop({ variant, className, overlayOpacity = 0.45, fixed
         className
       )}
     >
-      <video
-        ref={videoRef}
-        className="video-backdrop-video"
-        muted
-        loop
-        playsInline
-        autoPlay
-        preload="metadata"
-        tabIndex={-1}
-      >
-        <source src={SRC[variant]} type="video/mp4" />
-      </video>
+      {enableVideo && (
+        <video
+          ref={videoRef}
+          className="video-backdrop-video"
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload="metadata"
+          tabIndex={-1}
+        >
+          <source src={SRC[variant]} type="video/mp4" />
+        </video>
+      )}
       <div className={cn('absolute inset-0', OVERLAY[variant])} style={{ opacity: overlayOpacity }} />
     </div>
   );

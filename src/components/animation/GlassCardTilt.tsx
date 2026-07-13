@@ -76,6 +76,9 @@ export default function GlassCardTilt({
 
     const onEnter = () => {
       hovering = true;
+      // Arm the compositor hint only while actually tilting, so idle cards don't
+      // hold a permanent will-change layer (compositor memory).
+      inner.style.willChange = 'transform';
       if (!rafId) rafId = requestAnimationFrame(apply);
     };
 
@@ -83,10 +86,11 @@ export default function GlassCardTilt({
       hovering = false;
       targetX = 0;
       targetY = 0;
+      inner.style.willChange = 'auto';
       if (!rafId) rafId = requestAnimationFrame(apply);
     };
 
-    outer.addEventListener('mousemove', onMove);
+    outer.addEventListener('mousemove', onMove, { passive: true });
     outer.addEventListener('mouseenter', onEnter);
     outer.addEventListener('mouseleave', onLeave);
     return () => {
@@ -107,7 +111,8 @@ export default function GlassCardTilt({
         ref={innerRef}
         style={{
           transformStyle: 'preserve-3d',
-          willChange: 'transform',
+          // will-change is armed on hover (onEnter) and released on leave — not held
+          // permanently — so idle cards don't retain a compositor layer.
           transition: 'transform 0s',
         }}
       >

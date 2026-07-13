@@ -198,7 +198,7 @@ const SOURCES: Src[] = [
 <li><strong>Testing &amp; Training</strong> – Rolled out pilot versions to select officer groups for feedback and conducted digital literacy workshops.</li>
 <li><strong>Nationwide Rollout</strong> – Successfully deployed the platform across the country with dedicated helpdesk support.</li>
 </ol>
-<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/10/image-1.png" alt="Aaykar Kutumb platform" /></p>
+<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/10/image-1.webp" alt="Aaykar Kutumb platform" /></p>
 <h3>Impact &amp; Results</h3>
 <p>The rollout of <em>Aaykar Kutumb</em> has delivered transformative benefits:</p>
 <ul>
@@ -266,7 +266,7 @@ const SOURCES: Src[] = [
 <li><strong>Spotlights &amp; Milestones:</strong> Templates to celebrate member achievements and amplify success stories.</li>
 <li><strong>Admin Dashboard &amp; Custom Workflows:</strong> Automated approvals, role assignments, and notification rules to reduce manual work.</li>
 </ul>
-<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/08/AGNI-Foundation-Building-Global-Community-One-Member-at-a-Time-1024x576.png" alt="AGNI Foundation Platform Interface" /></p>
+<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/08/AGNI-Foundation-Building-Global-Community-One-Member-at-a-Time-1024x576.webp" alt="AGNI Foundation Platform Interface" /></p>
 <h2>Results &amp; Impact</h2>
 <p>Following the launch and iterative updates, AGNI experienced clear operational and engagement benefits (sample metrics available once analytics are shared):</p>
 <ul>
@@ -483,7 +483,7 @@ const SOURCES: Src[] = [
     tags: ['Case Study', 'Mobile App', 'Community'],
     date: 'May 23, 2025',
     iso: '2025-05-23',
-    image: 'https://kaizeninfotech.com/wp-content/uploads/2025/05/Gray-and-Black-Modern-Handphone-Mockup-Instagram-Story-1-576x1024.png',
+    image: 'https://kaizeninfotech.com/wp-content/uploads/2025/05/Gray-and-Black-Modern-Handphone-Mockup-Instagram-Story-1-576x1024.webp',
     bodyHtml: `<p>At <strong>Kaizen Infotech Solutions Pvt. Ltd.</strong>, we specialize in <strong>custom software development</strong> and <strong>mobile app solutions</strong> that create real-world impact. Our recent collaboration with <strong>JITO (Jain International Trade Organization)</strong> is a compelling example of how <strong>digital transformation</strong> can enhance community engagement, streamline operations, and preserve cultural values.</p>
 <h2>About JITO – Jain International Trade Organization</h2>
 <p><strong>JITO</strong> is a global organization that unites <strong>Jain entrepreneurs, professionals, industrialists, and knowledge workers</strong> from around the world. Rooted in the values of <strong>prosperity with purpose</strong>, JITO operates on three core pillars:</p>
@@ -502,7 +502,7 @@ const SOURCES: Src[] = [
 <p><strong>Scalable Architecture</strong><br />Build a solution that can handle <strong>thousands of members</strong> across national and international locations.</p>
 <p><strong>Event Management</strong><br />Simplify the <strong>discovery, registration, and participation</strong> in JITO events, programs, and conferences.</p>
 <p><strong>Secure and Verified Access</strong><br />Ensure that only <strong>genuine, approved members</strong> gain access to sensitive features, content, and directories.</p>
-<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/05/Gray-and-Black-Modern-Handphone-Mockup-Instagram-Story-1-576x1024.png" alt="JITO App key requirements" /></p>
+<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/05/Gray-and-Black-Modern-Handphone-Mockup-Instagram-Story-1-576x1024.webp" alt="JITO App key requirements" /></p>
 <h2>Our Solution: The JITO Mobile App</h2>
 <p>At <strong>Kaizen Infotech Solutions</strong>, we turned JITO's requirements into a <strong>powerful, intuitive, and scalable mobile application</strong> tailored for organizational efficiency and user engagement.</p>
 <h3>Key Features of the JITO App:</h3>
@@ -785,7 +785,7 @@ const SOURCES: Src[] = [
 <tr><td>Speed of Operations</td><td>Slower</td><td>Instant actions</td></tr>
 </tbody>
 </table>
-<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/05/mobile-apps-3-1024x576.png" alt="The Kaizen approach to building enterprise mobile apps" /></p>
+<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/05/mobile-apps-3-1024x576.webp" alt="The Kaizen approach to building enterprise mobile apps" /></p>
 <h2>The Kaizen Approach: Building Enterprise Mobile Apps That Work</h2>
 <p>At <strong>Kaizen Infotech Solutions</strong>, our <strong>mobile app development services in India</strong> follow a scalable, agile approach designed to reduce your time-to-deploy and maximize business impact.</p>
 <h3>Our 5-Step Development Process:</h3>
@@ -829,7 +829,7 @@ const SOURCES: Src[] = [
 <li>Do employees struggle to access information outside the office?</li>
 <li>Are you already investing in cloud-based tools or ERPs?</li>
 </ul>
-<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/05/mobile-apps-4-1024x576.png" alt="Enterprise mobile apps in action" /></p>
+<p><img src="https://kaizeninfotech.com/wp-content/uploads/2025/05/mobile-apps-4-1024x576.webp" alt="Enterprise mobile apps in action" /></p>
 <h2>Why Partner with Kaizen Infotech Solutions?</h2>
 <ul>
 <li>Over a decade of experience in <strong>custom software development in India</strong></li>
@@ -1044,23 +1044,23 @@ const LOCAL_BANNER: Record<string, string> = {
   'case-study-how-kaizen-infotechs-z-funds-is-digitally-transforming-the-ngo-ecosystem-in-india':
     '/images/blog/zfunds.png',
   'aaykar-kutumb-digitized-handbook-for-50000-income-tax-officers':
-    '/images/blog/aaykar-kutumb.png',
+    '/images/blog/aaykar-kutumb.webp',
   'agni-foundation-building-global-community-one-member-at-a-time':
     '/images/blog/agni-foundation.png',
   'how-mbpt-eseva-is-revolutionizing-port-operations-through-digital-transformation':
-    '/images/blog/mbpt-eseva.png',
+    '/images/blog/mbpt-eseva.webp',
   'kaizen-infotech-solutions-proven-approach-to-solving-complex-tech-challenges':
-    '/images/blog/proven-approach.png',
+    '/images/blog/proven-approach.webp',
   'case-study-empowering-jain-unity-through-technology-the-jito-app-by-kaizen-infotech-solutions':
-    '/images/blog/jito-world.png',
+    '/images/blog/jito-world.webp',
   'our-culture-of-innovation-how-we-train-developers-to-think-like-entrepreneurs':
-    '/images/blog/culture-of-innovation.png',
+    '/images/blog/culture-of-innovation.webp',
   'mobile-apps-that-do-more-than-just-sell-improving-internal-ops-via-apps':
-    '/images/blog/mobile-apps-internal-ops.png',
+    '/images/blog/mobile-apps-internal-ops.webp',
   'the-rise-of-industry-specific-mobile-apps-in-india-transforming-retail-logistics-healthcare':
-    '/images/blog/industry-specific-apps.png',
+    '/images/blog/industry-specific-apps.webp',
   'best-practices-for-qa-testing-delivering-high-quality-software-with-confidence':
-    '/images/blog/qa-best-practices.png',
+    '/images/blog/qa-best-practices.webp',
 };
 
 /** A dead reference to the retired WordPress media library. */

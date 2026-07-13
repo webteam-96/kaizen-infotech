@@ -421,6 +421,18 @@ body.loader-active {
 }
 .rc-glass-card > * { position: relative; z-index: 1; }
 
+/* Coarse-pointer (touch) devices that still run the scroll narrative: a heavy
+   blur(36px) backdrop-filter animating over the live WebGL canvas is a real INP/
+   scroll-jank cost (and Chrome doesn't blur reliably over WebGL there anyway).
+   Trim the radius for the narrative cards only — the hook card already has no
+   backdrop-filter, and real-mouse desktops (desk:) keep the full frost. */
+@media (pointer: coarse) {
+  .rc-glass-card:not(.rc-hook-card) {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
 /* Gentle, contained float for the Spline monitor — keeps it moving inside its
    box without ever drifting far enough to crop at the edges. */
 .rc-spline-float {
@@ -458,17 +470,23 @@ body.loader-active {
 }
 .rc-glass-card.rc-hook-card::before,
 .rc-glass-card.rc-hook-card::after { display: none; }
-.rc-hook-inner { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+.rc-hook-inner { display: flex; flex-direction: column; align-items: flex-start; text-align: left; container-type: inline-size; }
 /* Two-line poster treatment: heavy condensed uppercase (gradient + 3D drop
    shadow) over a flowing gold script — a light-background adaptation of the
    "COME FOR THE MUSIC / Stay for the Cause" look. */
 .rc-hook-title {
   display: flex;
   flex-direction: column;
-  /* Fluid master size — grows with the viewport (notably bigger on laptop /
-     desktop / large screens), capped so "YOUR VISION" always fits its box.
-     Both lines scale in em off this. Small screens use the overrides below. */
-  font-size: clamp(5.25rem, 10.5vw, 12rem);
+  /* SINGLE master size for ALL devices. Both lines scale in em off this, so the
+     whole "YOUR VISION / Our Code" composition scales as one unit — same layout as
+     the reference at every width, it just gets smaller on narrow screens.
+     17.5cqi = 17.5% of the hook card's width (via the .rc-hook-inner container).
+     "YOUR VISION" (the wider line) measures ~4.55× its font-size, so 17.5cqi keeps
+     it at a constant ~80% of the card width — never wrapping, never overflowing,
+     never realigning, at any device size. Capped at 12rem for very large cards.
+     The first (clamp) declaration is a fallback for browsers without container units. */
+  font-size: clamp(2.75rem, 9vw, 12rem);
+  font-size: min(12rem, 17.5cqi);
   line-height: 1;
   letter-spacing: -0.01em;
   color: #1a1a1a;
@@ -499,7 +517,7 @@ body.loader-active {
   overflow: visible;
   font-family: var(--font-script), cursive;
   font-style: normal; /* the script is inherently slanted */
-  font-weight: 600; /* semi-bold (synthesised — Great Vibes ships weight 400 only) */
+  font-weight: 400; /* native Great Vibes weight — lighter, delicate script (no faux-bold synthesis) */
   font-size: 1.3em; /* scripts read small — bump to balance the caps */
   line-height: 1.16;
   margin-top: -0.34em; /* pull the script UP so it overlaps the bottom of the caps */
@@ -521,7 +539,9 @@ body.loader-active {
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
 }
 .rc-hook-title { overflow: visible; }
-.rc-hook-t1, .rc-hook-t2 { text-shadow: none; }
+/* nowrap: each line stays on ONE line at every width — the font-size fit above
+   guarantees they still fit, so the words never break ("go haywire"). */
+.rc-hook-t1, .rc-hook-t2 { text-shadow: none; white-space: nowrap; }
 /* "Tap to begin" cue — shown only on touch/small (phone + iPad) layouts, where
    the CRT's "Press Enter" prompt isn't the right affordance. Hidden on desktop. */
 .rc-tap-cue { display: none; }
@@ -800,7 +820,7 @@ html, body { max-width: 100%; overflow-x: clip; }
     margin-inline: 0 !important;
     max-width: 58vw !important;
   }
-  .rc-hook-title { font-size: clamp(3.25rem, 7.4vw, 6rem); }
+  /* font-size now handled by the single container-unit rule on .rc-hook-title */
 }
 
 /* ---------------------------------------------------------------------
@@ -823,9 +843,9 @@ html, body { max-width: 100%; overflow-x: clip; }
     margin-bottom: 0.75rem;
   }
 
-  /* Hero title sizing for phone — doubled */
+  /* Hero title on phone: font-size comes from the single container-unit rule; keep
+     the width/line-height tuning here. */
   .rc-hook-title {
-    font-size: clamp(3.5rem, 14vw, 5rem);
     max-width: 100%;
     line-height: 1.12;
   }
@@ -858,7 +878,7 @@ html, body { max-width: 100%; overflow-x: clip; }
     letter-spacing: 0.12em;
     font-size: 0.5625rem;
   }
-  .rc-hook-title { font-size: clamp(3.2rem, 17vw, 4rem); }
+  /* .rc-hook-title font-size handled by the single container-unit rule */
   .rc-headline  { font-size: clamp(1.15rem, 6vw, 1.5rem); }
 }
 
@@ -941,7 +961,7 @@ html, body { max-width: 100%; overflow-x: clip; }
      busy hexagon texture behind it */
   .rc-hook-card .rc-hook-title {
     font-weight: 600;
-    font-size: clamp(4rem, 20vw, 5.7rem) !important;
+    /* font-size handled by the single container-unit rule on .rc-hook-title */
     line-height: 1.05;
     letter-spacing: -0.02em;
     text-shadow: 0 1px 18px rgba(245,245,245,0.9), 0 1px 2px rgba(245,245,245,0.9);

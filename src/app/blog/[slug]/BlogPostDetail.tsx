@@ -80,6 +80,7 @@ export function BlogPostDetail({ post, relatedPosts }: Props) {
                 slug={post.slug}
                 category={post.category}
                 imgClassName="absolute inset-0 h-full w-full object-cover"
+                priority
               />
             </div>
           </FadeIn>

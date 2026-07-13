@@ -19,6 +19,11 @@ interface BlogImageProps {
   imgClassName?: string;
   /** classes for the fallback <BlogCover>; defaults to absolute fill. */
   coverClassName?: string;
+  /**
+   * Above-the-fold images (e.g. the article cover banner) should load eagerly to
+   * protect LCP. Defaults to false → lazy-loaded, for grid/related/gallery images.
+   */
+  priority?: boolean;
 }
 
 export function BlogImage({
@@ -28,6 +33,7 @@ export function BlogImage({
   category,
   imgClassName,
   coverClassName = 'absolute inset-0',
+  priority = false,
 }: BlogImageProps) {
   const [failed, setFailed] = useState(false);
 
@@ -37,6 +43,13 @@ export function BlogImage({
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={url} alt={alt || ''} className={imgClassName} onError={() => setFailed(true)} />
+    <img
+      src={url}
+      alt={alt || ''}
+      className={imgClassName}
+      decoding="async"
+      loading={priority ? 'eager' : 'lazy'}
+      onError={() => setFailed(true)}
+    />
   );
 }
