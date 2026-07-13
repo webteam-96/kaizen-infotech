@@ -1732,15 +1732,25 @@ export function RubiksCubeExperience() {
             fill phones / iPad-portrait (and every other size) with no gaps. */}
         <video
           ref={backdropVideoRef}
-          // preload="metadata" (not "auto") so the multi-MB narrative video does
-          // NOT eagerly download during the cold first-load window (competing with
-          // the Spline scene). It's invisible until deep in the narrative; play()
-          // at loaderComplete kicks off buffering then, with ample time to fill.
-          preload="metadata"
+          // preload="none": the browser touches this multi-MB narrative video ONLY
+          // when play() is called (in the loaderComplete effect), never on initial
+          // render. That keeps even the metadata range-request out of the cold
+          // first-load window (it was competing with the Spline scene AND, when the
+          // asset is missing/oversized on the host, logging a console error before
+          // first paint). It's invisible (opacity 0) until deep in the narrative,
+          // so there's ample time to buffer after play() starts it.
+          preload="none"
           muted
           loop
           playsInline
           aria-hidden
+          // Fail safe: if the (heavy) source can't load — e.g. not yet deployed to
+          // the host — hide the element so it degrades to the flat #f5f5f5 stage
+          // instead of retrying a broken source behind the scene. Nothing depends
+          // on it: it's a 30%-opacity ambient texture.
+          onError={() => {
+            if (backdropVideoRef.current) backdropVideoRef.current.style.display = 'none';
+          }}
           className="pointer-events-none fixed inset-0 z-[-1] object-cover"
           style={{ opacity: 0, width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center' }}
         >
@@ -1769,10 +1779,18 @@ export function RubiksCubeExperience() {
                 the exact same spot, so there's no pop). Inline width/height beat
                 the unlayered `img{height:auto}` reset (same trick as the video). */}
             <img
-              src="/images/hero/spline-monitor-poster.jpg"
+              src="/images/hero/spline-monitor-poster.webp"
               alt=""
               aria-hidden
               draggable={false}
+              // LCP element. It's the blurred placeholder behind the Spline
+              // monitor, so a tiny WebP (≈14KB vs the old 150KB JPEG) is
+              // visually identical through the blur. fetchPriority=high +
+              // decoding=async + the matching <link rel=preload> on the home
+              // route (src/app/page.tsx) make it discoverable and painted early
+              // even though this component is a dynamic(ssr:false) chunk.
+              fetchPriority="high"
+              decoding="async"
               style={{
                 position: 'absolute', inset: 0,
                 width: '100%', height: '100%', maxWidth: 'none',

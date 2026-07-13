@@ -13,6 +13,18 @@ import { CTASection } from '@/components/sections/CTASection';
 export default function HomePage() {
   return (
     <main>
+      {/* Preload the hero's LCP element — the blurred Spline poster. The hero is a
+          dynamic(ssr:false) chunk, so without this the poster isn't discoverable
+          until that chunk executes; the preload fetches its ~14KB in parallel with
+          the JS (during the intro loader) so it paints the moment the chunk mounts.
+          Next hoists this <link> into <head>. */}
+      <link
+        rel="preload"
+        as="image"
+        href="/images/hero/spline-monitor-poster.webp"
+        type="image/webp"
+        fetchPriority="high"
+      />
       <CountdownLoader />
       <RubiksHero />
       <BrandPromise />
