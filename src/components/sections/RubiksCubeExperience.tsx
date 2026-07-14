@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
 import { useLoaderStore } from '@/store/loaderStore';
-import { useReducedMotion } from '@/hooks';
+import { useReducedMotion, useDeviceCapability } from '@/hooks';
 import { useLenis } from '@/components/layout/SmoothScroll';
 import type Lenis from 'lenis';
 import Spline from '@splinetool/react-spline';
@@ -189,6 +189,17 @@ export function RubiksCubeExperience() {
   const loaderComplete = useLoaderStore((s) => s.isComplete);
   const prefersReducedMotion = useReducedMotion();
 
+  // Touch/coarse-pointer devices (phones, tablets) can't afford TWO live WebGL
+  // contexts at once. Running the three.js cube AND the Spline monitor together hung
+  // Lighthouse-mobile (PAGE_HUNG) and wrecked real-user INP/LCP. So on touch we keep
+  // the signature cube but DROP the second context: the Spline scene is never mounted
+  // (its heavy WASM + scene-graph init and continuous GPU cost are skipped) and the
+  // poster — already the pre-Spline placeholder — simply stays as a static monitor.
+  // `cap.ready` gates it so the live scene is only ever mounted once we've CONFIRMED a
+  // non-touch device (never mounted-then-torn-down on a phone).
+  const cap = useDeviceCapability();
+  const allowLiveMonitor = cap.ready && !cap.coarsePointer;
+
   // Live mirrors of values the long-lived useGSAP effect reads at interaction
   // time (Enter/Space/tap → "play the dive like a video"). Stored in refs so the
   // effect needn't list them as deps (which would tear down + rebuild the whole
@@ -216,13 +227,21 @@ export function RubiksCubeExperience() {
     // animates in view. (The hex-grid backdrop is a self-animating canvas — and it
     // only activates now, via active={loaderComplete}, so it never competes with
     // the Spline/Three.js boot.)
-    backdropVideoRef.current?.play().catch(() => {});
+    // Skip the multi-MB narrative video on touch devices — it's a decorative
+    // 30%-opacity texture, and its decode is pure overhead on a phone GPU that's
+    // already running the cube + hex canvas (it was part of what hung mobile).
+    if (!window.matchMedia('(pointer: coarse)').matches) {
+      backdropVideoRef.current?.play().catch(() => {});
+    }
     splineStartRef.current?.();
   }, [loaderComplete]);
 
   // Warm the HTTP cache for the heavy Spline scene file while the loader counts
   // down, so the scene initialises as early as possible under the overlay.
   useEffect(() => {
+    // Touch devices never mount the live Spline scene (see allowLiveMonitor), so
+    // don't warm its cache — that download would be pure waste on mobile data.
+    if (window.matchMedia('(pointer: coarse)').matches) return;
     const link = document.createElement('link');
     link.rel = 'prefetch';
     link.as = 'fetch';
@@ -329,13 +348,18 @@ export function RubiksCubeExperience() {
     const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
     camera.position.set(0, 0, 4.5);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    // Touch devices run this cube alongside the hex canvas on a phone GPU. MSAA + a
+    // high DPR there is a big raster cost that helped hang mobile, so coarse-pointer
+    // devices drop antialiasing and cap DPR at 1 (the cube is small/scaled on mobile,
+    // so the softness is negligible next to not hanging). Desktop is unchanged.
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const renderer = new THREE.WebGLRenderer({ antialias: !coarsePointer, alpha: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(innerWidth, innerHeight);
-    // Cap DPR at 1.5 on EVERY device: a full-viewport MSAA canvas at DPR 2–3
-    // alongside the separate Spline WebGL context is a heavy GPU load that causes
-    // janky/stuck scrolling. 1.5 keeps it crisp enough at a fraction of the cost.
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    // Cap DPR at 1.5 on desktop: a full-viewport MSAA canvas at DPR 2–3 alongside the
+    // separate Spline WebGL context is a heavy GPU load that causes janky/stuck
+    // scrolling. 1.5 keeps it crisp enough at a fraction of the cost; touch caps at 1.
+    renderer.setPixelRatio(Math.min(devicePixelRatio, coarsePointer ? 1 : 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.4;
     container.appendChild(renderer.domElement);
@@ -1795,7 +1819,10 @@ export function RubiksCubeExperience() {
                 position: 'absolute', inset: 0,
                 width: '100%', height: '100%', maxWidth: 'none',
                 objectFit: 'fill',
-                filter: 'blur(7px)',
+                // On touch the live Spline never loads, so this poster IS the monitor
+                // — use a light blur (crisp-ish static screen) instead of the heavy
+                // placeholder blur that's meant to be crossfaded away on desktop.
+                filter: cap.coarsePointer ? 'blur(3px)' : 'blur(7px)',
                 transform: 'scale(1.04)',
                 opacity: splineLoaded ? 0 : 1,
                 transition: 'opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1)',
@@ -1806,7 +1833,7 @@ export function RubiksCubeExperience() {
             {/* Zoom layer — scroll pushes IN toward the monitor screen (immersive).
                 transformOrigin is set to the screen centre in the effect. */}
             <div ref={splineZoomRef} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: -120, transformOrigin: '48% 36%', willChange: 'transform' }}>
-              {splineNearViewport && (
+              {splineNearViewport && allowLiveMonitor && (
                 <div
                   style={{
                     width: '100%',
