@@ -1,7 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Jost, Lato, JetBrains_Mono, Bricolage_Grotesque, Anton, Great_Vibes } from 'next/font/google';
 import './globals.css';
 import { AppFrame } from '@/components/layout/AppFrame';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { organizationSchema, websiteSchema } from '@/lib/seo/jsonld';
+import { SITE_URL, DEFAULT_OG_IMAGE } from '@/lib/seo/config';
 
 const jost = Jost({
   subsets: ['latin'],
@@ -52,8 +55,11 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata: Metadata = {
+  // Resolves every relative canonical / og:image URL to an absolute one. Without
+  // this, Next emits path-only social + canonical URLs that crawlers ignore.
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Kaizen Infotech Solutions | Continuous Improvement Through Technology',
+    default: 'Kaizen Infotech Solutions | Custom Software & Digital Solutions',
     template: '%s | Kaizen Infotech Solutions',
   },
   description:
@@ -64,29 +70,49 @@ export const metadata: Metadata = {
     'event management systems',
     'enterprise web portals',
     'digital marketing services',
+    'software company Thane',
     'software company Mumbai',
     'business automation',
     'digital transformation India',
   ],
   authors: [{ name: 'Kaizen Infotech Solutions' }],
+  creator: 'Kaizen Infotech Solutions',
+  publisher: 'Kaizen Infotech Solutions',
+  applicationName: 'Kaizen Infotech Solutions',
+  category: 'technology',
   openGraph: {
     type: 'website',
     locale: 'en_US',
+    url: '/',
     siteName: 'Kaizen Infotech Solutions',
     title: 'Kaizen Infotech Solutions | Custom Software & Digital Solutions',
     description:
       'Custom software, mobile apps, event management systems, and digital marketing solutions for business efficiency.',
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kaizen Infotech Solutions',
+    title: 'Kaizen Infotech Solutions | Custom Software & Digital Solutions',
     description:
       'Custom software, mobile apps, event management systems, and digital marketing solutions for business efficiency.',
+    images: [DEFAULT_OG_IMAGE.url],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#ffffff',
+  colorScheme: 'light',
 };
 
 export default function RootLayout({
@@ -106,6 +132,10 @@ export default function RootLayout({
       <body
         className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} ${anton.variable} ${greatVibes.variable} antialiased`}
       >
+        {/* Sitewide structured data — the Organization anchor + WebSite node that
+            every page-level schema (Breadcrumb, Service, BlogPosting) references
+            by @id. Rendered on the server so it's in the initial HTML. */}
+        <JsonLd data={[organizationSchema(), websiteSchema()]} />
         <AppFrame>{children}</AppFrame>
       </body>
     </html>

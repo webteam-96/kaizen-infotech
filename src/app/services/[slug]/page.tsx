@@ -1,6 +1,10 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { services } from '@/content/services';
 import ServiceDetailClient from './ServiceDetailClient';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { serviceSchema, breadcrumbSchema, faqSchema } from '@/lib/seo/jsonld';
+import { pageMetadata } from '@/lib/seo/config';
 
 // ---------------------------------------------------------------------------
 // Static params generation
@@ -20,18 +24,19 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
   const service = services.find((s) => s.slug === slug);
 
   if (!service) {
-    return { title: 'Service Not Found | Kaizen Infotech Solutions' };
+    return { title: 'Service Not Found' };
   }
 
-  return {
-    title: `${service.title} | Kaizen Infotech Solutions`,
+  return pageMetadata({
+    title: service.title,
     description: service.description,
-  };
+    path: `/services/${service.slug}`,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -53,5 +58,20 @@ export default async function ServiceDetailPage({
   // Find related services (exclude current)
   const relatedServices = services.filter((s) => s.id !== service.id).slice(0, 3);
 
-  return <ServiceDetailClient service={service} relatedServices={relatedServices} />;
+  return (
+    <>
+      <JsonLd
+        data={[
+          serviceSchema(service),
+          breadcrumbSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Services', path: '/services' },
+            { name: service.title, path: `/services/${service.slug}` },
+          ]),
+          ...(service.faqs && service.faqs.length > 0 ? [faqSchema(service.faqs)] : []),
+        ]}
+      />
+      <ServiceDetailClient service={service} relatedServices={relatedServices} />
+    </>
+  );
 }

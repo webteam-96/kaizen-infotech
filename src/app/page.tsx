@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { CountdownLoader } from '@/components/sections/CountdownLoader';
 import { RubiksHero } from '@/components/sections/RubiksHero';
 import { BrandPromise } from '@/components/sections/BrandPromise';
@@ -9,6 +10,13 @@ import { IndustriesSection } from '@/components/sections/IndustriesSection';
 import { TechStack } from '@/components/sections/TechStack';
 import { WhyChooseSection } from '@/components/sections/WhyChooseSection';
 import { CTASection } from '@/components/sections/CTASection';
+
+// Home gets an absolute (non-templated) title so the brand isn't duplicated, and
+// its own canonical. Description/OG image inherit the sitewide defaults.
+export const metadata: Metadata = {
+  title: { absolute: 'Custom Software & Digital Solutions Company | Kaizen Infotech' },
+  alternates: { canonical: '/' },
+};
 
 export default function HomePage() {
   return (

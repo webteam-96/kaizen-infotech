@@ -1,7 +1,11 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { projects } from '@/content/projects';
 import ProjectDetailClient from './ProjectDetailClient';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { caseStudySchema, breadcrumbSchema } from '@/lib/seo/jsonld';
+import { pageMetadata } from '@/lib/seo/config';
 
 // ---------------------------------------------------------------------------
 // Static params
@@ -21,15 +25,17 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
   const project = projects.find((p) => p.slug === slug);
   if (!project) return { title: 'Project Not Found' };
 
-  return {
-    title: `${project.title} | Kaizen Infotech`,
+  return pageMetadata({
+    title: project.title,
     description: project.description,
-  };
+    path: `/work/${project.slug}`,
+    image: project.image ? { url: project.image, alt: project.title } : undefined,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -52,10 +58,22 @@ export default async function ProjectDetailPage({
     projectIndex < projects.length - 1 ? projects[projectIndex + 1] : null;
 
   return (
-    <ProjectDetailClient
-      project={project}
-      prevProject={prevProject}
-      nextProject={nextProject}
-    />
+    <>
+      <JsonLd
+        data={[
+          caseStudySchema(project),
+          breadcrumbSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Work', path: '/work' },
+            { name: project.title, path: `/work/${project.slug}` },
+          ]),
+        ]}
+      />
+      <ProjectDetailClient
+        project={project}
+        prevProject={prevProject}
+        nextProject={nextProject}
+      />
+    </>
   );
 }

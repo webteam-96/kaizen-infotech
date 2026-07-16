@@ -1,12 +1,30 @@
+import type { Metadata } from 'next';
 import { Reveal } from '@/components/animation/Reveal';
 import { PageHero } from '@/components/sections/PageHero';
 import { HexGridBackground } from '@/components/shared/HexGridBackground';
 import { SolutionsInAction } from '@/components/sections/SolutionsInAction';import { CtaGlowBackdrop } from '@/components/shared/CtaGlowBackdrop';
 import { Button } from '@/components/ui/Button';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbSchema } from '@/lib/seo/jsonld';
+import { pageMetadata } from '@/lib/seo/config';
+
+export const metadata: Metadata = pageMetadata({
+  title: 'Our Work',
+  description:
+    'Explore our portfolio of digital platforms delivered for government organisations, enterprises, healthcare providers, and global communities — real problems, thoughtful solutions, and measurable outcomes.',
+  path: '/work',
+});
 
 export default function WorkPage() {
   return (
-    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">      {/* ── Hero ── */}
+    <main className="relative isolate min-h-screen bg-[var(--color-bg-primary)]">
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Work', path: '/work' },
+        ])}
+      />
+      {/* ── Hero ── */}
       <PageHero
         align="center"
         backdrop={<HexGridBackground />}

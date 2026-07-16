@@ -1,0 +1,35 @@
+# Kaizen Infotech Solutions
+
+> Kaizen Infotech Solutions is an ISO 9001:2015-certified software company based in Thane, Maharashtra, India. We build custom software, mobile apps, event registration & management systems, enterprise web portals, and digital marketing solutions for enterprises, government bodies, and global communities.
+
+## About
+
+- [About Kaizen Infotech](https://kaizeninfotech.com/about): Our story, values, and delivery process. We take a business-first approach — understanding operational workflows before designing technology around them.
+- Notable scale: a digital ecosystem for Rotary International serving 4,500+ clubs and over 1.8 lakh Rotarians across Zones 4–7 in India, plus platforms trusted by public institutions.
+
+## Services
+
+- [Custom Software Development](https://kaizeninfotech.com/services/custom-software-development): Tailor-made enterprise software, business process automation, custom ERP/MIS, dashboards, and API integrations.
+- [Mobile App Development](https://kaizeninfotech.com/services/mobile-app-development): Native Android and iOS apps for member engagement, enterprise mobility, and field-force management.
+- [Event Registration & Management Systems](https://kaizeninfotech.com/services/event-registration-management): End-to-end event registration, ticketing, and delegate management platforms.
+- [Enterprise Web Portals](https://kaizeninfotech.com/services/enterprise-web-portals): Scalable, secure web portals for large organisations and communities.
+- [Digital Marketing](https://kaizeninfotech.com/services/digital-marketing-services): SEO, content, and campaign services that grow reach and engagement.
+
+## Work
+
+- [Case Studies](https://kaizeninfotech.com/work): Real-world digital platforms delivered for government organisations, enterprises, healthcare providers, and global communities — each with a defined problem, solution, and measurable outcome.
+
+## Blog
+
+- [Blog](https://kaizeninfotech.com/blog): Articles on custom software, mobile apps, digital transformation, and technology trends.
+
+## Careers
+
+- [Careers](https://kaizeninfotech.com/careers): Build platforms used by government organisations and global communities; team culture, benefits, and opportunities to grow.
+
+## Contact
+
+- [Contact](https://kaizeninfotech.com/contact)
+- Email: connect@kaizeninfotech.com
+- Phone: +91 93721 30855
+- Address: Centrum Business Square, A 406, Road No. 16, Nehru Nagar, Wagle Industrial Estate, Thane West, Thane, Maharashtra 400604, India
