@@ -1,7 +1,7 @@
 import { PageHero } from '@/components/sections/PageHero';
 import { HexGridBackground } from '@/components/shared/HexGridBackground';
 
-// Shared presentation for the /privacy and /terms pages. Server component: it
+// Shared presentation for the /privacy-policy and /terms pages. Server component: it
 // renders the same animated PageHero the other sub-pages use (design parity) and
 // wraps the legal body in the existing `.prose-custom` typography (globals.css)
 // so it reads exactly like the blog — no new styles, no design drift.

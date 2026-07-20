@@ -20,7 +20,7 @@ export const metadata: Metadata = pageMetadata({
   title: 'Privacy Policy',
   description:
     'How Kaizen Infotech Solutions collects, uses, shares, and protects the personal information you share through this website, in line with India’s DPDP Act, 2023.',
-  path: '/privacy',
+  path: '/privacy-policy',
 });
 
 export default function PrivacyPolicyPage() {
@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
       <JsonLd
         data={breadcrumbSchema([
           { name: 'Home', path: '/' },
-          { name: 'Privacy Policy', path: '/privacy' },
+          { name: 'Privacy Policy', path: '/privacy-policy' },
         ])}
       />
       <LegalPageShell

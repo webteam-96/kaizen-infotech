@@ -46,6 +46,11 @@ const nextConfig: NextConfig = {
   // replacement MUST use a new filename or returning visitors get the stale asset
   // for up to a year. /data (admin-mutable blogs.json) is explicitly kept fresh so
   // blog edits keep surfacing. /_next/static is already 1yr-immutable by Next.
+  // The privacy page originally shipped at /privacy; the sitemap and any early
+  // external links may still point there.
+  async redirects() {
+    return [{ source: '/privacy', destination: '/privacy-policy', permanent: true }];
+  },
   async headers() {
     const IMMUTABLE = 'public, max-age=31536000, immutable';
     return [

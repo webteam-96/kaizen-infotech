@@ -39,7 +39,7 @@ export const footerLinkGroups: FooterLinkGroup[] = [
     links: [
       { label: 'Blog', href: '/blog' },
       { label: 'Case Studies', href: '/work' },
-      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Privacy Policy', href: '/privacy-policy' },
       { label: 'Terms of Service', href: '/terms' },
     ],
   },

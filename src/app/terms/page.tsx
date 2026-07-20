@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
           These Terms of Service (“Terms”) govern your access to and use of the website{' '}
           <a href={SITE_CONFIG.url}>kaizeninfotech.com</a> (the “Website”), operated by {LEGAL_NAME}{' '}
           (“Kaizen Infotech”, “we”, “us”, or “our”). By accessing or using the Website, you agree to
-          be bound by these Terms and by our <Link href="/privacy">Privacy Policy</Link>. If you do
+          be bound by these Terms and by our <Link href="/privacy-policy">Privacy Policy</Link>. If you do
           not agree, please do not use the Website.
         </p>
 
@@ -154,7 +154,7 @@ export default function TermsOfServicePage() {
         <h2>11. Privacy</h2>
         <p>
           Your use of the Website is also governed by our{' '}
-          <Link href="/privacy">Privacy Policy</Link>, which explains how we handle your personal
+          <Link href="/privacy-policy">Privacy Policy</Link>, which explains how we handle your personal
           data. By using the Website, you consent to the processing described there.
         </p>
 
