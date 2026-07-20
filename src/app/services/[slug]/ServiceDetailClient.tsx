@@ -8,7 +8,8 @@ import { StaggerChildren } from '@/components/animation/StaggerChildren';
 import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { HexPopBackground } from '@/components/shared/HexPopBackground';
+import { FlowingLightWaves } from '@/components/shared/FlowingLightWaves';
 import type { Service } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -157,7 +158,7 @@ export default function ServiceDetailClient({
 }: ServiceDetailClientProps) {
   return (
     <main className="relative isolate overflow-hidden bg-[var(--color-bg-primary)]">
-      <VideoBackdrop variant="white" fixed />
+      <HexPopBackground fixed />
       {/* ================================================================= */}
       {/* HERO */}
       {/* ================================================================= */}
@@ -429,7 +430,7 @@ export default function ServiceDetailClient({
       {/* CTA */}
       {/* ================================================================= */}
       <section className="section-ink relative isolate px-6 py-32">
-        <VideoBackdrop variant="ink" />
+        <FlowingLightWaves />
         <div className="mx-auto max-w-3xl text-center">
           <FadeIn>
             <h2

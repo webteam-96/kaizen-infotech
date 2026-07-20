@@ -11,7 +11,7 @@ import { PinnedSection } from '@/components/animation/PinnedSection';
 import { PageHero } from '@/components/sections/PageHero';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { Button } from '@/components/ui/Button';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { FlowingLightWaves } from '@/components/shared/FlowingLightWaves';
 import { HexGridBackground } from '@/components/shared/HexGridBackground';
 import { CtaGlowBackdrop } from '@/components/shared/CtaGlowBackdrop';
 import { cn } from '@/lib/utils/cn';
@@ -226,7 +226,7 @@ export default function AboutPage() {
         onProgress={setMissionVisionProgress}
         duration="+=150%"
       >
-        <VideoBackdrop variant="ink" />
+        <FlowingLightWaves />
         <div className="mx-auto max-w-4xl text-center">
           <AnimatePresence mode="wait">
             {missionVisionProgress < 0.5 ? (

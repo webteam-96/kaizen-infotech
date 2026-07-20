@@ -10,6 +10,7 @@ import { useLenis } from '@/components/layout/SmoothScroll';
 import type Lenis from 'lenis';
 import Spline from '@splinetool/react-spline';
 import { HexGridBackground } from '@/components/shared/HexGridBackground';
+import { HexPrismBackground } from '@/components/shared/HexPrismBackground';
 import { RubiksHeroStatic } from './RubiksHeroStatic';
 
 /* ══════════════════════════════════════════════════════════════
@@ -169,7 +170,7 @@ export function RubiksCubeExperience() {
   const scanlineRef = useRef<HTMLDivElement>(null);
   const diveVignetteRef = useRef<HTMLDivElement>(null);
   const streaksRef = useRef<HTMLDivElement>(null);
-  const backdropVideoRef = useRef<HTMLVideoElement>(null);
+  const backdropFxRef = useRef<HTMLDivElement>(null);
   // Animated hex-grid backdrop behind the opening act (the hook card + Spline
   // computer) — a tiny, light-grey honeycomb with a 3D light-blue water-ripple
   // flowing left→right, replacing the old "Landing Page Background" video.
@@ -219,20 +220,11 @@ export function RubiksCubeExperience() {
   useEffect(() => {
     loaderCompleteRef.current = loaderComplete;
     if (!loaderComplete) return;
-    // Loader has cleared. Start the narrative backdrop video — with
-    // preload="metadata" this is when it begins buffering (it stays invisible
-    // until deep in the narrative, so there's ample time), keeping its multi-MB
-    // download OUT of the cold first-load window — and resume the Spline scene,
-    // which loaded sharp under the overlay but was frozen, so its typing intro now
-    // animates in view. (The hex-grid backdrop is a self-animating canvas — and it
-    // only activates now, via active={loaderComplete}, so it never competes with
-    // the Spline/Three.js boot.)
-    // Skip the multi-MB narrative video on touch devices — it's a decorative
-    // 30%-opacity texture, and its decode is pure overhead on a phone GPU that's
-    // already running the cube + hex canvas (it was part of what hung mobile).
-    if (!window.matchMedia('(pointer: coarse)').matches) {
-      backdropVideoRef.current?.play().catch(() => {});
-    }
+    // Loader has cleared. Resume the Spline scene, which loaded sharp under the
+    // overlay but was frozen, so its typing intro now animates in view. The two
+    // canvas backdrops (hex-grid + the hex-prism field) are self-animating and only
+    // activate now, via active={loaderComplete}, so they never compete with
+    // the Spline/Three.js boot on a cold load.
     splineStartRef.current?.();
   }, [loaderComplete]);
 
@@ -1616,10 +1608,10 @@ export function RubiksCubeExperience() {
       }
       const rawP = smoothProgress;
 
-      // Backdrop video: hidden during intro, fades to 30% once cubes are visible.
-      if (backdropVideoRef.current) {
-        backdropVideoRef.current.style.opacity = String(
-          lerp01(rawP, INTRO_END, INTRO_END + 0.03) * 0.3
+      // Hex-prism backdrop: hidden during intro, fades to 40% once cubes are visible.
+      if (backdropFxRef.current) {
+        backdropFxRef.current.style.opacity = String(
+          lerp01(rawP, INTRO_END, INTRO_END + 0.03) * 0.4
         );
       }
       // Hex-grid backdrop: full strength while the computer sits at rest, then
@@ -1744,42 +1736,22 @@ export function RubiksCubeExperience() {
           <HexGridBackground variant="mono" waveDirection="radial" active={loaderComplete} />
         </div>
 
-        {/* Continuous video backdrop — sits behind every layer, including Spline.
-            Full-bleed cover at EVERY device size. The width/height are set inline
-            (not via h-full/w-full) on purpose: the global reset
-            `img, video, svg { max-width:100%; height:auto }` is UNLAYERED, so in
-            Tailwind v4 it overrides the `@layer utilities` h-full — and because a
-            <video> is a replaced element, height:auto collapses it to its
-            intrinsic 16:9 band (a thin strip with empty space above/below on
-            portrait). Inline styles beat the unlayered reset, giving the element a
-            true full-viewport box so object-cover scales the video up to always
-            fill phones / iPad-portrait (and every other size) with no gaps. */}
-        <video
-          ref={backdropVideoRef}
-          // preload="none": the browser touches this multi-MB narrative video ONLY
-          // when play() is called (in the loaderComplete effect), never on initial
-          // render. That keeps even the metadata range-request out of the cold
-          // first-load window (it was competing with the Spline scene AND, when the
-          // asset is missing/oversized on the host, logging a console error before
-          // first paint). It's invisible (opacity 0) until deep in the narrative,
-          // so there's ample time to buffer after play() starts it.
-          preload="none"
-          muted
-          loop
-          playsInline
+        {/* Hex-prism honeycomb backdrop — a lightweight canvas that REPLACES the old
+            multi-MB backdrop-rubix.mp4 ambient video (zero download): a white 3D
+            honeycomb of matte hexagonal pillars that gently breathe up/down in a slow
+            wave, recreating the video's look. Fixed + full-bleed, behind every layer
+            including Spline. Starts hidden (opacity 0) during the opening act and is
+            faded up to 40% by updateIntro once the cubes come into view (see
+            backdropFxRef above). `active={loaderComplete}` keeps its canvas inert until
+            the loader clears so it never competes with the Spline/three.js boot. */}
+        <div
+          ref={backdropFxRef}
           aria-hidden
-          // Fail safe: if the (heavy) source can't load — e.g. not yet deployed to
-          // the host — hide the element so it degrades to the flat #f5f5f5 stage
-          // instead of retrying a broken source behind the scene. Nothing depends
-          // on it: it's a 30%-opacity ambient texture.
-          onError={() => {
-            if (backdropVideoRef.current) backdropVideoRef.current.style.display = 'none';
-          }}
-          className="pointer-events-none fixed inset-0 z-[-1] object-cover"
-          style={{ opacity: 0, width: '100%', height: '100%', maxWidth: 'none', objectFit: 'cover', objectPosition: 'center' }}
+          className="pointer-events-none fixed inset-0 z-[-1]"
+          style={{ opacity: 0 }}
         >
-          <source src="/videos/backdrop-rubix.mp4" type="video/mp4" />
-        </video>
+          <HexPrismBackground active={loaderComplete} />
+        </div>
 
         {/* Spline desktop (opening act) — right side, behind the transparent cube canvas.
             Width is set per-device in the effect; opacity/scale are scroll-driven. */}

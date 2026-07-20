@@ -9,7 +9,7 @@ import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
 import { useReducedMotion } from '@/hooks';
 import { footerLinkGroups, socialLinks } from '@/content/navigation';
-import { VideoBackdrop } from '@/components/shared/VideoBackdrop';
+import { FlowingLightWaves } from '@/components/shared/FlowingLightWaves';
 
 type NewsletterStatus = 'idle' | 'pending' | 'success' | 'error';
 
@@ -117,7 +117,7 @@ export function Footer() {
 
   return (
     <footer className="section-ink relative isolate">
-      <VideoBackdrop variant="ink" />
+      <FlowingLightWaves />
       {/* Animated top border */}
       <div
         ref={topBorderRef}
