@@ -30,7 +30,14 @@ const nextConfig: NextConfig = {
     '/api/captcha': ['./node_modules/svg-captcha/fonts/**'],
   },
   experimental: {
-    optimizePackageImports: ['framer-motion', 'gsap'],
+    // lucide-react added so icon imports are rewritten to per-icon deep imports
+    // (drops barrel/legacy-JS overhead flagged by Lighthouse).
+    optimizePackageImports: ['framer-motion', 'gsap', 'lucide-react'],
+    // Inline each route's critical CSS into its prerendered HTML instead of a
+    // render-blocking <link> to the ~124KB stylesheet. Same bytes, delivered
+    // inside the (already-gzipped) document → one fewer blocking round-trip on
+    // first paint. The homepage is static, so this ships in the prerender.
+    inlineCss: true,
   },
   // Long-lived caching for static media so repeat visitors don't re-download the
   // (multi-MB) videos and images on every navigation. Applies on `next start`

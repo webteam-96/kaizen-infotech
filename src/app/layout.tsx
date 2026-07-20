@@ -36,6 +36,11 @@ const bricolage = Bricolage_Grotesque({
   weight: ['400', '500', '600', '700'],
   variable: '--font-card-heading',
   display: 'swap',
+  // Card headings are below the fold on every route (hero uses --font-display /
+  // --font-poster). Don't race these four weights onto the critical path against
+  // the CSS/JS — they swap in smoothly via display:swap + next/font's size-adjusted
+  // fallback when the cards scroll into view.
+  preload: false,
 });
 
 // Heavy condensed poster display (for the "YOUR VISION" line — bold uppercase).

@@ -13,6 +13,9 @@ interface ScrollState {
   setScrollVelocity: (v: number) => void;
   setActiveSection: (index: number) => void;
   setIsScrolling: (scrolling: boolean) => void;
+  /** Merge several scroll fields in ONE set() — used by the per-frame scroll
+   *  handler so a scroll frame does one allocation + one notify sweep, not five. */
+  setScrollState: (partial: Partial<ScrollState>) => void;
 }
 
 export const useScrollStore = create<ScrollState>((set) => ({
@@ -28,4 +31,5 @@ export const useScrollStore = create<ScrollState>((set) => ({
   setScrollVelocity: (v) => set({ scrollVelocity: v }),
   setActiveSection: (index) => set({ activeSection: index }),
   setIsScrolling: (scrolling) => set({ isScrolling: scrolling }),
+  setScrollState: (partial) => set(partial),
 }));

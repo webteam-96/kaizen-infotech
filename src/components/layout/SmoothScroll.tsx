@@ -43,11 +43,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
   );
   const pathname = usePathname();
 
-  const setScrollY = useScrollStore((s) => s.setScrollY);
-  const setScrollDirection = useScrollStore((s) => s.setScrollDirection);
-  const setScrollProgress = useScrollStore((s) => s.setScrollProgress);
-  const setScrollVelocity = useScrollStore((s) => s.setScrollVelocity);
-  const setIsScrolling = useScrollStore((s) => s.setIsScrolling);
+  const setScrollState = useScrollStore((s) => s.setScrollState);
 
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -93,8 +89,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       let lastY = window.scrollY;
       const onNativeScroll = () => {
         const y = window.scrollY;
-        setScrollY(y);
-        setScrollDirection(y >= lastY ? 'down' : 'up');
+        setScrollState({ scrollY: y, scrollDirection: y >= lastY ? 'down' : 'up' });
         lastY = y;
       };
       window.addEventListener('scroll', onNativeScroll, { passive: true });
@@ -171,19 +166,23 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       progress: number;
       velocity: number;
     }) => {
-      setScrollY(scroll);
-      setScrollDirection(direction >= 0 ? 'down' : 'up');
-      setScrollProgress(progress);
-      setScrollVelocity(velocity);
-      setIsScrolling(true);
+      // One store write per frame (was five separate set() calls): a single
+      // merged set() = one allocation + one subscriber-notify sweep per scroll
+      // frame instead of five. Published values are identical.
+      setScrollState({
+        scrollY: scroll,
+        scrollDirection: direction >= 0 ? 'down' : 'up',
+        scrollProgress: progress,
+        scrollVelocity: velocity,
+        isScrolling: true,
+      });
       updateSkew(velocity);
 
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
       scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-        setScrollVelocity(0);
+        setScrollState({ isScrolling: false, scrollVelocity: 0 });
         updateSkew(0);
       }, 150);
     };
@@ -204,7 +203,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [setScrollY, setScrollDirection, setScrollProgress, setScrollVelocity, setIsScrolling]);
+  }, [setScrollState]);
 
   // Scroll restoration on route change. Reset to top immediately, but DEFER the
   // ScrollTrigger.refresh() out of the React commit (a synchronous refresh there

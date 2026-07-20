@@ -1,20 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // useDeviceCapability — one client-only source of truth for "how much experience
 // can this device/connection take?", so the heavy 3D hero, background videos and
 // canvas effects can adapt consistently instead of each re-deriving device signals.
 //
-// Resolves AFTER mount (matchMedia/navigator are undefined during SSR), so consumers
-// must render an SSR-safe placeholder while `ready` is false to avoid hydration
-// mismatch. Fails OPEN: unknown signals (Safari/Firefox lack navigator.deviceMemory
-// / Network Information API) keep the FULL experience rather than wrongly downgrading.
+// Resolved via useSyncExternalStore (not useState+useEffect): getServerSnapshot
+// returns the SSR default (`ready:false`) so SSR + hydration match, then the REAL
+// value is committed on the FIRST client render — before the browser paints —
+// instead of one frame LATER in an effect. That timing matters: the old effect-based
+// resolution let the hero paint its 720vh placeholder and THEN collapse to the short
+// static hero on lite/reduced-motion devices (a large layout shift that CrUX field
+// data caught but the loader-masked lab run did not). Fails OPEN: unknown signals
+// (Safari/Firefox lack navigator.deviceMemory / Network Information API) keep the
+// FULL experience rather than wrongly downgrading.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface DeviceCapability {
-  /** false during SSR + first client render, true once the effect has resolved */
+  /** false during SSR + hydration, true on the first client render onward */
   ready: boolean;
   reducedMotion: boolean;
   saveData: boolean;
@@ -72,22 +77,44 @@ const SSR_DEFAULT: DeviceCapability = {
   liteExperience: false,
 };
 
+// Device signals are global, so a module-level memo is safe and lets getSnapshot
+// return a STABLE reference while nothing has changed. useSyncExternalStore requires
+// getSnapshot to return an identical reference across calls when the store hasn't
+// changed — otherwise it re-renders forever.
+let cachedSnapshot: DeviceCapability | null = null;
+let cachedKey = '';
+
+function getSnapshot(): DeviceCapability {
+  const c = readCapability();
+  const key = `${c.reducedMotion}|${c.saveData}|${c.coarsePointer}|${c.cores}|${c.memory}|${c.slowNetwork}|${c.liteExperience}`;
+  if (!cachedSnapshot || key !== cachedKey) {
+    cachedKey = key;
+    cachedSnapshot = { ...c, ready: true };
+  }
+  return cachedSnapshot;
+}
+
+function getServerSnapshot(): DeviceCapability {
+  return SSR_DEFAULT;
+}
+
+function subscribe(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  // Re-evaluate when the user toggles reduced-motion, switches pointer type, or the
+  // connection changes. Each change invalidates the memo on the next getSnapshot.
+  const mqs = [
+    window.matchMedia('(prefers-reduced-motion: reduce)'),
+    window.matchMedia('(pointer: coarse)'),
+  ];
+  mqs.forEach((mq) => mq.addEventListener?.('change', onChange));
+  const conn = (navigator as Navigator & { connection?: ConnectionLike }).connection;
+  conn?.addEventListener?.('change', onChange);
+  return () => {
+    mqs.forEach((mq) => mq.removeEventListener?.('change', onChange));
+    conn?.removeEventListener?.('change', onChange);
+  };
+}
+
 export function useDeviceCapability(): DeviceCapability {
-  const [cap, setCap] = useState<DeviceCapability>(SSR_DEFAULT);
-
-  useEffect(() => {
-    const resolve = () => setCap({ ...readCapability(), ready: true });
-    resolve();
-    // Re-evaluate if the user toggles reduced-motion or the connection changes.
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    mq.addEventListener?.('change', resolve);
-    const conn = (navigator as Navigator & { connection?: ConnectionLike }).connection;
-    conn?.addEventListener?.('change', resolve);
-    return () => {
-      mq.removeEventListener?.('change', resolve);
-      conn?.removeEventListener?.('change', resolve);
-    };
-  }, []);
-
-  return cap;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

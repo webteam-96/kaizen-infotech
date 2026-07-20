@@ -54,13 +54,17 @@ export function VideoBackdrop({ variant, className, overlayOpacity = 0.45, fixed
   const cap = useDeviceCapability();
 
   // Only ever mount (and therefore download/decode) the multi-MB video on capable,
-  // un-metered devices. Constrained / Save-Data / reduced-motion / low-end devices
-  // get just the solid same-colour overlay — which is this component's designed base
-  // layer ("if the video never loads nothing breaks"), so the section keeps its exact
-  // colour identity and only loses the subtle 45%-opacity motion. `cap.ready` is false
-  // during SSR + first client render → video is withheld until we know the device can
-  // take it (no hydration mismatch, and weak devices never create the element).
-  const enableVideo = cap.ready && !cap.liteExperience;
+  // un-metered, REAL-MOUSE devices. Constrained / Save-Data / reduced-motion / low-end
+  // AND every touch device (coarse pointer) get just the solid same-colour overlay —
+  // this component's designed base layer ("if the video never loads nothing breaks"),
+  // so the section keeps its exact colour identity and only loses the subtle
+  // 45%-opacity motion. Touch is now excluded because these decorative ink backdrops
+  // were the BULK of the mobile payload — the same 9MB clip fetched by every instance
+  // (StatsGrid + Industries + Footer) for a texture that's barely perceptible on a
+  // phone. `cap.ready` is false during SSR + first client render → video is withheld
+  // until we know the device can take it (no hydration mismatch; weak/touch devices
+  // never create the element).
+  const enableVideo = cap.ready && !cap.liteExperience && !cap.coarsePointer;
 
   useEffect(() => {
     if (!enableVideo) return;
@@ -123,14 +127,18 @@ export function VideoBackdrop({ variant, className, overlayOpacity = 0.45, fixed
       )}
     >
       {enableVideo && (
+        // No autoPlay + preload="none": autoPlay forces the browser to fetch the whole
+        // clip on mount even for off-screen instances (the three ink backdrops each
+        // pulled the full 9MB eagerly, competing with LCP). The IntersectionObserver
+        // effect above calls play() only when the backdrop nears the viewport, so the
+        // file downloads on demand and repeat instances reuse the HTTP cache.
         <video
           ref={videoRef}
           className="video-backdrop-video"
           muted
           loop
           playsInline
-          autoPlay
-          preload="metadata"
+          preload="none"
           tabIndex={-1}
         >
           <source src={SRC[variant]} type="video/mp4" />

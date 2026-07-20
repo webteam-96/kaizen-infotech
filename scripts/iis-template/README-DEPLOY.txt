@@ -69,6 +69,39 @@ The site RUNS with no configuration. These are only needed for optional features
 See .env.example for the full list.
 
 --------------------------------------------------------------------------------
+ PERFORMANCE (recommended — biggest real-user speed wins, Option A)
+--------------------------------------------------------------------------------
+The homepage is fully pre-rendered static HTML, so a WARM server answers in tens of
+ms. Field data showed ~1.9s TTFB — the signature of IIS letting the Node process go
+idle and cold-booting it for the next visitor. Fix that (and set one canonical host):
+
+1. KEEP NODE WARM (kills cold-start TTFB — do this first). In an elevated cmd, using
+   your actual App Pool + Site names:
+     %windir%\system32\inetsrv\appcmd set apppool "KaizenPool" /startMode:AlwaysRunning
+     %windir%\system32\inetsrv\appcmd set apppool "KaizenPool" /processModel.idleTimeout:00:00:00
+     %windir%\system32\inetsrv\appcmd set apppool "KaizenPool" /recycling.periodicRestart.time:00:00:00
+     %windir%\system32\inetsrv\appcmd set site "KaizenSite" /[path='/'].applicationDefaults.preloadEnabled:true
+   (Belt-and-suspenders: a Task Scheduler task that curls https://kaizeninfotech.com/
+    every 5 min also keeps it hot.)
+
+2. WARM-START ON RECYCLE. Enable the "Application Initialization" IIS role feature
+   (Server Manager -> Add Roles -> Web Server -> Application Development -> Application
+   Initialization), then UNCOMMENT block (2) in web.config. With AlwaysRunning +
+   preloadEnabled (step 1) IIS pings "/" after every recycle so Node is never cold.
+
+3. ONE CANONICAL HOST (www -> apex). Install "URL Rewrite"
+   (https://www.iis.net/downloads/microsoft/url-rewrite), then UNCOMMENT block (1) in
+   web.config. It 301s www.kaizeninfotech.com -> kaizeninfotech.com before Node runs,
+   matching the site's canonical/sitemap (all apex) and removing a redirect hop.
+   (If you'd rather standardise on www, flip the rule's host + target and change
+    SITE_CONFIG.url in the source, then rebuild.)
+
+   IMPORTANT: each web.config block needs its module (above) FIRST — uncommenting
+   before installing throws HTTP 500.19. gzip + 1-yr immutable caching for
+   /videos /images /fonts already ship from Node (next.config.ts), so no extra
+   compression/caching config is required here; Brotli is an optional future add.
+
+--------------------------------------------------------------------------------
  NOTES
 --------------------------------------------------------------------------------
 * Node process listens on the PORT env var (IIS sets it automatically in Option A;
