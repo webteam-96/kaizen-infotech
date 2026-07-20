@@ -47,9 +47,11 @@ New-Item -ItemType Directory -Force (Join-Path $bundle '.next\static') | Out-Nul
 Copy-Item -Recurse -Force "$root\.next\static\*" (Join-Path $bundle '.next\static')
 New-Item -ItemType Directory -Force (Join-Path $bundle 'public') | Out-Null
 Copy-Item -Recurse -Force "$root\public\*" (Join-Path $bundle 'public')
-# 3. hand-written IIS files
+# 3. hand-written IIS files. web.config is deliberately NOT bundled: the live
+#    server keeps its own customized copy (env vars, Plesk settings) and a
+#    bundled one would overwrite it on deploy. The reference template stays in
+#    scripts\iis-template\web.config for first-time setup.
 $tpl = Join-Path $root 'scripts\iis-template'
-Copy-Item (Join-Path $tpl 'web.config')        $bundle
 Copy-Item (Join-Path $tpl 'start.bat')         $bundle
 Copy-Item (Join-Path $tpl 'README-DEPLOY.txt') $bundle
 Copy-Item (Join-Path $tpl '.env.example')      $bundle
@@ -58,11 +60,7 @@ Copy-Item (Join-Path $tpl 'logs-README.txt') (Join-Path $bundle 'logs\README.txt
 
 # 3b. optional: bake the Resend key into the BUNDLE copies only (never the templates)
 if ($ResendKey) {
-  Write-Host '== injecting RESEND_API_KEY into bundle web.config + start.bat ==' -ForegroundColor Cyan
-  $wc = Join-Path $bundle 'web.config'
-  (Get-Content $wc -Raw) -replace '<environmentVariable name="NODE_ENV" value="production" />',
-    ("<environmentVariable name=`"NODE_ENV`" value=`"production`" />`r`n        <environmentVariable name=`"RESEND_API_KEY`" value=`"$ResendKey`" />") |
-    Set-Content $wc -NoNewline
+  Write-Host '== injecting RESEND_API_KEY into bundle start.bat ==' -ForegroundColor Cyan
   $sb = Join-Path $bundle 'start.bat'
   (Get-Content $sb -Raw) -replace 'REM set RESEND_API_KEY=\.\.\.', "set RESEND_API_KEY=$ResendKey" |
     Set-Content $sb -NoNewline
@@ -71,11 +69,7 @@ if ($ResendKey) {
 # 3c. optional: random captcha-token signing secret (default is public in the repo,
 #     so production should always override it — pass e.g. two concatenated GUIDs)
 if ($CaptchaSecret) {
-  Write-Host '== injecting CAPTCHA_SECRET into bundle web.config + start.bat ==' -ForegroundColor Cyan
-  $wc = Join-Path $bundle 'web.config'
-  (Get-Content $wc -Raw) -replace '<environmentVariable name="NODE_ENV" value="production" />',
-    ("<environmentVariable name=`"NODE_ENV`" value=`"production`" />`r`n        <environmentVariable name=`"CAPTCHA_SECRET`" value=`"$CaptchaSecret`" />") |
-    Set-Content $wc -NoNewline
+  Write-Host '== injecting CAPTCHA_SECRET into bundle start.bat ==' -ForegroundColor Cyan
   $sb = Join-Path $bundle 'start.bat'
   (Get-Content $sb -Raw) -replace 'REM set CAPTCHA_SECRET=\.\.\.', "set CAPTCHA_SECRET=$CaptchaSecret" |
     Set-Content $sb -NoNewline

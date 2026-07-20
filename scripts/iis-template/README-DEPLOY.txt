@@ -10,7 +10,9 @@ node_modules, the compiled app (.next), and all static assets (public/).
   node_modules/        -> only the packages the server needs (already trimmed)
   .next/               -> compiled app + .next/static assets
   public/              -> images, videos, data/blogs.json, favicons, etc.
-  web.config           -> IIS config (HttpPlatformHandler) — see Option A
+  (web.config is NOT included in this bundle — the live server keeps its own
+   customized copy. For a first-time setup, take the reference template from
+   the repo at scripts\iis-template\web.config.)
   start.bat            -> manual / service run on port 3000 — see Option B
   .env.example         -> the environment variables the app understands
 
