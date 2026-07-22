@@ -40,7 +40,17 @@ const projectTypeOptions = [
 // Contact info
 // ---------------------------------------------------------------------------
 
-const contactInfo = [
+type ContactInfoItem = {
+  label: string;
+  value: string;
+  href: string;
+  copyable: boolean;
+  externalLink: boolean;
+  /** Optional lead-in text rendered inline before the linked value. */
+  prefix?: string;
+};
+
+const contactInfo: ContactInfoItem[] = [
   {
     label: 'Email',
     value: 'communication@kaizeninfotech.com',
@@ -50,8 +60,11 @@ const contactInfo = [
   },
   {
     label: 'Calls & WhatsApp',
-    value: '+91 93721 30855',
-    href: 'tel:+919372130855',
+    // Reads "For business enquiries contact +91 93724 30855"; the number stays
+    // a tel: link and the copy button copies just the number.
+    prefix: 'For business enquiries contact',
+    value: '+91 93724 30855',
+    href: 'tel:+919372430855',
     copyable: true,
     externalLink: false,
   },
@@ -363,15 +376,20 @@ export default function ContactPage() {
                       </p>
                       <div className="flex min-w-0 items-center gap-2">
                         {item.href ? (
-                          <a
-                            href={item.href}
-                            target={item.href?.startsWith('http') ? '_blank' : undefined}
-                            rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                            className="focus-ring min-w-0 break-all text-[length:var(--text-base)] text-[var(--text-on-ink)] transition-colors hover:text-[var(--accent-on-ink)]"
+                          <p
+                            className="min-w-0 text-[length:var(--text-base)] text-[var(--text-on-ink)]"
                             style={{ fontFamily: 'var(--font-body)' }}
                           >
-                            {item.value}
-                          </a>
+                            {item.prefix ? <>{item.prefix} </> : null}
+                            <a
+                              href={item.href}
+                              target={item.href?.startsWith('http') ? '_blank' : undefined}
+                              rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                              className="focus-ring break-all transition-colors hover:text-[var(--accent-on-ink)]"
+                            >
+                              {item.value}
+                            </a>
+                          </p>
                         ) : (
                           <p
                             className="text-[length:var(--text-base)] text-[var(--text-on-ink)]"

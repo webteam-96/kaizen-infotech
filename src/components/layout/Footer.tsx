@@ -228,8 +228,8 @@ export function Footer() {
             )}
 
             <div className="mt-6 space-y-2 text-[length:var(--text-xs)] text-[var(--text-on-ink-muted)]">
-              <p>dhini.s@kaizeninfotech.com</p>
-              <p>+91 93721 30855</p>
+              <p>communication@kaizeninfotech.com</p>
+              <p>+91 93724 30855</p>
               <p>Thane West, Thane, Maharashtra 400604</p>
             </div>
           </div>

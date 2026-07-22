@@ -318,6 +318,13 @@ export default function CareersPage() {
                     >
                       {SITE_CONFIG.email}
                     </a>
+                    . For more information on open roles, call{' '}
+                    <a
+                      href="tel:+919372130855"
+                      className="focus-ring text-[var(--color-accent-primary)] underline underline-offset-2 hover:opacity-80"
+                    >
+                      +91 93721 30855
+                    </a>
                   </p>
                 </div>
               </FadeIn>
