@@ -10,7 +10,7 @@ import { useLenis } from '@/components/layout/SmoothScroll';
 import type Lenis from 'lenis';
 import Spline from '@splinetool/react-spline';
 import { HexGridBackground } from '@/components/shared/HexGridBackground';
-import { HexPrismBackground } from '@/components/shared/HexPrismBackground';
+import { HexDomeBackground } from '@/components/shared/HexDomeBackground';
 import { RubiksHeroStatic } from './RubiksHeroStatic';
 
 /* ══════════════════════════════════════════════════════════════
@@ -170,12 +170,18 @@ export function RubiksCubeExperience() {
   const scanlineRef = useRef<HTMLDivElement>(null);
   const diveVignetteRef = useRef<HTMLDivElement>(null);
   const streaksRef = useRef<HTMLDivElement>(null);
-  const backdropFxRef = useRef<HTMLDivElement>(null);
-  // Animated hex-grid backdrop behind the opening act (the hook card + Spline
-  // computer) — a tiny, light-grey honeycomb with a 3D light-blue water-ripple
-  // flowing left→right, replacing the old "Landing Page Background" video.
-  // Visible at full strength during the intro, fades out (and hard-hides) as the
-  // dive leaves the intro so its canvas idles for the rest of the cube narrative.
+  // The cube-narrative motion background — the "hex dome" canvas recreating
+  // the client's reference video: two massive convex honeycomb domes flanking
+  // the frame, melting into a bright central glow (HexDomeBackground). Sits
+  // UNDER the intro backdrop below and is revealed as that fades on the dive;
+  // display-toggled off once the section has fully scrolled past so its rAF
+  // idles for the rest of the page.
+  const domeBgRef = useRef<HTMLDivElement>(null);
+  // The landing (opening act) backdrop — the blue hex-ripple honeycomb behind
+  // the Spline computer + hook card. Full strength at rest, fades out (and
+  // hard-hides) during the dive, revealing the hex-dome canvas beneath for the
+  // rest of the narrative. Restored per client request: landing keeps the old
+  // background; the dome takes over after scrolling.
   const introBgFxRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   // Lazy-mount guard for the Spline WebGL scene: only kept in the tree while the
@@ -222,9 +228,9 @@ export function RubiksCubeExperience() {
     if (!loaderComplete) return;
     // Loader has cleared. Resume the Spline scene, which loaded sharp under the
     // overlay but was frozen, so its typing intro now animates in view. The two
-    // canvas backdrops (hex-grid + the hex-prism field) are self-animating and only
-    // activate now, via active={loaderComplete}, so they never compete with
-    // the Spline/Three.js boot on a cold load.
+    // canvas backdrops (blue hex-ripple intro + hex-dome narrative) are
+    // self-animating and only activate now, via active={loaderComplete}, so
+    // they never compete with the Spline/Three.js boot on a cold load.
     splineStartRef.current?.();
   }, [loaderComplete]);
 
@@ -1380,6 +1386,14 @@ export function RubiksCubeExperience() {
       const spacer = rootEl.querySelector('[data-scroll-spacer]') as HTMLElement;
       if (!spacer) return;
       const rect = spacer.getBoundingClientRect();
+      // Hex-dome background: display-toggle with the section. display:none
+      // collapses its geometry so the IntersectionObserver inside
+      // HexDomeBackground reports not-intersecting and idles its rAF for the
+      // entire rest of the page (opacity alone would keep the canvas painting).
+      if (domeBgRef.current) {
+        const show = rect.bottom > 0 ? 'block' : 'none';
+        if (domeBgRef.current.style.display !== show) domeBgRef.current.style.display = show;
+      }
       // When the bottom of the spacer is above viewport, hide everything
       if (rect.bottom <= 0) {
         fixedLayer.style.opacity = '0';
@@ -1608,30 +1622,19 @@ export function RubiksCubeExperience() {
       }
       const rawP = smoothProgress;
 
-      // Hex-prism backdrop: hidden during intro, fades to 40% once cubes are visible.
-      if (backdropFxRef.current) {
-        backdropFxRef.current.style.opacity = String(
-          lerp01(rawP, INTRO_END, INTRO_END + 0.03) * 0.4
-        );
-      }
-      // Hex-grid backdrop: full strength while the computer sits at rest, then
-      // fades out AS THE COMPUTER ZOOMS IN — the dive into the screen runs across
-      // introT ~0.32→0.70, so the backdrop recedes with it and is gone by the
-      // time the screen fills. Whether the dive is driven by scroll or by the
-      // Enter/Space "play like a video" autoplay, both feed the same scroll
-      // progress, so the fade follows either trigger. Reverses on scroll-up.
-      // Past the intro it's display:none'd so its canvas rAF idles (the
-      // IntersectionObserver inside HexGridBackground stops the loop) for the
-      // whole rest of the cube narrative.
+      // Landing backdrop (blue hex-ripple): full strength while the computer
+      // sits at rest, then fades out AS THE COMPUTER ZOOMS IN — the dive runs
+      // across introT ~0.32→0.70, so the backdrop recedes with it, revealing
+      // the hex-dome canvas beneath (which persists for the whole narrative).
+      // Whether the dive is driven by scroll or by the Enter/Space autoplay,
+      // both feed the same scroll progress, so the crossfade follows either
+      // trigger and reverses on scroll-up. Past the intro it's display:none'd
+      // so its canvas rAF idles (the IntersectionObserver inside
+      // HexGridBackground stops the loop) for the rest of the cube narrative.
       if (introBgFxRef.current) {
         const introT = rawP / INTRO_END;
         const op = rawP < INTRO_END ? Math.max(0, 1 - lerp01(introT, 0.30, 0.62)) : 0;
         introBgFxRef.current.style.opacity = String(op);
-        // Hard-hide the moment it's invisible (op reaches 0 at introT≈0.62, well
-        // before INTRO_END) so HexGridBackground's IntersectionObserver idles its
-        // rAF — instead of the canvas rendering unseen for ~46vh of the dive and
-        // then the whole cube narrative. Restores to block (and restarts) on
-        // scroll back up as soon as op climbs above 0.
         introBgFxRef.current.style.display = op > 0 ? 'block' : 'none';
       }
 
@@ -1712,45 +1715,47 @@ export function RubiksCubeExperience() {
     <div ref={containerRef} className="relative" style={{ background: BG_COLOR }}>
       {/* All fixed elements wrapped in a single layer for visibility control */}
       <div ref={fixedLayerRef} className="transition-opacity duration-300" style={{ willChange: 'opacity' }}>
+        {/* Cube-narrative motion background — recreates the client's reference
+            video (BackDrop Rubix Section.mp4): two massive convex honeycomb
+            DOMES flanking lower-left and upper-right, high-density white hex
+            lattice over light-grey cells, both surfaces dissolving into a
+            bright radial glow at the central vanishing point, with the pattern
+            slowly ROLLING along each curved surface in a seamless loop (see
+            HexDomeBackground). Sits at the BOTTOM of the backdrop stack: the
+            opaque landing backdrop below covers it at rest and fades out on
+            the dive, revealing this canvas for the whole cube narrative
+            (replacing the old hex-prism field). pointer-events-none so the
+            computer/scroll stay interactive; motion is ambient-only per the
+            reference. `active` gated on loaderComplete so the canvas never
+            competes with the Spline/Three.js boot on a cold load; display is
+            toggled off by updateFixedVisibility once the section has fully
+            scrolled past. */}
+        <div ref={domeBgRef} aria-hidden className="pointer-events-none fixed inset-0 z-[-1]">
+          <HexDomeBackground active={loaderComplete} />
+        </div>
+
         {/* Landing-page hex-grid backdrop — continuous, full-bleed animated
-            honeycomb for the opening act, sitting behind the Spline computer and
-            the hook card (replaces the old background video). Tiny grey lattice
-            over the #f5f5f5 stage with a 3D light-blue water-ripple flowing
-            left→right and a per-tile micro-animation under the cursor. pointer-events-
-            none so the computer/scroll stay interactive — the hex still reacts to
-            the pointer because HexGridBackground tracks it on `window`. The
-            wrapper's opacity + display are scroll-driven (fades/hard-hides on the
-            dive). */}
+            honeycomb for the opening act, sitting behind the Spline computer
+            and the hook card. Tiny grey lattice over the soft blue-white stage
+            with a 3D light-blue water-ripple flowing left→right and a per-tile
+            micro-animation under the cursor (HexGridBackground tracks the
+            pointer on `window`, so pointer-events-none keeps the computer/
+            scroll interactive). The wrapper's opacity + display are scroll-
+            driven in tick(): opaque at rest (covering the hex-dome canvas
+            beneath), crossfading out during the dive. */}
         <div
           ref={introBgFxRef}
           aria-hidden
           className="pointer-events-none fixed inset-0 z-[-1]"
-          // Soft blue-white stage so the WHITE honeycomb reads and the field feels
-          // "white and blue". Fades out (opacity→0) during the dive, revealing the
-          // #f5f5f5 container beneath, so there is no lasting colour shift.
+          // Soft blue-white stage so the WHITE honeycomb reads and the field
+          // feels "white and blue". Opaque, so it fully covers the hex-dome
+          // canvas below until the dive crossfades it away.
           style={{ opacity: 1, background: '#e9eef8' }}
         >
-          {/* active gated on loaderComplete: the honeycomb stays inert behind the
-              countdown loader so it never competes with the Spline/Three.js boot
-              on a cold load — it starts the moment the hero reveals. */}
+          {/* active gated on loaderComplete: the honeycomb stays inert behind
+              the countdown loader so it never competes with the Spline/Three.js
+              boot on a cold load — it starts the moment the hero reveals. */}
           <HexGridBackground variant="mono" waveDirection="radial" active={loaderComplete} />
-        </div>
-
-        {/* Hex-prism honeycomb backdrop — a lightweight canvas that REPLACES the old
-            multi-MB backdrop-rubix.mp4 ambient video (zero download): a white 3D
-            honeycomb of matte hexagonal pillars that gently breathe up/down in a slow
-            wave, recreating the video's look. Fixed + full-bleed, behind every layer
-            including Spline. Starts hidden (opacity 0) during the opening act and is
-            faded up to 40% by updateIntro once the cubes come into view (see
-            backdropFxRef above). `active={loaderComplete}` keeps its canvas inert until
-            the loader clears so it never competes with the Spline/three.js boot. */}
-        <div
-          ref={backdropFxRef}
-          aria-hidden
-          className="pointer-events-none fixed inset-0 z-[-1]"
-          style={{ opacity: 0 }}
-        >
-          <HexPrismBackground active={loaderComplete} />
         </div>
 
         {/* Spline desktop (opening act) — right side, behind the transparent cube canvas.
