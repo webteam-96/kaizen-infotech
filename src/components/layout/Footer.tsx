@@ -249,7 +249,7 @@ export function Footer() {
                 <a
                   key={social.platform}
                   href={social.href}
-                  className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(245,248,252,0.14)] text-[var(--text-on-ink-muted)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-110 hover:border-[var(--accent-on-ink)] hover:text-[var(--accent-on-ink)]"
+                  className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(245,248,252,0.14)] text-[var(--text-on-ink-muted)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-110 hover:border-[var(--accent-on-ink)] hover:text-[var(--accent-on-ink)]"
                   aria-label={social.platform}
                   target="_blank"
                   rel="noopener noreferrer"

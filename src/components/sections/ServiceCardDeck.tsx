@@ -369,14 +369,20 @@ const styles = `
 .oc-card-cta::after{content:"→";transition:transform .3s;}
 .oc-card.active:hover .oc-card-cta::after{transform:translateX(4px);}
 
-/* dots */
-.oc-dots{display:flex;gap:10px;padding:0 0 5vh;z-index:5;}
+/* dots — 24px hit box (touch target) with a 9px visual dot rendered via ::before */
+.oc-dots{display:flex;gap:6px;padding:0 0 5vh;z-index:5;}
 .oc-dot{
-  width:9px;height:9px;border-radius:50%;border:0;padding:0;cursor:pointer;
-  background:rgba(245,248,252,.28);transition:transform .3s, background .3s, box-shadow .3s;
+  width:24px;height:24px;border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:transparent;position:relative;-webkit-tap-highlight-color:transparent;
 }
-.oc-dot:hover{transform:scale(1.3);}
-.oc-dot.on{background:var(--accent);transform:scale(1.25);box-shadow:0 0 12px var(--accent);}
+.oc-dot::before{
+  content:"";position:absolute;top:50%;left:50%;width:9px;height:9px;border-radius:50%;
+  background:rgba(245,248,252,.28);
+  transform:translate(-50%,-50%);
+  transition:transform .3s, background .3s, box-shadow .3s;
+}
+.oc-dot:hover::before{transform:translate(-50%,-50%) scale(1.3);}
+.oc-dot.on::before{background:var(--accent);transform:translate(-50%,-50%) scale(1.25);box-shadow:0 0 12px var(--accent);}
 
 /* detail panel */
 .oc-panel{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0;transition:opacity .35s;}

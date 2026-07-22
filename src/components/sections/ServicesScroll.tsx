@@ -151,9 +151,15 @@ export function ServicesScroll() {
     const measure = () => {
       const vw = window.innerWidth;
 
-      // Mouse + large screen: keep the exact original 800×860 desktop geometry.
+      // Mouse + large screen: keep the original 800-wide desktop geometry, but
+      // scale the box HEIGHT with the big-screen root font-size steps (globals.css)
+      // so the rem-based card text never overflows the fixed box at >=1920. W and
+      // GAP stay fixed so the horizontal pin choreography is unchanged.
       if (window.matchMedia(DESKTOP_MEDIA).matches) {
-        const next = { w: DESKTOP_W, h: DESKTOP_H, gap: DESKTOP_GAP };
+        const rootPx =
+          parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const k = Math.max(1, rootPx / 16);
+        const next = { w: DESKTOP_W, h: Math.round(DESKTOP_H * k), gap: DESKTOP_GAP };
         metricsRef.current = next; // keep the live mirror in lock-step with state
         setMetrics((m) =>
           m.w === next.w && m.h === next.h && m.gap === next.gap ? m : next,

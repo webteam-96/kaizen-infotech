@@ -319,17 +319,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     // ---- Render as Next.js Link when href is provided ----
+    // The padded/sized classes (`combined`) go on the <Link> itself, not on the
+    // wrapper — otherwise the anchor collapses to text height and the button's
+    // padding becomes a non-clickable dead zone. The wrapper only carries the
+    // magnetic ref + hover/tap motion.
     if (href) {
       return (
         <motion.span
           ref={buttonRef as React.RefObject<HTMLSpanElement>}
-          className={combined}
-          role="link"
+          className="inline-flex"
           {...motionProps}
         >
           <Link
             href={href}
-            className="inline-flex h-full w-full items-center justify-center gap-[inherit]"
+            className={combined}
             tabIndex={isDisabled ? -1 : 0}
           >
             {inner}

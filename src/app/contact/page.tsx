@@ -219,7 +219,7 @@ export default function ContactPage() {
 
       {/* Contact Form + Info */}
       <section className="section-tint seam-blue relative px-6 py-24 md:px-12 lg:px-24">
-        <div className="mx-auto grid max-w-7xl gap-16 md:grid-cols-2 lg:grid-cols-[1fr_auto_400px]">
+        <div className="mx-auto grid max-w-7xl gap-16 xl:grid-cols-[1fr_auto_25rem]">
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-10">
             <div ref={formFieldsRef} className="space-y-10">
@@ -328,8 +328,8 @@ export default function ContactPage() {
             </div>
           </form>
 
-          {/* Vertical Section Divider (desktop only) */}
-          <SectionDivider variant="line" direction="vertical" className="hidden lg:block" />
+          {/* Vertical Section Divider — only when the 3-column layout is active (xl+) */}
+          <SectionDivider variant="line" direction="vertical" className="hidden xl:block" />
 
           {/* Contact Info Sidebar */}
           <ScrollFadeIn direction="right">
@@ -361,13 +361,13 @@ export default function ContactPage() {
                         </span>
                         {item.label}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         {item.href ? (
                           <a
                             href={item.href}
                             target={item.href?.startsWith('http') ? '_blank' : undefined}
                             rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                            className="focus-ring text-[length:var(--text-base)] text-[var(--text-on-ink)] transition-colors hover:text-[var(--accent-on-ink)]"
+                            className="focus-ring min-w-0 break-all text-[length:var(--text-base)] text-[var(--text-on-ink)] transition-colors hover:text-[var(--accent-on-ink)]"
                             style={{ fontFamily: 'var(--font-body)' }}
                           >
                             {item.value}

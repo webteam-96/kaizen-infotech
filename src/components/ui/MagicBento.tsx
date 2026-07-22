@@ -471,14 +471,23 @@ const useReducedEffects = () => {
   const [reduce, setReduce] = useState(false);
 
   useEffect(() => {
+    // Disable mouse-driven effects (particles/magnetism/spotlight) on any touch
+    // device — not just <=768px. Every iPad is a coarse pointer, and on touch a
+    // tap fires synthetic mouse events with no mouseleave, so magnetism would
+    // leave the tapped card stuck displaced. Keep the small-screen and
+    // reduced-motion guards too.
+    const mqTouch = window.matchMedia('(hover: none), (pointer: coarse)');
     const mqMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
     const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduce(mqMobile.matches || mqMotion.matches);
+    const update = () =>
+      setReduce(mqTouch.matches || mqMobile.matches || mqMotion.matches);
 
     update();
+    mqTouch.addEventListener('change', update);
     mqMobile.addEventListener('change', update);
     mqMotion.addEventListener('change', update);
     return () => {
+      mqTouch.removeEventListener('change', update);
       mqMobile.removeEventListener('change', update);
       mqMotion.removeEventListener('change', update);
     };

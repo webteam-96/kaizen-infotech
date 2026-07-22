@@ -163,7 +163,7 @@ export function ProcessSteps() {
         'relative flex flex-col overflow-hidden section-light-aura seam-blue',
         // Full-viewport height for the GSAP pin on EVERY device (phones included).
         // Reduced motion keeps natural height (native horizontal scroll, no pin).
-        prefersReducedMotion ? 'h-auto' : 'h-screen',
+        prefersReducedMotion ? 'h-auto' : 'h-svh',
       )}
     >
       {/* ── Section header ──────────────────────────────────────── */}

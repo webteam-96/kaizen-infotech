@@ -129,8 +129,9 @@ export function Navbar() {
             </motion.div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden items-center gap-8 lg:flex">
+          {/* Desktop Navigation — desk: (mouse+hover, >=1024) so touch iPads get the
+              mobile menu instead of the hover-only link row. */}
+          <div className="hidden items-center gap-8 desk:flex">
             {NAV_LINKS.map((link, i) => (
               <NavLink
                 key={link.href}
@@ -146,7 +147,7 @@ export function Navbar() {
           <button
             ref={toggleRef}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="focus-ring relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 lg:hidden"
+            className="focus-ring relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 desk:hidden"
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMenuOpen}
           >
@@ -181,9 +182,12 @@ export function Navbar() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             ref={menuRef}
-            className="fixed inset-0 z-[calc(var(--z-sticky)-1)] bg-[var(--color-bg-primary)]"
+            className="fixed inset-0 z-[calc(var(--z-sticky)-1)] overflow-y-auto bg-[var(--color-bg-primary)]"
           >
-            <div className="flex h-full flex-col items-center justify-center gap-8">
+            {/* min-h-full + justify-center centers the links when they fit, but the
+                overlay scrolls (overflow-y-auto) when they don't — e.g. all 7 links
+                at text-4xl on a short landscape phone — so none are clipped/unreachable. */}
+            <div className="flex min-h-full flex-col items-center justify-center gap-8 px-6 py-24">
               {NAV_LINKS.map((link, i) => (
                 <motion.div
                   key={link.href}

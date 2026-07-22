@@ -181,13 +181,15 @@ export function FeaturedWork() {
 
       {/* Scroll area — drives the animation */}
       <div ref={sectionRef} style={{ height: `${N * 70}vh` }} className="relative">
-        {/* Sticky viewport */}
-        <div className="sticky top-0 flex flex-col min-h-[760px] h-[80vh] items-center justify-center overflow-hidden section-tint">
-          {/* Card stack */}
+        {/* Sticky viewport — cap the min-height to the visible viewport (svh) so the
+            pinned stage never extends below the fold on short screens (1366x768
+            laptops, phones, iPad landscape), which would clip the card + View All CTA. */}
+        <div className="sticky top-0 flex flex-col min-h-[min(760px,100svh)] h-[80svh] items-center justify-center overflow-hidden section-tint">
+          {/* Card stack — rem height so it scales with the big-screen root font steps */}
           <div
             ref={stackRef}
-            className="relative mx-auto w-full max-w-[860px] px-4"
-            style={{ height: 'min(640px, 80vh)' }}
+            className="relative mx-auto w-full max-w-[53.75rem] px-4"
+            style={{ height: 'min(40rem, 80svh)' }}
           >
             {featured.map((project, i) => (
               <div

@@ -163,14 +163,16 @@ export function CountdownLoader() {
         </div>
       ))}
 
-      {/* Brand name */}
+      {/* Brand name — font + tracking shrink on narrow phones so the nowrap line
+          is not clipped by the fixed overlay below ~395px (page has overflow-x:clip). */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap"
+        className="absolute left-1/2 -translate-x-1/2 text-center"
         style={{
           bottom: '15vh',
+          maxWidth: '94vw',
           fontFamily: 'var(--font-body)',
-          fontSize: '0.75rem',
-          letterSpacing: '0.4em',
+          fontSize: 'clamp(0.6rem, 2.4vw, 0.75rem)',
+          letterSpacing: 'clamp(0.18em, 1.1vw, 0.4em)',
           textTransform: 'uppercase',
           color: 'rgba(0,0,0,0.2)',
           opacity: 0,

@@ -187,7 +187,9 @@
    heading (blue h2). Body/sub stay ≥16px for readability. Targets ≤1024px
    (phones + iPad-portrait) plus any coarse-pointer screen ≤1366px (iPad
    landscape), but never a mouse desktop. */
-@media (max-width: 1024px), (max-width: 1366px) and (pointer: coarse) {
+/* First arm is 1023.98px (not 1024) so it never co-applies with the desk: /
+   deck (min-width:1024px) desktop styles at exactly 1024px on a fine pointer. */
+@media (max-width: 1023.98px), (max-width: 1366px) and (pointer: coarse) {
   :root {
     --h-hero:    clamp(1.625rem, 1.40rem + 1.0vw,  2.25rem);   /* ~26 → 36 px */
     --h-page:    clamp(1.375rem, 1.20rem + 0.8vw,  1.875rem);  /* ~22 → 30 px */
@@ -1310,27 +1312,28 @@ html.has-custom-cursor * {
 
 /* ===== Tablet: ≥ 768px ===== */
 @media (min-width: 768px) {
-  .container { max-width: 720px; padding-inline: 2rem; }
+  .container { max-width: 45rem; padding-inline: 2rem; }
   .grid-responsive { grid-template-columns: repeat(2, 1fr); }  /* 2 columns */
   .heading-responsive { font-size: clamp(2rem, 1.5rem + 2vw, 2.5rem); }
 }
 
 /* ===== Laptop: ≥ 1024px ===== */
 @media (min-width: 1024px) {
-  .container { max-width: 980px; }
+  .container { max-width: 61.25rem; }
   .grid-responsive { grid-template-columns: repeat(3, 1fr); }  /* 3 columns */
   .heading-responsive { font-size: clamp(2.5rem, 2rem + 2vw, 3.5rem); }
 }
 
 /* ===== Desktop / Big screen: ≥ 1280px ===== */
 @media (min-width: 1280px) {
-  .container { max-width: 1200px; }
+  .container { max-width: 75rem; }
   .grid-responsive { grid-template-columns: repeat(4, 1fr); }  /* 4 columns */
 }
 
 /* ===== Very large screens: ≥ 1536px ===== */
 @media (min-width: 1536px) {
-  .container { max-width: 1440px; }
+  /* rem (not px) so .container rides the root font-size steps like --container-max */
+  .container { max-width: 90rem; }
 }
 
 /* ===========================================================================
@@ -1412,6 +1415,14 @@ html.has-custom-cursor * {
   color: var(--color-text-tertiary);
 }
 .prose-custom table {
+  /* display:block + overflow-x:auto turns the table into its own horizontal
+     scroll container. Imported blog HTML isn't wrapped in a div, and the page
+     uses overflow-x:clip, so without this a wide table would be clipped and
+     unreachable on narrow phones. */
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   width: 100%;
   margin: 1.5rem 0;
   border-collapse: collapse;
@@ -1787,7 +1798,11 @@ html.has-custom-cursor * {
   position: absolute;
   inset: 0;
   padding: 0 0.05em;
-  white-space: nowrap;
+  /* normal (not nowrap) so the crisp overlay wraps identically to the ghost layer
+     beneath it. nowrap kept the overlay on one line while the ghost wrapped at
+     narrow desktop widths (1025-1150px, ~466px content column), producing doubled/
+     misaligned headline text. When a line fits (wide desktop) normal never wraps. */
+  white-space: normal;
   color: var(--color-text-primary);
   clip-path: inset(0 calc((1 - var(--hl)) * 100%) 0 0); /* hard L→R wipe to crisp */
   will-change: clip-path;
@@ -1855,6 +1870,7 @@ html.has-custom-cursor * {
   align-items: center;
   gap: 0.5rem;
   width: fit-content;
+  min-height: 44px; /* touch target — text alone is only ~18px tall */
   margin-top: 0.2rem;
   line-height: 1;
   font-family: var(--font-body);
@@ -1929,13 +1945,15 @@ html.has-custom-cursor * {
    override it and re-break the static fallback). */
 @media (max-width: 1024px) and (prefers-reduced-motion: no-preference) {
   .sia-card {
-    grid-template-rows: 100vh 100vh;   /* keep the 200vh scroll stage */
+    /* svh (small viewport) so mobile browser chrome never clips the pinned pane;
+       all three must use the SAME unit or the card-on-card cover math desyncs. */
+    grid-template-rows: 100svh 100svh;   /* keep the 200svh scroll stage */
     display: grid;
   }
-  .sia-card + .sia-card { margin-top: -100vh; }   /* keep card stacking */
+  .sia-card + .sia-card { margin-top: -100svh; }   /* keep card stacking */
 
   .sia-sticky {
-    height: 100vh;
+    height: 100svh;
     position: sticky;
     top: 0;
     overflow: hidden;
@@ -1965,4 +1983,21 @@ html.has-custom-cursor * {
     padding: 0 .05em;
   }
   .sia-hl { display: block; }   /* re-show the highlight bar */
+}
+
+/* ── Mobile/iPad SHORT-viewport guard: on landscape phones and small portraits
+   the full single-column stack (media + headline + bullets + closing + CTA) can
+   exceed the pane; shrink it so the closing line and "Know More" CTA stay visible
+   instead of being clipped inside the overflow:hidden pinned pane. */
+@media (max-width: 1024px) and (max-height: 700px) and (prefers-reduced-motion: no-preference) {
+  .sia-sticky {
+    gap: clamp(0.5rem, 2vh, 1rem);
+    padding-block: clamp(0.6rem, 2.5vh, 1.25rem);
+  }
+  .sia-media { min-height: 16vh; }
+  .sia-image-wrap { width: 52%; }
+  .sia-headline { font-size: clamp(1.35rem, 5.2vw, 2rem); }
+  .sia-content { gap: 0.45rem; }
+  .sia-bullets li { font-size: var(--text-sm); }
+  .sia-closing { font-size: var(--text-sm); }
 }

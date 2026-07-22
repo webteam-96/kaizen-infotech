@@ -27,17 +27,20 @@ export function HorizontalScroll({
       if (!sectionRef.current || !trackRef.current) return;
 
       const track = trackRef.current;
-      const scrollWidth = track.scrollWidth - track.clientWidth;
+      // Re-measure on every ScrollTrigger.refresh() (resize / orientation change)
+      // instead of capturing once at mount — a static distance leaves the track
+      // panning the wrong amount after a rotation (overshoot or unreachable tail).
+      const getDistance = () => track.scrollWidth - track.clientWidth;
 
-      if (scrollWidth <= 0) return;
+      if (getDistance() <= 0) return;
 
       gsap.to(track, {
-        x: -scrollWidth,
+        x: () => -getDistance(),
         ease: 'none',
         scrollTrigger: {
           trigger: sectionRef.current,
           start: 'top top',
-          end: () => `+=${scrollWidth * speed}`,
+          end: () => `+=${getDistance() * speed}`,
           scrub: ANIMATION_CONFIG.scrub.smooth,
           pin: true,
           anticipatePin: 1,

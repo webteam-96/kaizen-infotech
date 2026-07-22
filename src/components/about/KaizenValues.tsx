@@ -45,7 +45,7 @@ const VALUES: Value[] = [
 const SWIPE_DISTANCE = 70;
 const SWIPE_VELOCITY = 350;
 // Top padding so pinned content clears a fixed navbar. Tune to your navbar height.
-const NAV_OFFSET = "pt-24";
+const NAV_OFFSET = "pt-20";
 
 export default function KaizenValues() {
   const prefersReduced = useReducedMotion();
@@ -165,7 +165,7 @@ export default function KaizenValues() {
       className="relative"
     >
       <div
-        className={`sticky top-0 flex h-screen flex-col items-center justify-center overflow-hidden bg-white ${NAV_OFFSET}`}
+        className={`sticky top-0 flex h-svh flex-col items-center justify-center overflow-hidden bg-white ${NAV_OFFSET}`}
       >
         <Header />
 
@@ -210,7 +210,7 @@ export default function KaizenValues() {
             <motion.div
               key={index}
               custom={direction}
-              className="card-red-accent relative flex h-[520px] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
+              className="card-red-accent relative flex h-[min(32.5rem,56svh)] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
               style={{ zIndex: 20 }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
@@ -242,17 +242,23 @@ export default function KaizenValues() {
         </div>
 
         {/* Controls — progress dots */}
-        <div className="mt-8 flex items-center justify-center gap-2">
+        <div className="mt-8 flex items-center justify-center">
           {VALUES.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i)}
               aria-label={`Go to value ${i + 1}`}
               aria-current={i === index}
-              className={`h-2 rounded-full transition-all ${
-                i === index ? "w-6 bg-sky-500" : "w-2 bg-slate-300 hover:bg-slate-400"
-              }`}
-            />
+              className="group flex h-6 items-center justify-center px-2"
+            >
+              <span
+                className={`block h-2 rounded-full transition-all ${
+                  i === index
+                    ? "w-6 bg-sky-500"
+                    : "w-2 bg-slate-300 group-hover:bg-slate-400"
+                }`}
+              />
+            </button>
           ))}
         </div>
       </div>

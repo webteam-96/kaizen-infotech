@@ -403,7 +403,7 @@ export default function AboutPage() {
 
           <ScrollFadeIn>
             <DeliveryProcess steps={deliverySteps} />
-            <p className="mt-6 text-center text-[length:var(--text-sm)] text-[var(--color-text-secondary)] md:hidden">
+            <p className="mt-6 text-center text-[length:var(--text-sm)] text-[var(--color-text-secondary)] desk:hidden">
               Tap a step to expand it.
             </p>
           </ScrollFadeIn>
