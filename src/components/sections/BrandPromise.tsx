@@ -25,7 +25,10 @@ export function BrandPromise() {
         className="flex min-h-screen items-center justify-center section-tint"
       >
         <div className="mx-auto max-w-[var(--container-max)] px-[var(--container-padding)] text-center">
-          <div className="space-y-4">
+          {/* Single server-rendered <h1> for the homepage — the primary value
+              proposition. The 3D hero's headings render client-side (ssr:false),
+              so this is the page's crawlable H1 for SEO/AI engines. */}
+          <h1 className="space-y-4">
             {lines.map((line, lineIndex) => {
               const lineStart = lineIndex / lines.length;
               const lineEnd = (lineIndex + 1) / lines.length;
@@ -42,9 +45,10 @@ export function BrandPromise() {
               const after = line.text.slice(verbIdx + line.verb.length);
 
               return (
-                <p
+                <span
                   key={lineIndex}
                   className={cn(
+                    'block',
                     'font-[family-name:var(--font-display)]',
                     'text-[clamp(1.75rem,4.5vw,3.5rem)] leading-[1.2] tracking-tight',
                     'transition-all duration-300',
@@ -71,10 +75,10 @@ export function BrandPromise() {
                     />
                   </span>
                   <span className="text-[var(--color-text-primary)]">{after}</span>
-                </p>
+                </span>
               );
             })}
-          </div>
+          </h1>
         </div>
       </PinnedSection>
     </section>

@@ -38,6 +38,7 @@ export function organizationSchema() {
     name: SITE_NAME,
     legalName: SITE_NAME,
     url: SITE_URL,
+    slogan: 'Business First. Technology Second.',
     logo: {
       '@type': 'ImageObject',
       url: `${SITE_URL}/images/logos/kaizen-logo.png`,
@@ -45,6 +46,17 @@ export function organizationSchema() {
     image: `${SITE_URL}/images/og/og-default.png`,
     description:
       'Kaizen Infotech Solutions delivers custom software, mobile apps, event management systems, enterprise web portals, and digital marketing for enterprises, government bodies, and global communities.',
+    // Entity-expertise topics — helps AI/generative search associate the brand
+    // with what it actually does. Facts, mirroring the real service catalogue.
+    knowsAbout: [
+      'Custom Software Development',
+      'Mobile App Development',
+      'Event Registration & Management Systems',
+      'Enterprise Web Portals',
+      'Digital Marketing',
+      'Business Process Automation',
+      'Digital Transformation',
+    ],
     email: SITE_CONFIG.contactEmail,
     telephone: SITE_CONFIG.phone,
     address: postalAddress,
