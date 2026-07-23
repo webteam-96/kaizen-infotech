@@ -250,6 +250,22 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Streaming/hydration CLS guard. Two traced windows let the Footer paint at
+   the viewport origin and then jump ~20000px down when the page content
+   landed — PageSpeed scored it as TWO full-viewport (1.0) layout shifts on
+   mobile (footer.section-ink > FlowingLightWaves):
+     1. mid-stream, the page's <main> sits inside a hidden region (offsetHeight
+        0 even with a min-height — so a rule on <main> does NOT hold), and
+     2. during hydration React briefly REPLACES <main> (it leaves the DOM).
+   AppFrame's #main-content wrapper is present and visible through BOTH
+   windows, so the viewport-height reservation lives on it: the Footer can
+   never start above the fold, and its later push-down happens entirely
+   off-screen (unscored). Real page content always exceeds this height. */
+#main-content {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
 ::selection {
   background-color: var(--color-accent-primary);
   color: var(--color-text-inverse);

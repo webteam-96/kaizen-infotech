@@ -21,11 +21,27 @@ await page.addInitScript(() => {
     return parts.join(' < ');
   };
   const sample = (t) => {
-    for (const el of document.querySelectorAll('.absolute.inset-0')) {
-      const r = el.getBoundingClientRect();
-      if (r.y < 10 && r.width > 1000 && r.height > 200) {
-        window.__hits.push({ t: Math.round(t), rect: `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`, chain: chain(el) });
-        if (window.__hits.length > 12) return; // enough
+    const footer = document.querySelector('footer');
+    if (footer) {
+      const r = footer.getBoundingClientRect();
+      if (r.y < 10 && r.height > 100) {
+        // Flash frame: dump the footer's siblings — who is (or isn't) above it?
+        const sibs = footer.parentElement
+          ? [...footer.parentElement.children].map(
+              (c) =>
+                `${c.tagName.toLowerCase()}.${(typeof c.className === 'string' ? c.className : '').split(/\s+/).slice(0, 2).join('.')}=h${c.offsetHeight}`,
+            )
+          : [];
+        window.__hits.push({
+          t: Math.round(t),
+          rect: `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`,
+          mainExists: !!document.querySelector('main'),
+          mainH: document.querySelector('main')?.offsetHeight ?? -1,
+          mainMinH: document.querySelector('main') ? getComputedStyle(document.querySelector('main')).minHeight : 'n/a',
+          sibs: sibs.slice(0, 8),
+          chain: chain(footer),
+        });
+        if (window.__hits.length > 6) return;
       }
     }
     requestAnimationFrame(sample);
@@ -47,5 +63,5 @@ await page.waitForTimeout(6000);
 
 const hits = await page.evaluate(() => window.__hits);
 if (!hits.length) console.log('no viewport-origin backdrop caught');
-for (const h of hits.slice(0, 8)) console.log(`@${h.t}ms ${h.rect}\n   ${h.chain}\n`);
+for (const h of hits.slice(0, 4)) console.log(JSON.stringify(h, null, 1));
 await browser.close();
