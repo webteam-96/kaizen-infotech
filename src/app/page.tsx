@@ -29,7 +29,7 @@ export default function HomePage() {
       <link
         rel="preload"
         as="image"
-        href="/images/hero/spline-monitor-poster.webp"
+        href="/images/hero/spline-monitor-poster-v2.webp"
         type="image/webp"
         fetchPriority="high"
       />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import * as THREE from 'three';
 import { useGSAP } from '@gsap/react';
@@ -133,6 +133,24 @@ const SPLINE_SCENE_URL = '/spline/scene-v1.splinecode';
    1.5.2 (the runtime's baked-in default) — keep the package version and this
    directory in lockstep when upgrading. */
 const SPLINE_WASM_PATH = '/spline/wasm';
+
+/* react-spline has no onError prop — a failed scene/wasm fetch throws through
+   React and, uncontained, unmounts the ENTIRE landing page into the app error
+   boundary ("Something went wrong"). Contain it here instead: on failure the
+   live monitor simply never mounts and the full-quality poster stays as the
+   monitor — the page, cube, and every animation keep running. */
+class SplineErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(err: unknown) {
+    console.warn('[hero] Spline scene failed to load — keeping the static poster.', err);
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 /* The Spline canvas always renders at this fixed square size (big enough to hold
    the whole monitor), then is scaled DOWN to fit any viewport — so the monitor is
@@ -1803,26 +1821,28 @@ export function RubiksCubeExperience() {
                 the exact same spot, so there's no pop). Inline width/height beat
                 the unlayered `img{height:auto}` reset (same trick as the video). */}
             <img
-              src="/images/hero/spline-monitor-poster.webp"
+              src="/images/hero/spline-monitor-poster-v2.webp"
               alt=""
               aria-hidden
               draggable={false}
-              // LCP element. It's the blurred placeholder behind the Spline
-              // monitor, so a tiny WebP (≈14KB vs the old 150KB JPEG) is
-              // visually identical through the blur. fetchPriority=high +
-              // decoding=async + the matching <link rel=preload> on the home
-              // route (src/app/page.tsx) make it discoverable and painted early
-              // even though this component is a dynamic(ssr:false) chunk.
+              // LCP element. v2 is the full-quality 2412×1808 capture (~95KB
+              // q86) — the old 14.5KB webp relied on a heavy CSS blur to hide
+              // its compression, which made the monitor read as permanently
+              // smeared on touch devices (where this poster IS the monitor).
+              // fetchPriority=high + decoding=async + the matching
+              // <link rel=preload> on the home route (src/app/page.tsx) make it
+              // discoverable and painted early even though this component is a
+              // dynamic(ssr:false) chunk.
               fetchPriority="high"
               decoding="async"
               style={{
                 position: 'absolute', inset: 0,
                 width: '100%', height: '100%', maxWidth: 'none',
                 objectFit: 'fill',
-                // On touch the live Spline never loads, so this poster IS the monitor
-                // — use a light blur (crisp-ish static screen) instead of the heavy
-                // placeholder blur that's meant to be crossfaded away on desktop.
-                filter: cap.coarsePointer ? 'blur(3px)' : 'blur(7px)',
+                // Touch: the live Spline never mounts — show the monitor fully
+                // CRISP. Desktop: a light defocus as the placeholder "focuses
+                // in" when the live scene crossfades over it.
+                filter: cap.coarsePointer ? 'none' : 'blur(2.5px)',
                 transform: 'scale(1.04)',
                 opacity: splineLoaded ? 0 : 1,
                 transition: 'opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1)',
@@ -1834,6 +1854,7 @@ export function RubiksCubeExperience() {
                 transformOrigin is set to the screen centre in the effect. */}
             <div ref={splineZoomRef} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: -120, transformOrigin: '48% 36%', willChange: 'transform' }}>
               {splineNearViewport && allowLiveMonitor && (
+                <SplineErrorBoundary>
                 <div
                   style={{
                     width: '100%',
@@ -1903,6 +1924,7 @@ export function RubiksCubeExperience() {
                   }}
                 />
                 </div>
+                </SplineErrorBoundary>
               )}
               {/* Dissolve the canvas-drawn "Built with Spline" watermark (bottom-right).
                   A flat fill left a bright rectangle because the scene background is a

@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { CSSProperties } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import { useDeviceCapability } from '@/hooks';
 import { RubiksHeroStatic } from './RubiksHeroStatic';
 
@@ -54,13 +54,19 @@ const BG_COLOR = '#f5f5f5';
 //     (0.7·vw + 60px) at every viewport width; ×1.04 closes the size gap.
 //   compact (≤1024): contain is width-driven on portrait; ×1.45 = the
 //     experience's own compact `fill` factor exactly.
+// Poster asset is the FULL-QUALITY 2412×1808 capture (v2, ~95KB q86) — the old
+// 14.5KB webp was compressed on the assumption a heavy CSS blur would always
+// hide its artifacts, which made the monitor read as permanently smeared
+// (especially on phones, where the poster IS the monitor and never crossfades
+// to the live scene). Compact/touch now shows it fully crisp; desktop keeps a
+// light 2.5px defocus purely as the "focuses in" placeholder feel until the
+// live Spline scene fades over it.
 const posterImgStyle: CSSProperties = {
   position: 'absolute',
   inset: 0,
   width: '100%',
   height: '100%',
   objectFit: 'contain',
-  filter: 'blur(7px)',
   pointerEvents: 'none',
 };
 
@@ -72,10 +78,11 @@ const Spacer = () => (
       // the pre-mount frame matches the mounted first frame.
       style={{ height: '100svh', background: '#e9eef8' }}
     >
-      {/* compact (phones + portrait tablets): monitor-as-hero, centred */}
+      {/* compact (phones + portrait tablets): monitor-as-hero, centred, CRISP —
+          on touch this poster stays as the monitor, so no placeholder blur */}
       <img
         className="lg:hidden"
-        src="/images/hero/spline-monitor-poster.webp"
+        src="/images/hero/spline-monitor-poster-v2.webp"
         alt=""
         aria-hidden
         draggable={false}
@@ -88,10 +95,11 @@ const Spacer = () => (
           transformOrigin: '50% 45%',
         }}
       />
-      {/* desktop (>1024): two-column layout, monitor right */}
+      {/* desktop (>1024): two-column layout, monitor right; light defocus until
+          the live scene takes over */}
       <img
         className="hidden lg:block"
-        src="/images/hero/spline-monitor-poster.webp"
+        src="/images/hero/spline-monitor-poster-v2.webp"
         alt=""
         aria-hidden
         draggable={false}
@@ -100,6 +108,7 @@ const Spacer = () => (
         style={{
           ...posterImgStyle,
           objectPosition: '50% 50%',
+          filter: 'blur(2.5px)',
           transform: 'translate(calc(20% + 60px), 30px) scale(1.04)',
         }}
       />
@@ -114,6 +123,28 @@ const RubiksCubeExperience = dynamic(
 
 export function RubiksHero() {
   const cap = useDeviceCapability();
+
+  // Warm the Spline runtime chunk + scene file the moment a capable
+  // fine-pointer device is confirmed — in PARALLEL with the hero chunk
+  // download instead of serially after it mounts. Shortens the blurred
+  // placeholder window on desktop by roughly the hero chunk's fetch+parse
+  // time; phones/lite devices (which never mount the live scene) request
+  // nothing. The experience's own warm-up stays as a fallback — import() is
+  // cached and duplicate prefetch links dedupe to a single request.
+  useEffect(() => {
+    if (!cap.ready || cap.liteExperience) return;
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    void import('@splinetool/react-spline');
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.as = 'fetch';
+    // Keep in sync with SPLINE_SCENE_URL in RubiksCubeExperience — NOT
+    // imported from there, because a static import would fuse the heavy hero
+    // chunk into this eager one.
+    link.href = '/spline/scene-v1.splinecode';
+    document.head.appendChild(link);
+    return () => link.remove();
+  }, [cap.ready, cap.liteExperience]);
 
   // SSR + first client render (before the capability resolves): emit the exact same
   // spacer, so hydration matches and the page height is stable.
