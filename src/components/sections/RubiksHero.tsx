@@ -41,17 +41,27 @@ const BG_COLOR = '#f5f5f5';
 // replaces the old blank flash until the experience takes over with its
 // identical poster in the same spot.
 //
-// Geometry mirrors RubiksCubeExperience's computeSplineScale() (fit-scale of a
-// 1200×900 design frame) closely enough that the takeover doesn't jump behind
-// the 7px blur:
-//   desktop (>1024): right 60% column, height-fit ×1.16 overflow, 90vw width cap
-//   compact (≤1024): centred, width-driven 145vw, height-clamped ×1.45
+// CLS-hardened sizing: the img's LAYOUT box is the full sticky viewport
+// (inset-0, width/height 100%, object-fit contain — no calc()/min()/svh width
+// math, nothing the browser can re-resolve mid-load; an earlier version sized
+// the img with min(90vw, calc(…svh…)) inline widths and Lighthouse caught the
+// box re-laying-out between streaming/hydration frames as a ~0.14 CLS event).
+// ALL geometry matching against RubiksCubeExperience's computeSplineScale()
+// happens in `transform` + object-position instead, which are paint-only and
+// exempt from layout-shift scoring by spec:
+//   desktop (>1024): contain height ≈ 100svh ≈ the frame's (svh−96)×1.16;
+//     translate(calc(20% + 60px)) re-centres onto the right column
+//     (0.7·vw + 60px) at every viewport width; ×1.04 closes the size gap.
+//   compact (≤1024): contain is width-driven on portrait; ×1.45 = the
+//     experience's own compact `fill` factor exactly.
 const posterImgStyle: CSSProperties = {
-  aspectRatio: '4 / 3',
-  maxWidth: 'none',
-  objectFit: 'fill',
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
   filter: 'blur(7px)',
-  transform: 'scale(1.04)',
+  pointerEvents: 'none',
 };
 
 const Spacer = () => (
@@ -63,29 +73,36 @@ const Spacer = () => (
       style={{ height: '100svh', background: '#e9eef8' }}
     >
       {/* compact (phones + portrait tablets): monitor-as-hero, centred */}
-      <div className="absolute inset-0 flex items-center justify-center lg:hidden">
-        <img
-          src="/images/hero/spline-monitor-poster.webp"
-          alt=""
-          aria-hidden
-          draggable={false}
-          fetchPriority="high"
-          decoding="async"
-          style={{ ...posterImgStyle, width: 'min(145vw, calc((100svh - 130px) * 1.933))' }}
-        />
-      </div>
+      <img
+        className="lg:hidden"
+        src="/images/hero/spline-monitor-poster.webp"
+        alt=""
+        aria-hidden
+        draggable={false}
+        fetchPriority="high"
+        decoding="async"
+        style={{
+          ...posterImgStyle,
+          objectPosition: '50% 45%',
+          transform: 'scale(1.45)',
+          transformOrigin: '50% 45%',
+        }}
+      />
       {/* desktop (>1024): two-column layout, monitor right */}
-      <div className="absolute inset-y-0 right-0 hidden w-[60%] items-center justify-center pl-[120px] pt-[60px] lg:flex">
-        <img
-          src="/images/hero/spline-monitor-poster.webp"
-          alt=""
-          aria-hidden
-          draggable={false}
-          fetchPriority="high"
-          decoding="async"
-          style={{ ...posterImgStyle, width: 'min(90vw, calc((100svh - 96px) * 1.547))' }}
-        />
-      </div>
+      <img
+        className="hidden lg:block"
+        src="/images/hero/spline-monitor-poster.webp"
+        alt=""
+        aria-hidden
+        draggable={false}
+        fetchPriority="high"
+        decoding="async"
+        style={{
+          ...posterImgStyle,
+          objectPosition: '50% 50%',
+          transform: 'translate(calc(20% + 60px), 30px) scale(1.04)',
+        }}
+      />
     </div>
   </div>
 );

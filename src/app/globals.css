@@ -676,10 +676,16 @@ body.loader-active {
 }
 
 /* ===== COUNTDOWN — Thread/Knot Style ===== */
+/* Reveal via scaleY, NOT height: the thread used to grow height 0→clamp(...),
+   a layout animation that pushed the knot/digit down each frame and snapped
+   back on exit — Lighthouse scored every digit as a small layout shift.
+   The thread now has its final height from the start and unrolls with a
+   transform (paint-only, CLS-exempt); the stretched-gradient visual is
+   identical, and the .cd-number box never changes size. */
 @keyframes rc-threadGrow {
-  0% { height: 0; opacity: 0; }
+  0% { transform: scaleY(0); opacity: 0; }
   20% { opacity: 1; }
-  100% { height: clamp(60px, 12vh, 100px); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
 }
 @keyframes rc-knotAppear {
   0% { opacity: 0; transform: scale(0); }
@@ -736,9 +742,11 @@ body.loader-active {
   animation: rc-numExit 0.4s cubic-bezier(0.6,0,1,1) forwards !important;
 }
 .cd-thread {
-  width: 1.5px; height: 0;
+  width: 1.5px; height: clamp(60px, 12vh, 100px);
   background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.15) 40%, var(--color-accent-primary));
   transform-origin: top center;
+  transform: scaleY(0);
+  opacity: 0;
 }
 .active .cd-thread {
   animation: rc-threadGrow 0.45s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
