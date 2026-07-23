@@ -1,7 +1,7 @@
 'use client';
 
 import React, { forwardRef, useId, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -95,13 +95,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       : 'rgba(33, 150, 243, 0.1)';
 
   return (
-    <motion.div
+    <m.div
       className={cn('relative w-full', className)}
       variants={shakeVariants}
       animate={error ? 'shake' : 'idle'}
     >
       {/* Floating label */}
-      <motion.label
+      <m.label
         htmlFor={inputId}
         className={cn(
           'pointer-events-none absolute left-0 origin-left',
@@ -121,7 +121,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         style={{ top: '50%', translateY: '-50%' }}
       >
         {label}
-      </motion.label>
+      </m.label>
 
       {/* Input */}
       <input
@@ -145,7 +145,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       />
 
       {/* Focus glow */}
-      <motion.div
+      <m.div
         className="pointer-events-none absolute bottom-0 left-0 right-0 h-px"
         animate={{
           boxShadow: isFocused ? `0 2px 20px 4px ${glowColor}` : '0 0 0 0 transparent',
@@ -156,7 +156,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       {/* Success checkmark */}
       <AnimatePresence>
         {success && !error && (
-          <motion.div
+          <m.div
             className="absolute right-0 top-1/2 -translate-y-1/2"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -170,7 +170,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <motion.path
+              <m.path
                 d="M4 10.5L8 14.5L16 6.5"
                 stroke="var(--color-accent-secondary)"
                 strokeWidth="2"
@@ -181,14 +181,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
                 transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
               />
             </svg>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Error message */}
       <AnimatePresence>
         {error && (
-          <motion.p
+          <m.p
             id={errorId}
             role="alert"
             className="mt-1.5 text-[length:var(--text-xs)] text-[var(--color-accent-warm)]"
@@ -198,9 +198,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             transition={{ duration: 0.2 }}
           >
             {error}
-          </motion.p>
+          </m.p>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 });

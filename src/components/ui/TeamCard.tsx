@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { motion, useInView as useFramerInView } from 'framer-motion';
+import { m, useInView as useFramerInView } from 'framer-motion';
 import Image from 'next/image';
 import { cn } from '@/lib/utils/cn';
 
@@ -109,7 +109,7 @@ export function TeamCard({
   const heightClass = heightVariations[index % heightVariations.length];
 
   return (
-    <motion.article
+    <m.article
       ref={cardRef}
       className={cn(
         'group relative flex flex-col overflow-hidden rounded-[var(--radius-lg)]',
@@ -123,7 +123,7 @@ export function TeamCard({
     >
       {/* Portrait image with clip-path circle reveal */}
       <div className="relative flex-1 overflow-hidden">
-        <motion.div
+        <m.div
           className="absolute inset-0"
           initial={{ clipPath: 'circle(0% at 50% 50%)' }}
           animate={isInView ? { clipPath: 'circle(75% at 50% 50%)' } : undefined}
@@ -139,7 +139,7 @@ export function TeamCard({
               'group-hover:scale-105 group-hover:saturate-[1.2]'
             )}
           />
-        </motion.div>
+        </m.div>
 
         {/* Duotone overlay on hover */}
         <div
@@ -192,7 +192,7 @@ export function TeamCard({
         {hasSocial && (
           <div className="mt-4 flex items-center gap-3">
             {social.linkedin && (
-              <motion.a
+              <m.a
                 href={social.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -205,10 +205,10 @@ export function TeamCard({
                 whileHover={{ scale: 1.15 }}
               >
                 <LinkedInIcon />
-              </motion.a>
+              </m.a>
             )}
             {social.twitter && (
-              <motion.a
+              <m.a
                 href={social.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -221,10 +221,10 @@ export function TeamCard({
                 whileHover={{ scale: 1.15 }}
               >
                 <TwitterIcon />
-              </motion.a>
+              </m.a>
             )}
             {social.github && (
-              <motion.a
+              <m.a
                 href={social.github}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -237,11 +237,11 @@ export function TeamCard({
                 whileHover={{ scale: 1.15 }}
               >
                 <GitHubIcon />
-              </motion.a>
+              </m.a>
             )}
           </div>
         )}
       </div>
-    </motion.article>
+    </m.article>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useId, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -80,7 +80,7 @@ export function Checkbox({
       />
 
       {/* Custom checkbox */}
-      <motion.div
+      <m.div
         role="checkbox"
         aria-checked={checked}
         tabIndex={disabled ? -1 : 0}
@@ -104,7 +104,7 @@ export function Checkbox({
           xmlns="http://www.w3.org/2000/svg"
           className="text-[var(--color-text-inverse)]"
         >
-          <motion.path
+          <m.path
             d="M2 6.5L4.5 9L10 3"
             stroke="currentColor"
             strokeWidth="2"
@@ -118,7 +118,7 @@ export function Checkbox({
             transition={{ duration: 0.25, ease: 'easeOut' }}
           />
         </svg>
-      </motion.div>
+      </m.div>
 
       {/* Label */}
       {label && (

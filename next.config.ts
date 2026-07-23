@@ -54,9 +54,24 @@ const nextConfig: NextConfig = {
   async headers() {
     const IMMUTABLE = 'public, max-age=31536000, immutable';
     return [
-      { source: '/videos/:path*', headers: [{ key: 'Cache-Control', value: IMMUTABLE }] },
+      // HSTS: skips the http→https 301 round-trip on repeat visits (and hardens
+      // the site). No 'preload' until the canonical host direction (www vs apex)
+      // is settled at the server layer.
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+        ],
+      },
       { source: '/images/:path*', headers: [{ key: 'Cache-Control', value: IMMUTABLE }] },
       { source: '/fonts/:path*', headers: [{ key: 'Cache-Control', value: IMMUTABLE }] },
+      // Self-hosted Spline scene + wasm helpers. Both are version-pinned by
+      // NAME (scene-v1…, wasm dir tied to @splinetool/runtime's exact version),
+      // so immutable is safe — bump the filename/dir when either changes.
+      { source: '/spline/:path*', headers: [{ key: 'Cache-Control', value: IMMUTABLE }] },
       {
         source: '/data/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],

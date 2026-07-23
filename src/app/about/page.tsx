@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import KaizenValues from '@/components/about/KaizenValues';
 import DeliveryProcess from '@/components/about/DeliveryProcess';
 import { TextReveal } from '@/components/animation/TextReveal';
@@ -230,7 +230,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-4xl text-center">
           <AnimatePresence mode="wait">
             {missionVisionProgress < 0.5 ? (
-              <motion.div
+              <m.div
                 key="mission"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -251,9 +251,9 @@ export default function AboutPage() {
                   simplifying operations, improving engagement, and supporting
                   long-term growth for every organisation we serve.
                 </h2>
-              </motion.div>
+              </m.div>
             ) : (
-              <motion.div
+              <m.div
                 key="vision"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -275,7 +275,7 @@ export default function AboutPage() {
                   future-ready digital platforms that deliver measurable
                   business impact.
                 </h2>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
 

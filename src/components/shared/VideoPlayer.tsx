@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -108,7 +108,7 @@ export function VideoPlayer({
       {/* Play/Pause overlay */}
       <AnimatePresence>
         {showOverlay && (
-          <motion.button
+          <m.button
             type="button"
             onClick={togglePlay}
             aria-label={isPlaying ? 'Pause video' : 'Play video'}
@@ -124,14 +124,14 @@ export function VideoPlayer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <motion.div
+            <m.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
               <PlayIcon />
-            </motion.div>
-          </motion.button>
+            </m.div>
+          </m.button>
         )}
       </AnimatePresence>
 

@@ -722,7 +722,7 @@ export const projects: Project[] = [
       'We built a centralized portal: a fund-request portal where individuals submit needs with KYC and supporting documents in a single submission visible to all registered NGOs; a searchable NGO and funder directory filterable by assistance type, location, and eligibility; real-time application tracking with automated notifications and direct NGO-applicant communication; secure document management; and a reporting and analytics dashboard — all accessible across devices.',
     result:
       'Critical financial aid now reaches beneficiaries faster, automated communication and digital KYC cut administrative work, and applicants from any region of India can connect with registered NGOs — backed by transparent, secure handling of sensitive personal and financial data.',
-    image: '/images/projects/zfunds.png',
+    image: '/images/projects/zfunds.webp',
     gallery: [],
     metrics: [
       { value: 'Nationwide', label: 'NGO Network' },
@@ -805,7 +805,7 @@ export const projects: Project[] = [
       'We delivered a mobile app and website: a global member directory, community updates and announcements, role-based reports and analytics, an events calendar with engagement tools, and admin dashboards with automated workflows.',
     result:
       'The platform improved member connectivity across the globe, delivered clearer visibility into participation and growth, and streamlined administrative processes — freeing the foundation to focus on impactful community initiatives.',
-    image: '/images/projects/agni-foundation.png',
+    image: '/images/projects/agni-foundation.webp',
     gallery: [],
     metrics: [
       { value: 'Global', label: 'Member Reach' },

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { TestimonialCard } from '@/components/ui/TestimonialCard';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { testimonials } from '@/content/testimonials';
@@ -78,7 +78,7 @@ export function Testimonials() {
           {/* Cards */}
           <div className="mx-auto max-w-3xl">
             <AnimatePresence mode="wait">
-              <motion.div
+              <m.div
                 key={activeIndex}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export function Testimonials() {
                   clientImage={testimonials[activeIndex].clientImage}
                   isActive
                 />
-              </motion.div>
+              </m.div>
             </AnimatePresence>
           </div>
 
@@ -113,7 +113,7 @@ export function Testimonials() {
               >
                 {/* Active ring */}
                 {i === activeIndex && (
-                  <motion.span
+                  <m.span
                     className="absolute inset-[-3px] rounded-full border-2 border-[var(--color-accent-primary)]"
                     layoutId="testimonial-ring"
                     transition={{ type: 'spring', stiffness: 300, damping: 25 }}

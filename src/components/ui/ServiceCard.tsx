@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 import { Card } from './Card';
 
@@ -47,7 +47,7 @@ export function ServiceCard({
   compact = false,
 }: ServiceCardProps) {
   return (
-    <motion.div
+    <m.div
       // h-full w-full: the card must FILL its parent box (the fixed-size deck
       // card / grid cell). Without this the wrapper is auto-height, so the inner
       // Card's `h-full` collapsed to the content height and every card sized to
@@ -117,6 +117,6 @@ export function ServiceCard({
           </p>
         </div>
       </Card>
-    </motion.div>
+    </m.div>
   );
 }

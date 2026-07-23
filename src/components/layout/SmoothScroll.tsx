@@ -45,8 +45,6 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
 
   const setScrollState = useScrollStore((s) => s.setScrollState);
 
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   // Initialize Lenis
   useEffect(() => {
     const prefersReducedMotion =
@@ -77,7 +75,20 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     } else {
       window.addEventListener('load', onLoad, { once: true });
     }
-    const onResize = () => scheduleRefresh();
+    // Mobile URL-bar show/hide fires HEIGHT-only resizes mid-scroll; a full
+    // ScrollTrigger.refresh() there re-seats every pin spacer while content is
+    // on screen — the dominant real-user (field) CLS source on touch devices.
+    // ScrollTrigger.config({ ignoreMobileResize }) only silences its INTERNAL
+    // resize listener, not this one — so apply the same policy here: on coarse
+    // pointers, only refresh when the WIDTH actually changes (rotation, split
+    // view). Desktop behaviour is unchanged.
+    let lastResizeW = window.innerWidth;
+    const onResize = () => {
+      const w = window.innerWidth;
+      if (w === lastResizeW && window.matchMedia('(pointer: coarse)').matches) return;
+      lastResizeW = w;
+      scheduleRefresh();
+    };
     window.addEventListener('resize', onResize);
 
     // ── Reduced motion: NO Lenis, NO smoothing — native browser scroll. ──
@@ -128,12 +139,26 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     // motion stays smooth — Lenis just catches up over the next few frames.
     let lastMs = 0;
     let virtualMs = 0;
+    // Scroll-idle detection lives in this ticker (see handleScroll): checking a
+    // timestamp once per frame replaces the old clearTimeout+setTimeout pair
+    // that ran on EVERY scroll event (~60 timer allocations/second while
+    // scrolling). Same observable behaviour: isScrolling flips false ~150ms
+    // after the last scroll event.
+    let lastScrollMs = -1;
+    const markScrolling = () => {
+      lastScrollMs = performance.now();
+    };
     const tickerCallback = (time: number) => {
       const ms = time * 1000;
       if (lastMs === 0) lastMs = ms;
       virtualMs += Math.min(50, ms - lastMs);
       lastMs = ms;
       instance.raf(virtualMs);
+      if (lastScrollMs >= 0 && performance.now() - lastScrollMs > 150) {
+        lastScrollMs = -1;
+        setScrollState({ isScrolling: false, scrollVelocity: 0 });
+        updateSkew(0);
+      }
     };
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
@@ -144,14 +169,18 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     // RAF transforms; using a CSS var keeps the two systems composable
     // instead of fighting per-frame.
     let smoothedVelocity = 0;
+    // Cache the last written value: writing a root CSS custom property
+    // invalidates style for every var() consumer, so skip the setProperty when
+    // the rounded value hasn't changed (most frames once velocity settles).
+    let lastSkew = '';
     const updateSkew = (velocity: number) => {
       if (prefersReducedMotion) return;
       smoothedVelocity = smoothedVelocity * 0.85 + velocity * 0.15;
       const clamped = Math.max(-1, Math.min(1, smoothedVelocity / 80));
-      document.documentElement.style.setProperty(
-        '--scroll-skew',
-        `${(clamped * 1.2).toFixed(3)}deg`
-      );
+      const next = `${(clamped * 1.2).toFixed(3)}deg`;
+      if (next === lastSkew) return;
+      lastSkew = next;
+      document.documentElement.style.setProperty('--scroll-skew', next);
     };
 
     // Update scroll store on scroll
@@ -177,14 +206,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
         isScrolling: true,
       });
       updateSkew(velocity);
-
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      scrollTimeoutRef.current = setTimeout(() => {
-        setScrollState({ isScrolling: false, scrollVelocity: 0 });
-        updateSkew(0);
-      }, 150);
+      markScrolling();
     };
 
     instance.on('scroll', handleScroll);
@@ -198,10 +220,6 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       window.removeEventListener('load', onLoad);
       window.removeEventListener('resize', onResize);
       if (refreshTimer) clearTimeout(refreshTimer);
-
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
     };
   }, [setScrollState]);
 

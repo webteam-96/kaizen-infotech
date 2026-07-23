@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import Image from 'next/image';
 import { cn } from '@/lib/utils/cn';
 
@@ -42,7 +42,7 @@ export function TestimonialCard({
   isActive = true,
 }: TestimonialCardProps) {
   return (
-    <motion.article
+    <m.article
       className={cn(
         'relative flex flex-col rounded-[var(--radius-lg)] p-8 md:p-10',
         'border border-[var(--color-border)]',
@@ -123,6 +123,6 @@ export function TestimonialCard({
           </p>
         </div>
       </div>
-    </motion.article>
+    </m.article>
   );
 }

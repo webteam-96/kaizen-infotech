@@ -3,7 +3,7 @@
 import { createElement, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
-  motion,
+  m,
   animate,
   useInView,
   useScroll,
@@ -378,7 +378,7 @@ function ReadingProgress() {
     mass: 0.3,
   });
   return (
-    <motion.div
+    <m.div
       aria-hidden
       style={{ scaleX, transformOrigin: '0%' }}
       className="fixed inset-x-0 top-0 z-[70] h-[3px] bg-gradient-to-r from-[var(--color-accent-secondary)] to-[var(--color-accent-primary)]"
@@ -427,7 +427,7 @@ function SectionEyebrow({ label, color }: { label: string; color: string }) {
   const inView = useInView(ref, { once: true, margin: '-80px' });
   return (
     <div ref={ref} className="mb-4 flex items-center gap-3">
-      <motion.span
+      <m.span
         className="h-px"
         style={{ backgroundColor: color }}
         initial={{ width: 0 }}

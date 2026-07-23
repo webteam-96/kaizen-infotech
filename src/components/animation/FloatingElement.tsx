@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { useReducedMotion } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
@@ -27,7 +27,7 @@ export function FloatingElement({
   }
 
   return (
-    <motion.div
+    <m.div
       className={cn(className)}
       animate={{
         y: [-amplitude, amplitude, -amplitude],
@@ -41,6 +41,6 @@ export function FloatingElement({
       }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

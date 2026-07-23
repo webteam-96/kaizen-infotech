@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback, forwardRef } from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { m, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
 import { useMagnetic } from '@/hooks/useMagnetic';
@@ -77,7 +77,7 @@ function Ripple({
   onComplete: () => void;
 }) {
   return (
-    <motion.span
+    <m.span
       className="pointer-events-none absolute rounded-full bg-[var(--color-accent-primary)]"
       style={{ left: x, top: y, x: '-50%', y: '-50%' }}
       initial={{ width: 0, height: 0, opacity: 0.35 }}
@@ -284,7 +284,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {/* Text / spinner with AnimatePresence */}
         <AnimatePresence mode="wait" initial={false}>
           {isLoading ? (
-            <motion.span
+            <m.span
               key="spinner"
               className="relative z-10 flex items-center justify-center"
               variants={contentVariants}
@@ -294,9 +294,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               transition={{ duration: 0.2 }}
             >
               <Spinner size={size} />
-            </motion.span>
+            </m.span>
           ) : (
-            <motion.span
+            <m.span
               key="content"
               className="relative z-10 flex items-center justify-center gap-[inherit]"
               variants={contentVariants}
@@ -312,7 +312,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 children
               )}
               {rightIcon && <span className="shrink-0">{rightIcon}</span>}
-            </motion.span>
+            </m.span>
           )}
         </AnimatePresence>
       </>
@@ -325,7 +325,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // magnetic ref + hover/tap motion.
     if (href) {
       return (
-        <motion.span
+        <m.span
           ref={buttonRef as React.RefObject<HTMLSpanElement>}
           className="inline-flex"
           {...motionProps}
@@ -337,22 +337,22 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           >
             {inner}
           </Link>
-        </motion.span>
+        </m.span>
       );
     }
 
     // ---- Default: render as <button> ----
     return (
-      <motion.button
+      <m.button
         ref={buttonRef}
         className={combined}
         disabled={isDisabled}
         onClick={handleClick}
         {...motionProps}
-        {...(props as React.ComponentProps<typeof motion.button>)}
+        {...(props as React.ComponentProps<typeof m.button>)}
       >
         {inner}
-      </motion.button>
+      </m.button>
     );
   }
 );

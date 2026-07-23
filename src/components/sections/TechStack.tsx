@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @next/next/no-img-element -- brand logos are remote SVGs from the Simple Icons CDN; next/image would require SVG-domain config for no benefit here. */
+/* eslint-disable @next/next/no-img-element -- brand logos are tiny first-party SVGs (self-hosted Simple Icons); next/image adds an optimizer round-trip for no benefit on SVG. */
 
 import {
   useRef,
@@ -9,7 +9,7 @@ import {
   type ReactNode,
   type PointerEvent as RPointerEvent,
 } from 'react';
-import { motion, useMotionValue, useAnimationFrame, useTransform } from 'framer-motion';
+import { m, useMotionValue, useAnimationFrame, useTransform } from 'framer-motion';
 import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { useReducedMotion } from '@/hooks';
@@ -70,8 +70,12 @@ const IconMobile = (
 
 interface Tech {
   name: string;
-  slug?: string;   // official logo from cdn.simpleicons.org
-  img?: string;    // local logo image (brands not on the CDN)
+  // Official Simple Icons logo, SELF-HOSTED at /images/tech/<slug>.svg (brand
+  // colour baked into the file's fill). Previously hot-linked from
+  // cdn.simpleicons.org — ~17 third-party requests on a cold homepage load; to
+  // add a new one: curl -sL https://cdn.simpleicons.org/<slug> -o public/images/tech/<slug>.svg
+  slug?: string;
+  img?: string;    // local logo image (brands not on Simple Icons)
   node?: ReactNode;
   tint?: string;
 }
@@ -146,7 +150,7 @@ function Chip({ tech, index, active }: { tech: Tech; index?: number; active?: bo
           />
         ) : tech.slug ? (
           <img
-            src={`https://cdn.simpleicons.org/${tech.slug}`}
+            src={`/images/tech/${tech.slug}.svg`}
             alt=""
             width={44}
             height={44}
@@ -201,6 +205,12 @@ function useMarquee(baseVelocity: number) {
   const dragged = useRef(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  // Visibility gate: this marquee used to be the one remaining per-frame loop
+  // that ran for the whole page lifetime (every canvas background is already
+  // IO-gated and the hero tick early-exits off-screen). Pause the rAF work while
+  // the section is out of view; position resumes exactly where it paused.
+  const inViewRef = useRef(true);
+
   useEffect(() => {
     const measure = () => {
       if (trackRef.current) periodRef.current = trackRef.current.scrollWidth / 2 || 1;
@@ -208,7 +218,21 @@ function useMarquee(baseVelocity: number) {
     measure();
     const ro = new ResizeObserver(measure);
     if (trackRef.current) ro.observe(trackRef.current);
-    return () => ro.disconnect();
+    let io: IntersectionObserver | undefined;
+    if (trackRef.current && typeof IntersectionObserver !== 'undefined') {
+      io = new IntersectionObserver(
+        ([entry]) => {
+          inViewRef.current = entry.isIntersecting;
+        },
+        // Small margin so the rows are already moving as they scroll into view.
+        { rootMargin: '150px 0px' },
+      );
+      io.observe(trackRef.current);
+    }
+    return () => {
+      ro.disconnect();
+      io?.disconnect();
+    };
   }, []);
 
   // Map any accumulated offset into a single [-period, 0) window → seamless wrap.
@@ -219,6 +243,8 @@ function useMarquee(baseVelocity: number) {
   });
 
   useAnimationFrame((_, delta) => {
+    // Off-screen: skip all motion work (except mid-drag, which implies visible).
+    if (!inViewRef.current && !dragging.current) return;
     const dt = Math.min(delta, 50) / 1000; // clamp tab-switch gaps
     speed.current += (targetSpeed.current - speed.current) * 0.08; // smooth hover slow-down
     let move = baseVelocity * speed.current * dt;
@@ -304,11 +330,11 @@ function MarqueeRow({ items, baseVelocity }: { items: Tech[]; baseVelocity: numb
         maskImage: 'linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%)',
       }}
     >
-      <motion.div ref={trackRef} className="flex w-max px-2" style={{ x }}>
+      <m.div ref={trackRef} className="flex w-max px-2" style={{ x }}>
         {[...items, ...items].map((t, i) => (
           <Chip key={`${t.name}-${i}`} tech={t} index={i} active={i === activeIndex} />
         ))}
-      </motion.div>
+      </m.div>
     </div>
   );
 }

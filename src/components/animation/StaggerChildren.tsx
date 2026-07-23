@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { m, type Variants } from 'framer-motion';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { EASE_OUT } from '@/lib/animations/framer';
 import { useReducedMotion } from '@/hooks';
@@ -70,7 +70,7 @@ export function StaggerChildren({
       };
 
   return (
-    <motion.div
+    <m.div
       className={cn(className)}
       initial="hidden"
       whileInView="visible"
@@ -79,15 +79,15 @@ export function StaggerChildren({
     >
       {Array.isArray(children)
         ? children.map((child, i) => (
-            <motion.div key={i} variants={itemVariants}>
+            <m.div key={i} variants={itemVariants}>
               {child}
-            </motion.div>
+            </m.div>
           ))
         : (
-          <motion.div variants={itemVariants}>
+          <m.div variants={itemVariants}>
             {children}
-          </motion.div>
+          </m.div>
         )}
-    </motion.div>
+    </m.div>
   );
 }

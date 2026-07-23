@@ -26,8 +26,9 @@ export type { DeviceCapability } from './useDeviceCapability';
 export { usePageTransition } from './usePageTransition';
 export type { TransitionState } from './usePageTransition';
 
-export { useLenis } from './useLenis';
-export type { UseLenisReturn } from './useLenis';
+// NOTE: the real useLenis lives in @/components/layout/SmoothScroll (context-
+// based). The former ./useLenis re-export here polled a window global nothing
+// ever set and always returned null — deleted.
 
 export { useStaggeredScrollReveal } from './useStaggeredScrollReveal';
 export type { UseStaggeredScrollRevealConfig } from './useStaggeredScrollReveal';

@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { m, type Variants } from 'framer-motion';
 import { ANIMATION_CONFIG } from '@/lib/animations/config';
 import { EASE_OUT } from '@/lib/animations/framer';
 import { useReducedMotion } from '@/hooks';
@@ -70,7 +70,7 @@ export function FadeIn({
         },
       };
 
-  const MotionTag = motion[as];
+  const MotionTag = m[as];
 
   return (
     <MotionTag

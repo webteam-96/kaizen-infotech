@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { useStaggeredScrollReveal } from '@/hooks/useStaggeredScrollReveal';
@@ -132,7 +132,7 @@ export default function ServicesPage() {
           </span>
           <span className="relative inline-flex h-[1.55em] w-[4.9em] items-center justify-start overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
-              <motion.span
+              <m.span
                 key={keywords[keywordIndex]}
                 initial={{ y: '0.7em', opacity: 0, scale: 0.92 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -149,7 +149,7 @@ export default function ServicesPage() {
                 }}
               >
                 {keywords[keywordIndex]}
-              </motion.span>
+              </m.span>
             </AnimatePresence>
           </span>
         </div>

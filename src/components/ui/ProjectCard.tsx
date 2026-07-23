@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { motion, useInView as useFramerInView } from 'framer-motion';
+import { m, useInView as useFramerInView } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
@@ -48,7 +48,7 @@ export function ProjectCard({
   const isInView = useFramerInView(cardRef, { once: true, margin: '-100px' });
 
   return (
-    <motion.div
+    <m.div
       ref={cardRef}
       className={cn(
         'group relative overflow-hidden rounded-[var(--radius-lg)]',
@@ -65,7 +65,7 @@ export function ProjectCard({
         aria-label={`View project: ${title}`}
       >
         {/* Background image */}
-        <motion.div
+        <m.div
           className="absolute inset-0 bg-[var(--color-bg-secondary)]"
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -77,7 +77,7 @@ export function ProjectCard({
             sizes={featured ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 33vw'}
             className="object-contain p-4"
           />
-        </motion.div>
+        </m.div>
 
         {/* Dark gradient overlay — always visible at bottom */}
         <div
@@ -94,7 +94,7 @@ export function ProjectCard({
         {/* Info overlay — slides up from bottom on hover */}
         <div className="absolute inset-x-0 bottom-0 flex flex-col p-6 md:p-8">
           {/* Category pill + Year */}
-          <motion.div
+          <m.div
             className="mb-3 flex items-center gap-3"
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : undefined}
@@ -110,10 +110,10 @@ export function ProjectCard({
             >
               {category}
             </span>
-          </motion.div>
+          </m.div>
 
           {/* Title */}
-          <motion.h3
+          <m.h3
             className="mb-1 text-[length:var(--h-card)] font-bold text-[var(--color-text-inverse)]"
             style={{ fontFamily: 'var(--font-card-heading), var(--font-heading)' }}
             initial={{ opacity: 0, y: 16 }}
@@ -121,10 +121,10 @@ export function ProjectCard({
             transition={{ delay: 0.4, ...spring }}
           >
             {title}
-          </motion.h3>
+          </m.h3>
 
           {/* Client — revealed on hover */}
-          <motion.p
+          <m.p
             className={cn(
               'text-[length:var(--text-sm)] text-[var(--color-text-inverse)]/70',
               'translate-y-4 opacity-0 transition-all duration-300',
@@ -133,9 +133,9 @@ export function ProjectCard({
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {client}
-          </motion.p>
+          </m.p>
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   );
 }

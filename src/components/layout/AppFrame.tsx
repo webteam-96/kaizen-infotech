@@ -3,8 +3,15 @@
 import { useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
+import { LazyMotion } from 'framer-motion';
 import { CursorProvider } from '@/components/cursor/CursorProvider';
 import SmoothScroll from '@/components/layout/SmoothScroll';
+
+// LazyMotion feature bundle, loaded async so the full framer-motion feature set
+// stays out of the eager JS. `strict` throws in dev if any full `motion.*`
+// component sneaks back in (everything must use the lightweight `m.*`).
+const loadMotionFeatures = () =>
+  import('@/lib/animations/motion-features').then((mod) => mod.default);
 
 // The custom cursor is the ONLY sitewide consumer of framer-motion, and it only
 // ever renders on a real-mouse desktop (it returns null on touch/reduced-motion).
@@ -48,21 +55,23 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <CursorProvider>
-      <SmoothScroll>
-        {canHover && <CustomCursor />}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-md focus:bg-[var(--color-accent-primary)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[var(--color-text-inverse)]"
-        >
-          Skip to main content
-        </a>
-        <ScrollProgress />
-        <CustomScrollbar />
-        <Navbar />
-        <div id="main-content">{children}</div>
-        <Footer />
-      </SmoothScroll>
-    </CursorProvider>
+    <LazyMotion features={loadMotionFeatures} strict>
+      <CursorProvider>
+        <SmoothScroll>
+          {canHover && <CustomCursor />}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-md focus:bg-[var(--color-accent-primary)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[var(--color-text-inverse)]"
+          >
+            Skip to main content
+          </a>
+          <ScrollProgress />
+          <CustomScrollbar />
+          <Navbar />
+          <div id="main-content">{children}</div>
+          <Footer />
+        </SmoothScroll>
+      </CursorProvider>
+    </LazyMotion>
   );
 }

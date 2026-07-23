@@ -1042,11 +1042,11 @@ const SOURCES: Src[] = [
 // case study, whose original featured image is a portrait phone mockup.
 const LOCAL_BANNER: Record<string, string> = {
   'case-study-how-kaizen-infotechs-z-funds-is-digitally-transforming-the-ngo-ecosystem-in-india':
-    '/images/blog/zfunds.png',
+    '/images/blog/zfunds.webp',
   'aaykar-kutumb-digitized-handbook-for-50000-income-tax-officers':
     '/images/blog/aaykar-kutumb.webp',
   'agni-foundation-building-global-community-one-member-at-a-time':
-    '/images/blog/agni-foundation.png',
+    '/images/blog/agni-foundation.webp',
   'how-mbpt-eseva-is-revolutionizing-port-operations-through-digital-transformation':
     '/images/blog/mbpt-eseva.webp',
   'kaizen-infotech-solutions-proven-approach-to-solving-complex-tech-challenges':

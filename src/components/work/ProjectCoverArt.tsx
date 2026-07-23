@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useReducedMotion } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
 
@@ -130,7 +130,7 @@ export function ProjectCoverArt({
             reduce ? (
               <circle key={i} cx={st.x} cy={st.y} r={st.r} fill={SKY} opacity={st.o} />
             ) : (
-              <motion.circle
+              <m.circle
                 key={i}
                 cx={st.x}
                 cy={st.y}
@@ -150,14 +150,14 @@ export function ProjectCoverArt({
         </g>
 
         {/* Motif */}
-        <motion.g {...breathe}>
+        <m.g {...breathe}>
           {kind === 'network' && <NetworkMotif reduce={reduce} />}
           {kind === 'government' && <GovernmentMotif reduce={reduce} />}
           {kind === 'enterprise' && <EnterpriseMotif reduce={reduce} />}
           {kind === 'healthcare' && <HealthcareMotif reduce={reduce} />}
           {kind === 'mobility' && <MobilityMotif reduce={reduce} />}
           {kind === 'social' && <SocialMotif reduce={reduce} />}
-        </motion.g>
+        </m.g>
       </svg>
     </div>
   );
@@ -188,15 +188,15 @@ function NetworkMotif({ reduce }: { reduce: boolean }) {
   ] as const;
   return (
     <g>
-      <motion.g {...spin(60, reduce)}>
+      <m.g {...spin(60, reduce)}>
         <circle cx="400" cy="250" r="170" fill="none" stroke={BLUE} strokeWidth="1" opacity="0.35" strokeDasharray="4 6" />
         <circle cx="400" cy="250" r="120" fill="none" stroke={SKY} strokeWidth="1" opacity="0.25" />
-      </motion.g>
+      </m.g>
       {nodes.map(([x, y], i) => (
         <line key={i} x1="400" y1="250" x2={x} y2={y} stroke={BLUE} strokeWidth="1" opacity="0.3" />
       ))}
       {nodes.map(([x, y], i) => (
-        <motion.circle
+        <m.circle
           key={i}
           cx={x}
           cy={y}
@@ -217,7 +217,7 @@ function GovernmentMotif({ reduce }: { reduce: boolean }) {
   // Classic colonnade + shield — public institutions.
   return (
     <g>
-      <motion.g
+      <m.g
         initial={{ opacity: 0.9 }}
         animate={reduce ? undefined : { y: [0, -6, 0] }}
         transition={reduce ? undefined : { duration: 7, repeat: Infinity, ease: 'easeInOut' }}
@@ -230,9 +230,9 @@ function GovernmentMotif({ reduce }: { reduce: boolean }) {
           <rect key={i} x={x} y="195" width="20" height="150" rx="3" fill={SKY} opacity="0.35" />
         ))}
         <rect x="258" y="350" width="284" height="16" rx="3" fill={BLUE} opacity="0.7" />
-      </motion.g>
+      </m.g>
       {/* shield */}
-      <motion.path
+      <m.path
         d="M400 250 L444 266 V300 Q444 338 400 356 Q356 338 356 300 V266 Z"
         fill={RED}
         opacity="0.9"
@@ -261,7 +261,7 @@ function EnterpriseMotif({ reduce }: { reduce: boolean }) {
   return (
     <g>
       {blocks.map(([x, y], i) => (
-        <motion.rect
+        <m.rect
           key={i}
           x={x}
           y={y}
@@ -289,7 +289,7 @@ function HealthcareMotif({ reduce }: { reduce: boolean }) {
   // Vitals pulse + medical cross — clinical platforms.
   return (
     <g>
-      <motion.path
+      <m.path
         d="M150 250 H320 l24 -60 l34 120 l28 -90 l22 50 H640"
         fill="none"
         stroke={SKY}
@@ -301,7 +301,7 @@ function HealthcareMotif({ reduce }: { reduce: boolean }) {
         animate={reduce ? undefined : { pathLength: 1 }}
         transition={reduce ? undefined : { duration: 2.4, repeat: Infinity, repeatType: 'loop', ease: 'easeInOut', repeatDelay: 0.6 }}
       />
-      <motion.g
+      <m.g
         initial={{ opacity: 0.95 }}
         animate={reduce ? undefined : { scale: [1, 1.07, 1] }}
         transition={reduce ? undefined : { duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -310,7 +310,7 @@ function HealthcareMotif({ reduce }: { reduce: boolean }) {
         <circle cx="400" cy="330" r="46" fill={BLUE} opacity="0.9" />
         <rect x="392" y="306" width="16" height="48" rx="4" fill="#fff" />
         <rect x="376" y="322" width="48" height="16" rx="4" fill="#fff" />
-      </motion.g>
+      </m.g>
       <circle cx="250" cy="150" r="7" fill={RED} opacity="0.85" />
       <circle cx="560" cy="180" r="5" fill={SKY} opacity="0.7" />
     </g>
@@ -323,7 +323,7 @@ function MobilityMotif({ reduce }: { reduce: boolean }) {
   return (
     <g>
       <path d={d} fill="none" stroke={SKY} strokeWidth="2" opacity="0.25" strokeDasharray="2 8" strokeLinecap="round" />
-      <motion.path
+      <m.path
         d={d}
         fill="none"
         stroke={BLUE}
@@ -344,10 +344,10 @@ function MobilityMotif({ reduce }: { reduce: boolean }) {
         </g>
       ))}
       {!reduce && (
-        <motion.g animate={{ offsetDistance: ['0%', '100%'] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} style={{ offsetPath: `path('${d}')` }}>
+        <m.g animate={{ offsetDistance: ['0%', '100%'] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} style={{ offsetPath: `path('${d}')` }}>
           <circle r="7" fill="#fff" />
           <circle r="13" fill="#fff" opacity="0.25" />
-        </motion.g>
+        </m.g>
       )}
     </g>
   );
@@ -365,7 +365,7 @@ function SocialMotif({ reduce }: { reduce: boolean }) {
         <line key={`l${i}`} x1="400" y1="260" x2={x} y2={y} stroke={BLUE} strokeWidth="1" opacity="0.25" />
       ))}
       {ring.map(([x, y], i) => (
-        <motion.circle
+        <m.circle
           key={`n${i}`}
           cx={x}
           cy={y}
@@ -377,7 +377,7 @@ function SocialMotif({ reduce }: { reduce: boolean }) {
           style={{ transformOrigin: `${x}px ${y}px` }}
         />
       ))}
-      <motion.path
+      <m.path
         d="M400 300 C 360 262 360 222 388 222 C 400 222 400 234 400 234 C 400 234 400 222 412 222 C 440 222 440 262 400 300 Z"
         fill={RED}
         opacity="0.92"

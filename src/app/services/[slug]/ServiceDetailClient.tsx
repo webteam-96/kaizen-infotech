@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { TextReveal } from '@/components/animation/TextReveal';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { StaggerChildren } from '@/components/animation/StaggerChildren';
@@ -289,7 +289,7 @@ export default function ServiceDetailClient({
 
             <StaggerChildren className="space-y-4">
               {service.features.map((feature, index) => (
-                <motion.div
+                <m.div
                   key={index}
                   className={cn(
                     'flex items-start gap-4 rounded-[var(--radius-md)] p-4',
@@ -306,7 +306,7 @@ export default function ServiceDetailClient({
                   >
                     {feature}
                   </p>
-                </motion.div>
+                </m.div>
               ))}
             </StaggerChildren>
           </div>
@@ -379,7 +379,7 @@ export default function ServiceDetailClient({
                 href={`/services/${related.slug}`}
                 className="focus-ring group block"
               >
-                <motion.div
+                <m.div
                   className={cn(
                     'flex h-full flex-col rounded-[var(--radius-lg)] p-6',
                     'bg-[var(--color-bg-tertiary)] border border-[var(--color-border)]',
@@ -419,7 +419,7 @@ export default function ServiceDetailClient({
                       />
                     </svg>
                   </span>
-                </motion.div>
+                </m.div>
               </Link>
             ))}
           </StaggerChildren>

@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
@@ -45,7 +45,7 @@ export default function DeliveryProcess({
       {steps.map((step, index) => {
         const isActive = active === index;
         return (
-          <motion.div
+          <m.div
             key={step.number}
             role="button"
             tabIndex={0}
@@ -74,7 +74,7 @@ export default function DeliveryProcess({
             {/* Accent wash on the active card */}
             <AnimatePresence>
               {isActive && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -86,7 +86,7 @@ export default function DeliveryProcess({
             {/* Collapsed state — number on top, vertical title at the bottom */}
             <AnimatePresence>
               {!isActive && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -101,14 +101,14 @@ export default function DeliveryProcess({
                   <span className="whitespace-nowrap rotate-180 text-sm font-medium uppercase tracking-widest text-[var(--color-text-secondary)] [writing-mode:vertical-rl]">
                     {step.title}
                   </span>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
             {/* Expanded state — number, title, description (in flow, no overlap) */}
             <AnimatePresence>
               {isActive && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -133,10 +133,10 @@ export default function DeliveryProcess({
                   >
                     {step.description}
                   </p>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </m.div>
         );
       })}
     </div>

@@ -240,6 +240,14 @@
 /* ===== BASE STYLES ===== */
 html {
   /* scroll-behavior handled by Lenis smooth scrolling */
+  /* Reserve the scrollbar gutter permanently. The countdown loader locks the
+     page with body.loader-active { overflow: hidden } — without this, the
+     scrollbar vanishes during the intro and POPS back at loader-exit, shifting
+     the whole page ~15px sideways (a near-1.0 layout-shift event on Windows
+     classic scrollbars; a major real-user CLS source). With a stable gutter,
+     showing/hiding overflow never changes layout width. Overlay-scrollbar
+     platforms (macOS, phones) are unaffected. */
+  scrollbar-gutter: stable;
 }
 
 ::selection {
@@ -1448,23 +1456,6 @@ html.has-custom-cursor * {
   content: attr(data-placeholder);
   color: var(--color-text-tertiary);
   pointer-events: none;
-}
-
-/* ============================================================================
-   VIDEO BACKDROP  (<VideoBackdrop> behind flat white / dark-blue sections)
-   Full-bleed cover, 50% opacity; host keeps its solid colour as the base.
-   Hidden entirely under reduced motion (section falls back to its plain colour).
-   ========================================================================== */
-.video-backdrop-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* fill every screen size — never cropped-to-smaller / letterboxed */
-  opacity: 0.5;
-}
-@media (prefers-reduced-motion: reduce) {
-  .video-backdrop { display: none !important; }
 }
 
 /* ============================================================================

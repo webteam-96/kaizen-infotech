@@ -8,7 +8,7 @@ import React, {
   useRef,
   useEffect,
 } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { m, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -174,13 +174,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       : 'rgba(33, 150, 243, 0.1)';
 
     return (
-      <motion.div
+      <m.div
         className={cn('relative w-full', className)}
         variants={shakeVariants}
         animate={error ? 'shake' : 'idle'}
       >
         {/* Floating label */}
-        <motion.label
+        <m.label
           htmlFor={textareaId}
           className={cn(
             'pointer-events-none absolute left-0 top-4 origin-left',
@@ -199,7 +199,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           transition={spring}
         >
           {label}
-        </motion.label>
+        </m.label>
 
         {/* Textarea */}
         <textarea
@@ -228,7 +228,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         />
 
         {/* Focus glow */}
-        <motion.div
+        <m.div
           className="pointer-events-none absolute bottom-0 left-0 right-0 h-px"
           animate={{
             boxShadow: isFocused
@@ -242,7 +242,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <div className="mt-1.5 flex items-start justify-between gap-4">
           <AnimatePresence>
             {error && (
-              <motion.p
+              <m.p
                 id={errorId}
                 role="alert"
                 className="text-[length:var(--text-xs)] text-[var(--color-accent-warm)]"
@@ -252,7 +252,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
                 transition={{ duration: 0.2 }}
               >
                 {error}
-              </motion.p>
+              </m.p>
             )}
           </AnimatePresence>
 
@@ -262,7 +262,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
     );
   }
 );

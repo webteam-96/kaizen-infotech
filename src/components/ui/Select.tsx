@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useId } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -177,14 +177,14 @@ export function Select({
     : 'rgba(33, 150, 243, 0.1)';
 
   return (
-    <motion.div
+    <m.div
       ref={containerRef}
       className={cn('relative w-full', className)}
       variants={shakeVariants}
       animate={error ? 'shake' : 'idle'}
     >
       {/* Floating label */}
-      <motion.span
+      <m.span
         className={cn(
           'pointer-events-none absolute left-0 origin-left',
           'font-[family-name:var(--font-body)]',
@@ -203,7 +203,7 @@ export function Select({
         style={{ top: '50%', translateY: '-50%' }}
       >
         {label}
-      </motion.span>
+      </m.span>
 
       {/* Trigger button */}
       <button
@@ -237,7 +237,7 @@ export function Select({
         </span>
 
         {/* Chevron */}
-        <motion.svg
+        <m.svg
           width="16"
           height="16"
           viewBox="0 0 16 16"
@@ -254,11 +254,11 @@ export function Select({
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-        </motion.svg>
+        </m.svg>
       </button>
 
       {/* Focus glow */}
-      <motion.div
+      <m.div
         className="pointer-events-none absolute bottom-0 left-0 right-0 h-px"
         animate={{
           boxShadow: isOpen
@@ -271,7 +271,7 @@ export function Select({
       {/* Dropdown */}
       <AnimatePresence>
         {isOpen && (
-          <motion.ul
+          <m.ul
             ref={listRef}
             id={listboxId}
             role="listbox"
@@ -334,14 +334,14 @@ export function Select({
                 </li>
               );
             })}
-          </motion.ul>
+          </m.ul>
         )}
       </AnimatePresence>
 
       {/* Error message */}
       <AnimatePresence>
         {error && (
-          <motion.p
+          <m.p
             id={errorId}
             role="alert"
             className="mt-1.5 text-[length:var(--text-xs)] text-[var(--color-accent-warm)]"
@@ -351,9 +351,9 @@ export function Select({
             transition={{ duration: 0.2 }}
           >
             {error}
-          </motion.p>
+          </m.p>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 }

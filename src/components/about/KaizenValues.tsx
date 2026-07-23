@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import {
-  motion,
+  m,
   AnimatePresence,
   useScroll,
   useTransform,
@@ -207,7 +207,7 @@ export default function KaizenValues() {
               applyTarget();
             }}
           >
-            <motion.div
+            <m.div
               key={index}
               custom={direction}
               className="card-red-accent relative flex h-[min(32.5rem,56svh)] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
@@ -237,7 +237,7 @@ export default function KaizenValues() {
               <p className="mt-4 text-lg leading-relaxed text-slate-600">
                 {VALUES[index].body}
               </p>
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         </div>
 

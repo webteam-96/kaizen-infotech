@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { ScrollFadeIn } from '@/components/animation/ScrollFadeIn';
 import { SectionDivider } from '@/components/animation/SectionDivider';
 import { ParallaxLayer } from '@/components/animation/ParallaxLayer';
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Captcha, type CaptchaHandle } from '@/components/ui/Captcha';
 import { socialLinks } from '@/content/navigation';
 import { SITE_CONFIG } from '@/lib/utils/constants';
+import { cn } from '@/lib/utils/cn';
 // ---------------------------------------------------------------------------
 // Select options
 // ---------------------------------------------------------------------------
@@ -316,7 +317,7 @@ export default function ContactPage() {
 
               <AnimatePresence>
                 {submitStatus === 'success' && (
-                  <motion.p
+                  <m.p
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0 }}
@@ -324,10 +325,10 @@ export default function ContactPage() {
                     style={{ fontFamily: 'var(--font-body)' }}
                   >
                     Thank you! Your message has been sent. We will get back to you within 24 hours.
-                  </motion.p>
+                  </m.p>
                 )}
                 {submitStatus === 'error' && (
-                  <motion.p
+                  <m.p
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0 }}
@@ -335,7 +336,7 @@ export default function ContactPage() {
                     style={{ fontFamily: 'var(--font-body)' }}
                   >
                     Something went wrong. Please try again or email us directly at {SITE_CONFIG.contactEmail}
-                  </motion.p>
+                  </m.p>
                 )}
               </AnimatePresence>
             </div>
@@ -377,7 +378,7 @@ export default function ContactPage() {
                       <div className="flex min-w-0 items-center gap-2">
                         {item.href ? (
                           <p
-                            className="min-w-0 text-[length:var(--text-base)] text-[var(--text-on-ink)]"
+                            className="min-w-0 hyphens-auto text-[length:var(--text-base)] text-[var(--text-on-ink)]"
                             style={{ fontFamily: 'var(--font-body)' }}
                           >
                             {item.prefix ? <>{item.prefix} </> : null}
@@ -385,7 +386,14 @@ export default function ContactPage() {
                               href={item.href}
                               target={item.href?.startsWith('http') ? '_blank' : undefined}
                               rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                              className="focus-ring break-all transition-colors hover:text-[var(--accent-on-ink)]"
+                              className={cn(
+                                'focus-ring break-words transition-colors hover:text-[var(--accent-on-ink)]',
+                                // Email/phone are single unbreakable strings — allow a
+                                // last-resort mid-string break so they wrap instead of
+                                // overflowing. The address is normal prose and must only
+                                // ever wrap at spaces (no "Industri-al" splits).
+                                item.label !== 'Address' && '[overflow-wrap:anywhere]'
+                              )}
                             >
                               {item.value}
                             </a>
@@ -408,7 +416,7 @@ export default function ContactPage() {
                           >
                             <AnimatePresence mode="wait">
                               {copiedField === item.label ? (
-                                <motion.svg
+                                <m.svg
                                   key="check"
                                   width="16"
                                   height="16"
@@ -426,9 +434,9 @@ export default function ContactPage() {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                   />
-                                </motion.svg>
+                                </m.svg>
                               ) : (
-                                <motion.svg
+                                <m.svg
                                   key="copy"
                                   width="16"
                                   height="16"
@@ -453,7 +461,7 @@ export default function ContactPage() {
                                     strokeWidth="1.5"
                                     strokeLinecap="round"
                                   />
-                                </motion.svg>
+                                </m.svg>
                               )}
                             </AnimatePresence>
                           </button>

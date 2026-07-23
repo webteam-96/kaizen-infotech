@@ -2,7 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from 'react';
 import {
-  motion,
+  m,
   useMotionValue,
   useSpring,
   AnimatePresence,
@@ -85,7 +85,7 @@ export function CustomCursor() {
   return (
     <>
       {/* Small dot - follows cursor tightly */}
-      <motion.div
+      <m.div
         className={styles.dot}
         style={{
           x: dotX,
@@ -98,7 +98,7 @@ export function CustomCursor() {
       />
 
       {/* Larger follower circle */}
-      <motion.div
+      <m.div
         className={styles.follower}
         style={{
           x: followerX,
@@ -128,7 +128,7 @@ export function CustomCursor() {
       >
         <AnimatePresence mode="wait">
           {isText && text && (
-            <motion.span
+            <m.span
               key={text}
               className={styles.followerText}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -137,10 +137,10 @@ export function CustomCursor() {
               transition={{ duration: ANIMATION_CONFIG.duration.instant }}
             >
               {text}
-            </motion.span>
+            </m.span>
           )}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
     </>
   );
 }

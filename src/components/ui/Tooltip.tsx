@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -94,7 +94,7 @@ export function Tooltip({
 
       <AnimatePresence>
         {isVisible && (
-          <motion.div
+          <m.div
             role="tooltip"
             className={cn(
               'absolute z-[var(--z-toast)] pointer-events-none',
@@ -123,7 +123,7 @@ export function Tooltip({
                 className={cn('absolute h-0 w-0', styles.arrow)}
               />
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

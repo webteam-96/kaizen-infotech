@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import * as THREE from 'three';
 import { useGSAP } from '@gsap/react';
 import { gsap, registerGSAPPlugins, ScrollTrigger } from '@/lib/animations/gsap-setup';
@@ -8,7 +9,6 @@ import { useLoaderStore } from '@/store/loaderStore';
 import { useReducedMotion, useDeviceCapability } from '@/hooks';
 import { useLenis } from '@/components/layout/SmoothScroll';
 import type Lenis from 'lenis';
-import Spline from '@splinetool/react-spline';
 import { HexGridBackground } from '@/components/shared/HexGridBackground';
 import { HexDomeBackground } from '@/components/shared/HexDomeBackground';
 import { RubiksHeroStatic } from './RubiksHeroStatic';
@@ -107,11 +107,32 @@ const ANGLEVALS = [Math.PI / 2, -Math.PI / 2];
 /* ── Light theme colors ── */
 const BG_COLOR = '#f5f5f5';
 
-/* The heavy Spline 3D scene. Its file is prefetched under the countdown loader so
-   the download finishes early, but the <Spline> component is only MOUNTED once the
+/* The Spline React wrapper + runtime (~530KB gz, including its OWN bundled copy of
+   three.js) used to be statically imported here, fusing it into the same chunk as
+   the app's three.js — so coarse-pointer devices, which never mount <Spline> (see
+   allowLiveMonitor), still downloaded and parsed all of it. Code-splitting it means
+   phones skip it entirely; desktop timing is preserved by warming the import in the
+   same effect that prefetches the scene file (below), all under the countdown loader. */
+const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false });
+
+/* The heavy Spline 3D scene. SELF-HOSTED (was prod.spline.design, which served it
+   with no Cache-Control and from a third-party origin): the file is a plain export
+   — to update it, download the new scene.splinecode and bump the filename
+   (scene-v2…), because /spline/* is served with a 1-year immutable Cache-Control
+   (next.config.ts). Its file is prefetched under the countdown loader so the
+   download finishes early, but the <Spline> component is only MOUNTED once the
    loader clears — that way the scene's native typing animation starts fresh as the
    computer reveals, instead of finishing while it's hidden behind the overlay. */
-const SPLINE_SCENE_URL = 'https://prod.spline.design/bXo513RtAR9aENZB/scene.splinecode';
+const SPLINE_SCENE_URL = '/spline/scene-v1.splinecode';
+
+/* Spline's runtime lazily fetches wasm helpers (process/navmesh/boolean.wasm —
+   by default from unpkg.com) AND the DRACO mesh decoder (draco_wasm_wrapper.js +
+   draco_decoder.wasm — by default from www.gstatic.com), both cold third-party
+   origins on the hero's boot path. All are self-hosted in public/spline/wasm/:
+   the @splinetool ones are pinned to @splinetool/runtime 1.12.95 and draco to
+   1.5.2 (the runtime's baked-in default) — keep the package version and this
+   directory in lockstep when upgrading. */
+const SPLINE_WASM_PATH = '/spline/wasm';
 
 /* The Spline canvas always renders at this fixed square size (big enough to hold
    the whole monitor), then is scaled DOWN to fit any viewport — so the monitor is
@@ -240,11 +261,13 @@ export function RubiksCubeExperience() {
     // Touch devices never mount the live Spline scene (see allowLiveMonitor), so
     // don't warm its cache — that download would be pure waste on mobile data.
     if (window.matchMedia('(pointer: coarse)').matches) return;
+    // Warm the code-split Spline runtime chunk alongside the scene file, so the
+    // dynamic() boundary adds zero latency on devices that WILL mount it.
+    void import('@splinetool/react-spline');
     const link = document.createElement('link');
     link.rel = 'prefetch';
     link.as = 'fetch';
     link.href = SPLINE_SCENE_URL;
-    link.crossOrigin = 'anonymous';
     document.head.appendChild(link);
     return () => {
       link.remove();
@@ -1828,6 +1851,7 @@ export function RubiksCubeExperience() {
                 >
                 <Spline
                   scene={SPLINE_SCENE_URL}
+                  wasmPath={SPLINE_WASM_PATH}
                   onLoad={(app: unknown) => {
                     // Keep a handle on the Spline app so the scene can be driven
                     // imperatively (emit events, find objects) from anywhere.
@@ -1971,20 +1995,24 @@ export function RubiksCubeExperience() {
             style={{ opacity: 1, transform: 'translateY(-50%)' }}
           >
             <div ref={introInnerRef} className="rc-hook-inner" style={{ opacity: 0 }}>
-              <h1 className="rc-hook-title">
+              {/* div, not h1 — the homepage's semantic <h1> is the server-rendered
+                  BrandPromise value prop; this animated hero hook is decorative. */}
+              <div className="rc-hook-title">
                 <span className="rc-hook-t1">Your Vision</span>
                 <em className="rc-hook-t2">Our Code</em>
-              </h1>
+              </div>
               <span className="rc-tap-cue" aria-hidden="true">Tap to begin</span>
             </div>
           </div>
 
           {/* S1: THE SCRAMBLE */}
           <div data-card="card-s1" className="rc-glass-card rc-side-right rc-card-hero" style={{ opacity: 0 }}>
-            <h1 className="rc-headline rc-headline-hero">
+            {/* h2 (was h1) — consistent with the other narrative cards (s2… are h2)
+                and leaves BrandPromise as the single page <h1>. */}
+            <h2 className="rc-headline rc-headline-hero">
               <span className="rc-stagger" data-stg="s1-0">A scrambled Rubik&apos;s Cube looks <em>impossible</em> at first &mdash;</span>
               <span className="rc-stagger" data-stg="s1-1">and so does your business.</span>
-            </h1>
+            </h2>
           </div>
 
           {/* S2: THE FIRST MOVE */}

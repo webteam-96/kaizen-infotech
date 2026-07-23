@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  motion,
+  m,
   useInView,
   useMotionValue,
   useScroll,
@@ -85,7 +85,7 @@ export function StickyProjectCard({
   }, [scrollY, maxScrollY, scale, tilt]);
 
   return (
-    <motion.div
+    <m.div
       ref={setRefs}
       className={cn(
         'card-red-accent work-card group sticky w-full max-w-5xl overflow-hidden',
@@ -115,7 +115,7 @@ export function StickyProjectCard({
         aria-label={`View project: ${title}`}
       >
         {/* Project image — object-contain so mockups/screenshots aren't cropped */}
-        <motion.div
+        <m.div
           className="absolute inset-0"
           style={{ rotate: counterTilt }}
         >
@@ -127,7 +127,7 @@ export function StickyProjectCard({
             className="object-contain p-6 md:p-10 transition-transform duration-[600ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform group-hover:scale-[1.04]"
             priority={index < 2}
           />
-        </motion.div>
+        </m.div>
 
         {/* Blue gradient at bottom so text stays legible (brand blue, not black) */}
         <div
@@ -195,6 +195,6 @@ export function StickyProjectCard({
           </span>
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   );
 }

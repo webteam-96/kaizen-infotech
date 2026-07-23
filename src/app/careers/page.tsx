@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { StaggerChildren } from '@/components/animation/StaggerChildren';
 import { Accordion } from '@/components/ui/Accordion';
@@ -255,7 +255,7 @@ export default function CareersPage() {
                 </form>
                 <AnimatePresence>
                   {talentStatus === 'success' && (
-                    <motion.p
+                    <m.p
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
@@ -264,10 +264,10 @@ export default function CareersPage() {
                     >
                       You&apos;re on the list — we&apos;ll be in touch when a
                       role opens up.
-                    </motion.p>
+                    </m.p>
                   )}
                   {talentStatus === 'error' && (
-                    <motion.p
+                    <m.p
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
@@ -275,7 +275,7 @@ export default function CareersPage() {
                       style={{ fontFamily: 'var(--font-body)' }}
                     >
                       Something went wrong. Please try again.
-                    </motion.p>
+                    </m.p>
                   )}
                 </AnimatePresence>
                 <p

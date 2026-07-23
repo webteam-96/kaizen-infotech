@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 import { NAV_LINKS } from '@/lib/utils/constants';
 import { useLoaderStore } from '@/store/loaderStore';
@@ -93,7 +93,7 @@ export function Navbar() {
 
   return (
     <>
-      <motion.header
+      <m.header
         initial={{ y: isHomepage ? -100 : 0, opacity: isHomepage ? 0 : 1 }}
         animate={{
           y: isHomepage && !loaderComplete ? -100 : isVisible ? 0 : -100,
@@ -110,7 +110,7 @@ export function Navbar() {
         <nav className="mx-auto flex max-w-[var(--container-max)] items-center justify-between px-[var(--container-padding)]">
           {/* Logo */}
           <Link href="/" className="focus-ring relative z-10">
-            <motion.div
+            <m.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -126,7 +126,7 @@ export function Navbar() {
                 className="h-14! w-auto sm:h-18!"
                 priority
               />
-            </motion.div>
+            </m.div>
           </Link>
 
           {/* Desktop Navigation — desk: (mouse+hover, >=1024) so touch iPads get the
@@ -151,18 +151,18 @@ export function Navbar() {
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMenuOpen}
           >
-            <motion.span
+            <m.span
               animate={{
                 rotate: isMenuOpen ? 45 : 0,
                 y: isMenuOpen ? 6 : 0,
               }}
               className="h-[2px] w-6 bg-[var(--color-text-primary)]"
             />
-            <motion.span
+            <m.span
               animate={{ opacity: isMenuOpen ? 0 : 1 }}
               className="h-[2px] w-6 bg-[var(--color-text-primary)]"
             />
-            <motion.span
+            <m.span
               animate={{
                 rotate: isMenuOpen ? -45 : 0,
                 y: isMenuOpen ? -6 : 0,
@@ -171,12 +171,12 @@ export function Navbar() {
             />
           </button>
         </nav>
-      </motion.header>
+      </m.header>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -189,7 +189,7 @@ export function Navbar() {
                 at text-4xl on a short landscape phone — so none are clipped/unreachable. */}
             <div className="flex min-h-full flex-col items-center justify-center gap-8 px-6 py-24">
               {NAV_LINKS.map((link, i) => (
-                <motion.div
+                <m.div
                   key={link.href}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -212,10 +212,10 @@ export function Navbar() {
                   >
                     {link.label}
                   </Link>
-                </motion.div>
+                </m.div>
               ))}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>
@@ -234,7 +234,7 @@ function NavLink({
   index: number;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
@@ -256,6 +256,6 @@ function NavLink({
           )}
         />
       </Link>
-    </motion.div>
+    </m.div>
   );
 }

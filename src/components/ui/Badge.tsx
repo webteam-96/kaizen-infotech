@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ export function Badge({
   ...props
 }: BadgeProps) {
   return (
-    <motion.span
+    <m.span
       className={cn(
         'inline-flex items-center rounded-[var(--radius-full)] px-3 py-1',
         'text-[var(--text-xs)] font-medium font-[family-name:var(--font-heading)]',
@@ -60,9 +60,9 @@ export function Badge({
       )}
       whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
       transition={spring}
-      {...(props as React.ComponentProps<typeof motion.span>)}
+      {...(props as React.ComponentProps<typeof m.span>)}
     >
       {children}
-    </motion.span>
+    </m.span>
   );
 }

@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Static assets — includes vendored third-party JS (Spline wasm glue,
+    // draco decoder) that must never be linted.
+    "public/**",
+    // Generated deploy bundle + local QA output.
+    "deploy/**",
+    "audit-shots/**",
   ]),
 ]);
 

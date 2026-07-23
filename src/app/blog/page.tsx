@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { PageHero } from '@/components/sections/PageHero';
@@ -72,7 +72,7 @@ export default function BlogPage() {
           <FadeIn delay={0.4}>
             <div className="flex flex-wrap gap-3">
               {blogCategories.map((category) => (
-                <motion.button
+                <m.button
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
@@ -87,7 +87,7 @@ export default function BlogPage() {
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
                   {activeCategory === category && (
-                    <motion.div
+                    <m.div
                       className="absolute inset-0 rounded-[var(--radius-full)] bg-[var(--color-accent-primary)]"
                       layoutId="activeBlogCategory"
                       transition={{
@@ -98,7 +98,7 @@ export default function BlogPage() {
                     />
                   )}
                   <span className="relative z-10">{category}</span>
-                </motion.button>
+                </m.button>
               ))}
             </div>
           </FadeIn>
@@ -109,7 +109,7 @@ export default function BlogPage() {
       <section className="section-light-aura seam-red relative px-6 py-24 md:px-12 lg:px-24">
         <div className="mx-auto max-w-7xl">
           <AnimatePresence mode="popLayout">
-            <motion.div
+            <m.div
               key={activeCategory}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -132,6 +132,10 @@ export default function BlogPage() {
                           slug={featuredPost.slug}
                           category={featuredPost.category}
                           imgClassName="absolute inset-0 h-full w-full object-cover"
+                          // Above the fold — this card is /blog's LCP candidate;
+                          // without priority it rendered loading="lazy" and
+                          // deferred its own LCP.
+                          priority
                         />
                       </div>
 
@@ -252,7 +256,7 @@ export default function BlogPage() {
                   </Link>
                 ))}
               </div>
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         </div>
       </section>
@@ -298,7 +302,7 @@ export default function BlogPage() {
             </form>
             <AnimatePresence>
               {newsletterStatus === 'success' && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
@@ -318,7 +322,7 @@ export default function BlogPage() {
                   >
                     Subscribe another email
                   </button>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </FadeIn>

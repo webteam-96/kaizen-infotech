@@ -2,7 +2,7 @@
 
 import React, { useRef, useCallback } from 'react';
 import {
-  motion,
+  m,
   useMotionValue,
   useSpring,
   useTransform,
@@ -128,7 +128,7 @@ export function Card({
     }
   }, [mouseX, mouseY, scale]);
 
-  const Component = motion[as] as typeof motion.div;
+  const Component = m[as] as typeof m.div;
 
   const style: MotionStyle = {
     rotateX: tilt ? rotateX : 0,
@@ -165,7 +165,7 @@ export function Card({
 
       {/* Cursor-following inner glow */}
       {glow && (
-        <motion.div
+        <m.div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{ background: glowBackground }}
@@ -174,7 +174,7 @@ export function Card({
 
       {/* Animated conic gradient border overlay */}
       {glow && (
-        <motion.div
+        <m.div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{

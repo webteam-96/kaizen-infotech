@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { m, useInView } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ export function Divider({
       role="separator"
       aria-orientation={orientation}
     >
-      <motion.div
+      <m.div
         className={cn(
           'h-full w-full',
           accent

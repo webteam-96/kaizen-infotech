@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ const contentVariants = {
 
 function ChevronIcon({ isOpen }: { isOpen: boolean }) {
   return (
-    <motion.svg
+    <m.svg
       width="20"
       height="20"
       viewBox="0 0 20 20"
@@ -67,7 +67,7 @@ function ChevronIcon({ isOpen }: { isOpen: boolean }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </motion.svg>
+    </m.svg>
   );
 }
 
@@ -156,7 +156,7 @@ export function Accordion({
 
             <AnimatePresence initial={false}>
               {isOpen && (
-                <motion.div
+                <m.div
                   key={`content-${index}`}
                   variants={contentVariants}
                   initial="collapsed"
@@ -173,7 +173,7 @@ export function Accordion({
                   >
                     {item.content}
                   </div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>

@@ -57,6 +57,10 @@ const greatVibes = Great_Vibes({
   weight: '400',
   variable: '--font-script',
   display: 'swap',
+  // Only used by the hero hook line, which first paints ~8s into a first visit
+  // (after the countdown loader) — never on the cold critical path. Repeat
+  // visits have it cached; display:swap covers the gap either way.
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -127,13 +131,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        {/* Warm the cross-origin connection to the Spline CDN early (the home hero
-            fetches its scene from prod.spline.design). React hoists these; harmless
-            hints on routes that don't use Spline (browsers drop unused preconnects). */}
-        <link rel="preconnect" href="https://prod.spline.design" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://prod.spline.design" />
-      </head>
+      {/* No cross-origin preconnects needed anymore: the Spline scene + its wasm
+          helpers and the Simple Icons logos are all self-hosted now (public/spline,
+          public/images/tech) — the hero has zero third-party dependencies. */}
       <body
         className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} ${anton.variable} ${greatVibes.variable} antialiased`}
       >
