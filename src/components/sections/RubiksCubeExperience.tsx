@@ -125,14 +125,17 @@ const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false })
    computer reveals, instead of finishing while it's hidden behind the overlay. */
 const SPLINE_SCENE_URL = '/spline/scene-v1.splinecode';
 
-/* Spline's runtime lazily fetches wasm helpers (process/navmesh/boolean.wasm —
-   by default from unpkg.com) AND the DRACO mesh decoder (draco_wasm_wrapper.js +
-   draco_decoder.wasm — by default from www.gstatic.com), both cold third-party
-   origins on the hero's boot path. All are self-hosted in public/spline/wasm/:
-   the @splinetool ones are pinned to @splinetool/runtime 1.12.95 and draco to
-   1.5.2 (the runtime's baked-in default) — keep the package version and this
-   directory in lockstep when upgrading. */
-const SPLINE_WASM_PATH = '/spline/wasm';
+/* NOTE on wasm self-hosting: DO NOT pass `wasmPath` to <Spline>. It was tried
+   (serving the unpkg-published process/navmesh/boolean.js+wasm and the draco
+   decoder from /spline/wasm) and it BREAKS the runtime: with wasmPath set it
+   evals the fetched helper .js files into a colliding scope ("Identifier 'n'
+   has already been declared" / "Unexpected end of input" from a worker), the
+   scene build dies silently AFTER onLoad fires, and the monitor renders
+   nothing while the poster has already crossfaded away. With the DEFAULT
+   paths the runtime uses its own bundled JS glue and only fetches the .wasm
+   binaries (unpkg.com) + draco decoder (www.gstatic.com) — both origins are
+   preconnected in src/app/layout.tsx. Verified via public-harness bisect:
+   default paths → scene loads; wasmPath → dead canvas. */
 
 /* react-spline has no onError prop — a failed scene/wasm fetch throws through
    React and, uncontained, unmounts the ENTIRE landing page into the app error
@@ -1872,7 +1875,6 @@ export function RubiksCubeExperience() {
                 >
                 <Spline
                   scene={SPLINE_SCENE_URL}
-                  wasmPath={SPLINE_WASM_PATH}
                   onLoad={(app: unknown) => {
                     // Keep a handle on the Spline app so the scene can be driven
                     // imperatively (emit events, find objects) from anywhere.

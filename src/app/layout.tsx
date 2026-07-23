@@ -131,9 +131,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* No cross-origin preconnects needed anymore: the Spline scene + its wasm
-          helpers and the Simple Icons logos are all self-hosted now (public/spline,
-          public/images/tech) — the hero has zero third-party dependencies. */}
+      <head>
+        {/* The Spline scene file is self-hosted (/spline/scene-v1.splinecode), but
+            the runtime still fetches its wasm helpers from unpkg and the draco
+            decoder from gstatic at hero-boot time (self-hosting them via wasmPath
+            breaks the runtime — see the note in RubiksCubeExperience.tsx). Warm
+            those connections early; browsers drop unused preconnects on routes
+            that never mount the hero. */}
+        <link rel="preconnect" href="https://unpkg.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://unpkg.com" />
+        <link rel="preconnect" href="https://www.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.gstatic.com" />
+        {/* The scene's CRT screen text loads its fonts from fonts.gstatic.com. */}
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+      </head>
       <body
         className={`${jost.variable} ${lato.variable} ${jetbrainsMono.variable} ${bricolage.variable} ${anton.variable} ${greatVibes.variable} antialiased`}
       >
