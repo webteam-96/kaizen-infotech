@@ -3,18 +3,23 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { services } from '@/content/services';
+import { CapabilityBackdrop } from '@/components/shared/CapabilityBackdrop';
+import { useLenis } from '@/components/layout/SmoothScroll';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Capabilities — 3D ORBIT carousel.
+// Capabilities — 3D ORBIT carousel with a timed, scroll-locked stepper.
 //
-// Cards sit on a ring (cylinder) and rotate around a central axis like a globe.
-// Scrolling the section spins the ring (two turns); dragging left/right spins it
-// manually and snaps to the nearest card; clicking the front card opens its
-// detail panel, clicking a side card brings it to the front. Pure React + CSS 3D
-// transforms — no animation libraries. The SAME animation runs on phone, iPad and
-// desktop (pointer drag + `touch-action: pan-y`, capability-independent), only the
-// ring radius scales down. Styled in our brand: light-blue accents on the ink
-// surface, our display + body fonts.
+// Cards sit on a ring (cylinder). Only the CENTRED card is shown (the sides are
+// hidden). When the section reaches the viewport it PINS and plays a one-card-at-
+// a-time sequence: each card rotates to centre and is HELD for 0.5s before the next
+// scroll input can advance it. Because advancement is time-gated and one step at
+// a time, a fast flick can never fling cards past — every card gets its pause at
+// centre. After the last card (or before the first), the pin releases and normal
+// scroll resumes. The front card opens its detail panel on click; the dots jump.
+//
+// Under prefers-reduced-motion (no Lenis) there is NO scroll lock — a position-
+// based dwell map drives the ring off scroll position instead. Pure React + CSS
+// 3D transforms. Brand: light-blue accents on the ink surface.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Card highlight accent — a single light blue (the brand on-ink light blue) for
@@ -37,8 +42,42 @@ const CARDS = services.map((s, i) => ({
 const N = CARDS.length;
 const STEP = 360 / N;
 
+// Timed scroll-lock (the primary, smooth-scroll path). When the section reaches
+// the viewport it PINS and plays a one-card-at-a-time sequence: each card centres
+// and is HELD for DWELL ms before the next scroll input can advance — so a fast
+// flick can never fling cards past; every card pauses at centre. WHEEL/TOUCH_STEP
+// are the intent thresholds to move one card once the hold clears.
+const DWELL = 500;       // ms each card stays centred (the requested 0.5-second pause)
+const WHEEL_STEP = 26;   // wheel deltaY to advance a card after the hold
+const TOUCH_STEP = 46;   // touch-drag px to advance a card after the hold
+const SETTLE = 0.62;     // s — smooth glide into/out of the pinned position (entry/exit transition)
+
 function clamp(n: number, lo: number, hi: number) {
   return Math.min(hi, Math.max(lo, n));
+}
+
+// Reduced-motion / no-Lenis FALLBACK only: a position-based dwell map (no lock).
+// Each card holds centred across a band of the section's scroll, linked by quick
+// eased snaps — cards still pause at centre, just tied to scroll position rather
+// than a timer.
+const HOLD = 0.15; // fraction of the section's travel each card stays centred
+const TRANS = (1 - N * HOLD) / (N - 1); // the remainder, split across the N−1 snaps
+function smoothstep(x: number) {
+  x = x < 0 ? 0 : x > 1 ? 1 : x;
+  return x * x * (3 - 2 * x);
+}
+function ringRotationForProgress(p: number) {
+  p = clamp(p, 0, 1);
+  let c = 0;
+  for (let i = 0; i < N; i++) {
+    if (p < c + HOLD) return -i * STEP; // holding on card i (centred)
+    c += HOLD;
+    if (i < N - 1) {
+      if (p < c + TRANS) return -(i + smoothstep((p - c) / TRANS)) * STEP; // snapping i → i+1
+      c += TRANS;
+    }
+  }
+  return -(N - 1) * STEP; // settled on the last card
 }
 
 function ServiceIcon({ name }: { name: string }) {
@@ -66,18 +105,30 @@ function ServiceIcon({ name }: { name: string }) {
 type CardT = (typeof CARDS)[number];
 
 export function ServiceCardDeck() {
+  const { lenis } = useLenis();
   const sectionRef = useRef<HTMLElement>(null);
-  const scrollRotRef = useRef(0); // rotation contributed by scroll
-  const dragRotRef = useRef(0);   // rotation contributed by drag
   const rafRef = useRef(0);
-  const drag = useRef({ active: false, startX: 0, startRot: 0, moved: false });
 
   const [rotation, setRotation] = useState(0);
   const [active, setActive] = useState(0);
   const [selected, setSelected] = useState<CardT | null>(null);
-  const [dragging, setDragging] = useState(false);
   const [radius, setRadius] = useState(400);
   const [reduced, setReduced] = useState(false);
+
+  // Stepper / scroll-lock state (refs — read inside native listeners).
+  const indexRef = useRef(0);        // which card is currently centred
+  const engagedRef = useRef(false);  // are we pinned + running the timed sequence?
+  const settlingRef = useRef(false); // gliding into the pinned position (entry transition)
+  const lockUntilRef = useRef(0);    // ms; advancement is blocked until this time (the 0.5s hold)
+  const intentRef = useRef(0);       // accumulated directional scroll intent since the hold cleared
+  const cooldownRef = useRef(0);     // ms; suppress re-engage right after a release
+  const anchorYRef = useRef(0);      // page Y where the section top meets the viewport top
+  const lastYRef = useRef(0);        // last scrollY (for direction)
+  const touchYRef = useRef(0);
+  const reducedRef = useRef(false);
+  const selectedRef = useRef(false);
+
+  useEffect(() => { selectedRef.current = !!selected; }, [selected]);
 
   // Responsive ring radius.
   useEffect(() => {
@@ -93,22 +144,93 @@ export function ServiceCardDeck() {
   // Reduced-motion preference.
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
+    const update = () => { setReduced(mq.matches); reducedRef.current = mq.matches; };
     update();
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
   }, []);
 
-  const apply = useCallback(() => {
-    const total = scrollRotRef.current + dragRotRef.current;
-    setRotation(total);
-    const idx = ((Math.round(-total / STEP) % N) + N) % N;
-    setActive(idx);
+  // Centre a card (used by the stepper, the dots and the keys). Sets the 0.5s hold.
+  const centerCard = useCallback((i: number, resetDwell = true) => {
+    i = ((i % N) + N) % N;
+    indexRef.current = i;
+    setRotation(-i * STEP);
+    setActive(i);
+    if (resetDwell) lockUntilRef.current = performance.now() + DWELL;
   }, []);
 
-  // Scroll drives the ring while the section passes through the viewport.
-  // (Lenis updates the native scroll position, so window 'scroll' still fires.)
+  // Release the lock and GLIDE just past the section so the hand-off to the next
+  // band reads as one continuous scroll (no jump).
+  const disengage = useCallback((dir: 1 | -1) => {
+    engagedRef.current = false;
+    settlingRef.current = false;
+    const html = document.documentElement;
+    html.style.overflow = '';
+    html.style.overscrollBehavior = '';
+    cooldownRef.current = performance.now() + 950; // covers the exit glide → no instant re-engage
+    const vh = window.innerHeight;
+    const el = sectionRef.current;
+    const secH = el ? el.offsetHeight : vh;
+    const top = anchorYRef.current;
+    const target = dir === 1 ? top + secH + 2 : Math.max(0, top - vh - 2);
+    if (lenis) { lenis.start(); lenis.scrollTo(target, { duration: SETTLE, force: true }); }
+    else window.scrollTo(0, target);
+  }, [lenis]);
+
+  // Pin the section, but GLIDE it into place first so entering from the hero is a
+  // smooth continuation of the scroll rather than a jump-cut lock. The hard freeze
+  // (and the first card's 0.5s hold) only begins once the glide settles.
+  const engage = useCallback((entry: number) => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const top = window.scrollY + el.getBoundingClientRect().top;
+    anchorYRef.current = top;
+    engagedRef.current = true;
+    settlingRef.current = true;
+    intentRef.current = 0;
+    // show the entry card immediately — it rides up with the section during the glide
+    indexRef.current = ((entry % N) + N) % N;
+    setRotation(-indexRef.current * STEP);
+    setActive(indexRef.current);
+    let settleTimer = 0;
+    const finishLock = () => {
+      if (!engagedRef.current || !settlingRef.current) return; // run once; skip if we were cancelled
+      if (settleTimer) { clearTimeout(settleTimer); settleTimer = 0; }
+      settlingRef.current = false;
+      const html = document.documentElement;
+      html.style.overflow = 'hidden';   // freeze (scrollbar-gutter is stable → no shift)
+      html.style.overscrollBehavior = 'none';
+      lenis?.stop();
+      lockUntilRef.current = performance.now() + DWELL; // full 0.5s once centred
+    };
+    if (lenis) {
+      lenis.scrollTo(top, { duration: SETTLE, lock: true, force: true, onComplete: finishLock });
+      settleTimer = window.setTimeout(finishLock, 2500); // fallback so a missed onComplete can't trap scroll
+    } else {
+      window.scrollTo(0, top);
+      finishLock();
+    }
+  }, [lenis]);
+
+  // One step, honoured only after the current card's 0.5s hold — so a fast flick
+  // can never skip a card; each is guaranteed its pause at centre.
+  const advance = useCallback((dir: 1 | -1) => {
+    if (performance.now() < lockUntilRef.current) return;
+    const next = indexRef.current + dir;
+    if (next < 0) return disengage(-1);
+    if (next > N - 1) return disengage(1);
+    centerCard(next, true);
+  }, [centerCard, disengage]);
+
+  const goToCard = useCallback((i: number) => {
+    if (settlingRef.current) return; // don't fight the entry glide
+    centerCard(i, true);
+  }, [centerCard]);
+
+  // Engage detection + the reduced-motion (no-Lenis) fallback scroll map.
   useEffect(() => {
+    rafRef.current = 0; // a prior run's rAF was cancelled in cleanup; clear the stale id
+    lastYRef.current = window.scrollY;
     const onScroll = () => {
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame(() => {
@@ -117,80 +239,102 @@ export function ServiceCardDeck() {
         if (!el) return;
         const rect = el.getBoundingClientRect();
         const vh = window.innerHeight;
-        const travel = rect.height - vh;
-        const progress = travel > 0 ? clamp(-rect.top / travel, 0, 1) : 0;
-        scrollRotRef.current = -progress * 360; // one full turn across the section
-        apply();
+        // No smooth scroll / reduced motion → no lock; drive the ring off scroll
+        // position with the dwell map (each card still holds across a band).
+        if (reducedRef.current || !lenis) {
+          const travel = rect.height - vh;
+          const progress = travel > 0 ? clamp(-rect.top / travel, 0, 1) : 0;
+          const rot = ringRotationForProgress(progress);
+          setRotation(rot);
+          setActive(((Math.round(-rot / STEP) % N) + N) % N);
+          return;
+        }
+        if (engagedRef.current) return;
+        if (performance.now() < cooldownRef.current) { lastYRef.current = window.scrollY; return; }
+        const dir: 1 | -1 = window.scrollY >= lastYRef.current ? 1 : -1;
+        lastYRef.current = window.scrollY;
+        // Engage the moment the section covers the middle of the viewport.
+        if (rect.top <= vh * 0.5 && rect.bottom >= vh * 0.5) engage(dir === -1 ? N - 1 : 0);
       });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [apply]);
-
-  // Pointer drag to rotate + snap (works for mouse AND touch).
-  const onPointerDown = (e: React.PointerEvent) => {
-    drag.current = { active: true, startX: e.clientX, startRot: dragRotRef.current, moved: false };
-    setDragging(true);
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current.active) return;
-    const dx = e.clientX - drag.current.startX;
-    if (Math.abs(dx) > 4) drag.current.moved = true;
-    dragRotRef.current = drag.current.startRot + dx * 0.35; // 0.35 deg / px
-    apply();
-  };
-  const endDrag = () => {
-    if (!drag.current.active) return;
-    drag.current.active = false;
-    setDragging(false);
-    const total = scrollRotRef.current + dragRotRef.current;
-    const snappedTotal = Math.round(total / STEP) * STEP;
-    dragRotRef.current += snappedTotal - total;
-    apply();
-  };
-
-  // Arrow-key navigation.
-  const rotateBy = useCallback((dir: number) => {
-    dragRotRef.current -= dir * STEP;
-    apply();
-  }, [apply]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (selected) return;
-      if (e.key === 'ArrowLeft') rotateBy(-1);
-      if (e.key === 'ArrowRight') rotateBy(1);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0; // reset so a re-run's guard isn't stuck on a stale id
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [rotateBy, selected]);
+  }, [lenis, engage]);
 
-  const goToCard = (i: number) => {
-    const target = -i * STEP;
-    const current = scrollRotRef.current + dragRotRef.current;
-    let diff = target - current;
-    diff = (((diff + 180) % 360) + 360) % 360 - 180; // wrap to [-180,180]
-    dragRotRef.current += diff;
-    apply();
-  };
+  // Timed, scroll-locked stepping while engaged (wheel / touch / keyboard).
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (!engagedRef.current) return;
+      e.preventDefault(); // page stays pinned
+      if (settlingRef.current || selectedRef.current || performance.now() < lockUntilRef.current) { intentRef.current = 0; return; }
+      intentRef.current += e.deltaY;
+      if (intentRef.current > WHEEL_STEP) { intentRef.current = 0; advance(1); }
+      else if (intentRef.current < -WHEEL_STEP) { intentRef.current = 0; advance(-1); }
+    };
+    const onTouchStart = (e: TouchEvent) => { touchYRef.current = e.touches[0]?.clientY ?? 0; };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!engagedRef.current) return;
+      e.preventDefault();
+      const y = e.touches[0]?.clientY ?? touchYRef.current;
+      const dy = touchYRef.current - y; // swipe content up = forward
+      touchYRef.current = y;
+      if (settlingRef.current || selectedRef.current || performance.now() < lockUntilRef.current) { intentRef.current = 0; return; }
+      intentRef.current += dy;
+      if (intentRef.current > TOUCH_STEP) { intentRef.current = 0; advance(1); }
+      else if (intentRef.current < -TOUCH_STEP) { intentRef.current = 0; advance(-1); }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!engagedRef.current || settlingRef.current || selectedRef.current) return;
+      if (e.key === 'Escape') { disengage(1); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown' || e.code === 'Space') {
+        e.preventDefault(); advance(1);
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault(); advance(-1);
+      }
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [advance, disengage]);
+
+  // Safety: if we unmount mid-lock (or mid-glide), restore scrolling and mark us
+  // disengaged so a pending glide callback can't re-freeze the page after we're gone.
+  useEffect(() => () => {
+    if (engagedRef.current) {
+      engagedRef.current = false;
+      settlingRef.current = false;
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.overscrollBehavior = '';
+      lenis?.start();
+    }
+  }, [lenis]);
 
   return (
     <div className="oc-root">
       <style>{styles}</style>
 
-      <section ref={sectionRef} className="oc-section">
+      <section
+        ref={sectionRef}
+        className="oc-section"
+        style={{ height: reduced ? '260vh' : '100vh' }}
+      >
         <div className="oc-sticky">
+          <CapabilityBackdrop active={active} />
           <div className="oc-scene">
-            <div className="oc-core" aria-hidden />
             <div
-              className={`oc-ring-wrap ${dragging ? 'dragging' : ''} ${reduced ? 'reduced' : ''}`}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={endDrag}
-              onPointerCancel={endDrag}
-              onPointerLeave={endDrag}
+              className={`oc-ring-wrap ${reduced ? 'reduced' : ''}`}
               role="listbox"
               aria-label="Our capabilities"
             >
@@ -211,7 +355,6 @@ export function ServiceCardDeck() {
                         '--accent': c.accent,
                       } as React.CSSProperties}
                       onClick={() => {
-                        if (drag.current.moved) return; // ignore click right after a drag
                         if (isActive) setSelected(c);
                         else goToCard(i);
                       }}
@@ -222,8 +365,6 @@ export function ServiceCardDeck() {
                       <span className="oc-card-label" style={{ color: c.accent }}>{c.label}</span>
                       <span className="oc-card-tag">{c.tag}</span>
                       <span className="oc-card-name">{c.title}</span>
-                      <span className="oc-card-line" />
-                      <span className="oc-card-cta">{isActive ? 'Read more' : 'Bring to front'}</span>
                     </button>
                   );
                 })}
@@ -284,13 +425,17 @@ const styles = `
 }
 .oc-root *{box-sizing:border-box;}
 
-/* tall section so scroll has room to spin the ring ONE full turn; inner stage is sticky */
-.oc-section{position:relative;height:210vh;}
+/* height is set inline: 100vh when the timed scroll-lock drives it, taller for
+   the reduced-motion fallback (so scroll has room to dwell on each card). */
+.oc-section{position:relative;}
 .oc-sticky{
   position:sticky;top:0;height:100vh;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   overflow:hidden;
 }
+
+/* per-card motion backdrop — sits behind the ring, fills the sticky stage */
+.oc-backdrop{position:absolute;inset:0;z-index:0;pointer-events:none;}
 
 /* 3D scene */
 .oc-scene{
@@ -298,29 +443,18 @@ const styles = `
   display:flex;align-items:center;justify-content:center;
   perspective:1500px;
   position:relative;
+  z-index:1;
 }
-.oc-core{
-  position:absolute;width:130px;height:130px;border-radius:50%;
-  background:radial-gradient(circle at 50% 45%, #BFE2FB, #2196F3 42%, rgba(33,150,243,0) 72%);
-  filter:blur(2px);
-  box-shadow:0 0 130px 34px rgba(33,150,243,.26);
-  pointer-events:none;
-  animation:oc-pulse 6s ease-in-out infinite;
-}
-@keyframes oc-pulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.08);opacity:1}}
-
 .oc-ring-wrap{
   position:relative;width:300px;height:380px;
   transform-style:preserve-3d;
-  cursor:grab;touch-action:pan-y;
+  touch-action:pan-y;
 }
-.oc-ring-wrap.dragging{cursor:grabbing;}
 .oc-ring{
   position:absolute;inset:0;
   transform-style:preserve-3d;
-  transition:transform .65s cubic-bezier(.22,.61,.36,1);
+  transition:transform .6s cubic-bezier(.22,.61,.36,1);
 }
-.oc-ring-wrap.dragging .oc-ring{transition:none;}
 .oc-ring-wrap.reduced .oc-ring{transition:transform .2s linear;}
 
 .oc-card{
@@ -335,11 +469,12 @@ const styles = `
   box-shadow:0 24px 60px rgba(0,0,0,.45);
   color:var(--oc-ink);font-family:var(--font-body);
   cursor:pointer;
-  transition:border-color .4s, box-shadow .4s, opacity .4s, filter .4s;
-  opacity:.4;filter:saturate(.7);
+  transition:border-color .4s, box-shadow .4s, opacity .45s, filter .4s;
+  /* Only the centred (active) card is visible — the side cards are fully hidden. */
+  opacity:0;filter:saturate(.7);pointer-events:none;
 }
 .oc-card.active{
-  opacity:1;filter:none;
+  opacity:1;filter:none;pointer-events:auto;
   border-color:color-mix(in srgb, var(--accent) 60%, transparent);
   box-shadow:0 30px 80px rgba(0,0,0,.55),
              0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
@@ -358,17 +493,6 @@ const styles = `
   font-family:var(--font-display);font-size:25px;font-weight:600;
   margin-top:8px;letter-spacing:-.01em;line-height:1.18;
 }
-.oc-card-line{
-  height:1px;width:100%;background:var(--oc-line);margin:16px 0 14px;
-}
-.oc-card-cta{
-  font-size:12px;font-weight:600;letter-spacing:.04em;
-  color:var(--accent);font-family:var(--font-heading);
-  display:flex;align-items:center;gap:6px;
-}
-.oc-card-cta::after{content:"→";transition:transform .3s;}
-.oc-card.active:hover .oc-card-cta::after{transform:translateX(4px);}
-
 /* dots — 24px hit box (touch target) with a 9px visual dot rendered via ::before */
 .oc-dots{display:flex;gap:6px;padding:0 0 5vh;z-index:5;}
 .oc-dot{

@@ -165,7 +165,7 @@ export default function KaizenValues() {
       className="relative"
     >
       <div
-        className={`sticky top-0 flex h-svh flex-col items-center justify-center overflow-hidden bg-white ${NAV_OFFSET}`}
+        className={`kv-stage sticky top-0 flex h-svh flex-col items-center justify-center overflow-hidden bg-white ${NAV_OFFSET}`}
       >
         <Header />
 
@@ -175,7 +175,7 @@ export default function KaizenValues() {
           aria-roledescription="card carousel"
           aria-label="Our values. Use arrow keys, drag, or scroll to navigate."
           onKeyDown={onKeyDown}
-          className="relative mt-8 flex w-full max-w-lg items-center justify-center outline-none"
+          className="kv-deck relative mt-8 flex w-[min(100%-2rem,42rem)] items-center justify-center outline-none"
         >
           {/* Background deck cards — upright, never hold text */}
           {[2, 1].map((depth) => {
@@ -210,7 +210,7 @@ export default function KaizenValues() {
             <m.div
               key={index}
               custom={direction}
-              className="card-red-accent relative flex h-[min(32.5rem,56svh)] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-10 shadow-lg active:cursor-grabbing"
+              className="kv-card card-red-accent relative flex h-[min(32.5rem,58svh)] w-full cursor-grab flex-col overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-6 shadow-lg active:cursor-grabbing sm:p-8 lg:p-10"
               style={{ zIndex: 20 }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
@@ -227,14 +227,14 @@ export default function KaizenValues() {
               exit="exit"
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
             >
-              <div className="mb-5 inline-flex w-fit rounded-2xl bg-[var(--red-soft)] p-3 text-[var(--red-brand)]">
+              <div className="kv-icon mb-4 inline-flex w-fit rounded-2xl bg-[var(--red-soft)] p-3 text-[var(--red-brand)] sm:mb-5">
                 {VALUES[index].icon}
               </div>
               {/* break-words + balanced wrapping fixes the mid-word "Accountabilit-y" break */}
-              <h3 className="font-[family-name:var(--font-heading)] text-2xl font-semibold leading-tight tracking-tight text-slate-900 [text-wrap:balance] break-words">
+              <h3 className="font-[family-name:var(--font-heading)] text-xl font-semibold leading-tight tracking-tight text-slate-900 [text-wrap:balance] break-words sm:text-2xl">
                 {VALUES[index].title}
               </h3>
-              <p className="mt-4 text-lg leading-relaxed text-slate-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600 sm:mt-4 sm:text-lg">
                 {VALUES[index].body}
               </p>
             </m.div>
@@ -242,7 +242,7 @@ export default function KaizenValues() {
         </div>
 
         {/* Controls — progress dots */}
-        <div className="mt-8 flex items-center justify-center">
+        <div className="kv-dots mt-8 flex items-center justify-center">
           {VALUES.map((_, i) => (
             <button
               key={i}
@@ -268,7 +268,7 @@ export default function KaizenValues() {
 
 function Header() {
   return (
-    <div className="text-center">
+    <div className="kv-header text-center">
       <span className="text-[length:var(--h-eyebrow)] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Our Values</span>
       <h2 className="mt-2 font-[family-name:var(--font-heading)] text-[length:var(--h-section)] font-bold text-slate-900">The Kaizen Way</h2>
     </div>

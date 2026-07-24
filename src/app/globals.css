@@ -1178,6 +1178,35 @@ html, body { max-width: 100%; overflow-x: clip; }
   .deck-shortfit { transform: translateY(14px) scale(0.7); }
 }
 
+/* ===== About > Our Values pinned deck — short-viewport fit ==================
+   The active value card is a FIXED height with overflow:hidden so every card
+   stays a uniform size regardless of copy length. On a short viewport (landscape
+   phones, compact laptop windows) that fixed card is shorter than the longest
+   value's copy and would clip it. These queries free vertical budget (trim the
+   nav offset, heading and inter-block gaps) and shrink the card's own padding /
+   type so the fullest card ("Long-Term Value…") fits without cropping. Keyed on
+   height only, so normal/tall viewports are left exactly as they were. */
+@media (max-height: 720px) {
+  .kv-stage { padding-top: 4rem; }
+  .kv-header h2 { font-size: clamp(1.5rem, 3.2vh, 2rem); }
+  .kv-deck { margin-top: 1rem; }
+  .kv-dots { margin-top: 1rem; }
+  .kv-card {
+    height: min(32.5rem, 76svh);
+    padding: 1.1rem 1.4rem;
+  }
+  .kv-icon { margin-bottom: 0.55rem; padding: 0.4rem; }
+  .kv-icon svg { width: 1.2rem; height: 1.2rem; }
+  .kv-card h3 { font-size: 1.05rem; line-height: 1.2; }
+  .kv-card p { margin-top: 0.5rem; font-size: 0.875rem; line-height: 1.45; }
+}
+@media (max-height: 560px) {
+  .kv-stage { padding-top: 3.25rem; }
+  .kv-card { height: min(32.5rem, 82svh); padding: 0.8rem 1.1rem; }
+  .kv-card h3 { font-size: 0.95rem; }
+  .kv-card p { font-size: 0.8rem; line-height: 1.4; }
+}
+
 /* ===== Per-section card identities =====
    Each card-bearing section gets a signature edge accent so its cards read as
    one set, yet clearly differ from neighbouring sections. These touch only
