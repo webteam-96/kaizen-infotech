@@ -1,15 +1,13 @@
+import { SkeletonPage, HeroSkeleton } from '@/components/skeletons';
+
+// Default route loading fallback — used for the home page (and any route without
+// its own loading.tsx). The AppFrame navbar + footer stay mounted; this fills the
+// hero area until the page's components (incl. the 3D hero) load. On a first
+// visit the intro CountdownLoader takes over once the page itself renders.
 export default function Loading() {
   return (
-    <div className="fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center bg-[var(--color-bg-primary)]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-accent-primary)]" />
-        <p
-          className="text-sm tracking-widest uppercase text-[var(--color-text-tertiary)]"
-          style={{ fontFamily: 'var(--font-mono)' }}
-        >
-          Loading
-        </p>
-      </div>
-    </div>
+    <SkeletonPage>
+      <HeroSkeleton />
+    </SkeletonPage>
   );
 }
