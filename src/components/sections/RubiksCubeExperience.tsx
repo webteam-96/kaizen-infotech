@@ -256,14 +256,13 @@ export function RubiksCubeExperience() {
   const { lenis } = useLenis();
   const lenisRef = useRef<Lenis | null>(null);
   const loaderCompleteRef = useRef(false);
-  // True while the page is frozen at the top waiting for the user to press
-  // Enter/Space (or tap) to begin the dive. Set true by the useGSAP effect;
-  // released on the first trigger. Mirrored here so the Lenis instance can be
-  // stopped the moment it becomes available (it may mount after the effect).
-  const scrollLockedRef = useRef(false);
+  // The page is frozen at the top until the Enter/Space/tap gesture begins the
+  // dive. That freeze is OWNED + ENFORCED by SmoothScroll via the loader store's
+  // introScrollLocked flag (locked by RubiksHero before this heavy chunk even
+  // downloads); this component only detects the gesture and unlocks. Keep just a
+  // live Lenis handle for the dive's scrollTo.
   useEffect(() => {
     lenisRef.current = lenis;
-    if (lenis && scrollLockedRef.current) lenis.stop();
   }, [lenis]);
   useEffect(() => {
     loaderCompleteRef.current = loaderComplete;
@@ -1497,55 +1496,20 @@ export function RubiksCubeExperience() {
     const AUTOPLAY_TO = INTRO_END + 0.05; // land just past assembly, on the rotating cube
     let autoplaying = false;
 
-    // ── Freeze the page at the top until the user begins ──
-    // The page is held at the very top on load / refresh so the intro dive plays
-    // as one clean shot. Scrolling and swiping are fully SWALLOWED while frozen —
-    // they do NOT start the dive. Only Enter / Space (desktop) — or a tap on
-    // touch devices, which have no keyboard — begins the motion. The on-screen
-    // CRT already reads "Press Enter to begin…", so scroll is intentionally inert
-    // here. lenis.stop() is required (preventDefault alone won't stop it — Lenis
-    // reads the wheel delta itself); the native blockers cover touch + any window
-    // before Lenis is ready.
-    scrollLockedRef.current = true;
-    // If the user presses begin before the loader clears, remember it and
-    // auto-start the instant it does (see tick()).
+    // ── Begin gesture ────────────────────────────────────────────────────────
+    // The page is frozen at the very top — that freeze is owned + enforced by
+    // SmoothScroll (via the loader store's introScrollLocked flag, locked by
+    // RubiksHero before this chunk even downloads), so scrolling/swiping do
+    // nothing and nothing time-based ever auto-unlocks. The ONLY first action is
+    // Enter/Space (desktop) or a tap (touch): it unlocks the store and drives the
+    // opening dive like a video. The CRT reads "Press Enter to begin…".
+    // If the gesture happens before the loader clears, remember it and auto-start
+    // the instant it does (see tick()).
     let pendingStart = false;
+    let loaderClearedMs = 0; // elapsed-clock stamp of when the loader first cleared
     function startFromGesture() {
       if (loaderCompleteRef.current) playIntro();
       else pendingStart = true;
-    }
-    function reassertFreeze() {
-      // preventDefault alone can't stop Lenis (it reads wheel deltas itself), and
-      // a stray refresh/resize may have resumed it — so re-stop it right here.
-      const l = lenisRef.current;
-      if (l && !l.isStopped) l.stop();
-    }
-    function blockWheel(e: WheelEvent) {
-      if (!scrollLockedRef.current) return;
-      e.preventDefault(); // scroll is inert while frozen; Enter/Space/tap begins
-      reassertFreeze();
-    }
-    function blockTouchMove(e: TouchEvent) {
-      if (!scrollLockedRef.current) return;
-      e.preventDefault(); // swipe is inert while frozen; a tap begins
-      reassertFreeze();
-    }
-    window.addEventListener('wheel', blockWheel, { passive: false });
-    window.addEventListener('touchmove', blockTouchMove, { passive: false });
-    if (lenisRef.current) lenisRef.current.stop();
-
-    // Safety net: never leave the page frozen if the loader/autoplay path
-    // mis-fires — force-unlock after a few seconds (unless the dive is running).
-    const safetyUnlock = window.setTimeout(() => {
-      if (scrollLockedRef.current && !autoplaying) unlock();
-    }, 9000);
-
-    function unlock() {
-      if (!scrollLockedRef.current) return;
-      scrollLockedRef.current = false;
-      window.removeEventListener('wheel', blockWheel);
-      window.removeEventListener('touchmove', blockTouchMove);
-      lenisRef.current?.start();
     }
 
     function playIntro() {
@@ -1557,13 +1521,17 @@ export function RubiksCubeExperience() {
       if (span <= 0) return;
       const targetY = scrollTrigger.start + AUTOPLAY_TO * span;
       autoplaying = true;
-      // Release the freeze BEFORE scrolling: a STOPPED Lenis runs the scrollTo
-      // animation but never writes it to the page (its scroll setter is gated on
-      // isStopped — `force` only bypasses the entry guard, not the write). So we
-      // start Lenis + drop the wheel/touch blockers first, then run the dive with
-      // `lock:true` — Lenis ignores wheel/touch nudges while locked, so it still
-      // reads as one clean shot, and its completion resets the lock automatically.
-      unlock();
+      // Release the freeze synchronously BEFORE scrolling (a STOPPED Lenis runs
+      // the scrollTo animation but never writes it to the page). Clearing the
+      // store flag stops SmoothScroll re-locking each frame; we also start Lenis
+      // + restore overflow right here so there's no wait for SmoothScroll's async
+      // effect. Then the dive runs with lock:true so wheel/touch nudges can't
+      // interrupt it — it reads as one clean shot.
+      useLoaderStore.getState().unlockIntroScroll();
+      const html = document.documentElement;
+      html.style.overflow = '';
+      html.style.overscrollBehavior = '';
+      lenisInstance.start();
       lenisInstance.scrollTo(targetY, {
         duration: 3,
         easing: easeInOutCubic,
@@ -1573,12 +1541,8 @@ export function RubiksCubeExperience() {
     }
 
     function onKeyDown(e: KeyboardEvent) {
-      // While frozen, swallow the keys that would otherwise scroll the page so
-      // it truly can't move until the user begins.
-      if (scrollLockedRef.current &&
-          ['Space', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.code)) {
-        e.preventDefault();
-      }
+      // Scroll keys are swallowed by SmoothScroll while the freeze is on; here we
+      // only care about the begin gesture.
       if (e.key !== 'Enter' && e.key !== ' ' && e.code !== 'Space') return;
       // Don't hijack the key when an interactive element (nav link, button, field)
       // is focused — let its own default behaviour run.
@@ -1601,7 +1565,10 @@ export function RubiksCubeExperience() {
       const t = e.touches[0]; if (!t) return;
       if (Math.hypot(t.clientX - touchX, t.clientY - touchY) > 12) touchMoved = true;
     }
-    function onTouchEnd() { if (!touchMoved) playIntro(); }
+    // Route taps through startFromGesture (like Enter/Space) so a tap during the
+    // countdown is REMEMBERED and begins the dive the instant the loader clears,
+    // instead of being dropped by playIntro's not-yet-complete guard.
+    function onTouchEnd() { if (!touchMoved) startFromGesture(); }
     if (isTouch) {
       window.addEventListener('touchstart', onTouchStart, { passive: true });
       window.addEventListener('touchmove', onTouchMove, { passive: true });
@@ -1617,23 +1584,17 @@ export function RubiksCubeExperience() {
       lastDt = Math.min(0.05, Math.max(0.001, deltaTime / 1000));
       elapsed += lastDt;
 
-      // If the user tried to scroll while the loader was still up, begin now.
-      if (scrollLockedRef.current && pendingStart && loaderCompleteRef.current) {
-        pendingStart = false;
-        playIntro();
-      }
-
-      // ── Hold the freeze every frame while locked ──
-      // A single lenis.stop() isn't durable: a late ScrollTrigger.refresh (heavy
-      // Spline scene finishing), a resize, or a dev remount can silently RESUME
-      // Lenis while we're still meant to be frozen — and then the wheel scrolls
-      // the page even though scrollLockedRef is true (blockWheel's preventDefault
-      // can't stop Lenis; only lenis.stop() can). Re-assert it here so the page
-      // truly can't move until Enter/Space/tap begins. Skipped while autoplaying
-      // so the dive's forced scrollTo can run.
-      if (scrollLockedRef.current && !autoplaying) {
-        const l = lenisRef.current;
-        if (l && !l.isStopped) l.stop();
+      // If the user pressed begin while the loader was still up, start the dive
+      // — but not the instant the loader clears: the Spline onLoad fires a
+      // ScrollTrigger.refresh right then, which would interrupt a dive started on
+      // the same frame (leaving it stranded mid-scroll). Wait ~450ms after
+      // loader-complete for that burst to settle, then play cleanly.
+      if (pendingStart && loaderCompleteRef.current) {
+        if (loaderClearedMs === 0) loaderClearedMs = elapsed;
+        if (elapsed - loaderClearedMs > 0.45) {
+          pendingStart = false;
+          playIntro();
+        }
       }
 
       // Skip the heavy three.js work entirely when the section is fully
@@ -1712,19 +1673,15 @@ export function RubiksCubeExperience() {
 
     return () => {
       gsap.ticker.remove(tick);
-      clearTimeout(safetyUnlock);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('wheel', blockWheel);
-      window.removeEventListener('touchmove', blockTouchMove);
       if (isTouch) {
         window.removeEventListener('touchstart', onTouchStart);
         window.removeEventListener('touchmove', onTouchMove);
         window.removeEventListener('touchend', onTouchEnd);
       }
-      // Never leave the page frozen if this section unmounts mid-lock.
-      scrollLockedRef.current = false;
-      lenisRef.current?.start();
+      // The freeze itself is owned by SmoothScroll (via the store); RubiksHero
+      // unlocks it on unmount. Nothing to release here.
       scrollTrigger.kill();
       // Dispose per-mount GPU resources (cubie/disc/particle geometries and
       // materials are all created fresh in this effect) before clearing.

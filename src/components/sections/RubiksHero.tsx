@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, type CSSProperties } from 'react';
 import { useDeviceCapability } from '@/hooks';
+import { useLoaderStore } from '@/store/loaderStore';
 import { RubiksHeroStatic } from './RubiksHeroStatic';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,6 +124,25 @@ const RubiksCubeExperience = dynamic(
 
 export function RubiksHero() {
   const cap = useDeviceCapability();
+  const lockIntroScroll = useLoaderStore((s) => s.lockIntroScroll);
+  const unlockIntroScroll = useLoaderStore((s) => s.unlockIntroScroll);
+
+  // Freeze the page at the top the instant we know this is the full 3D hero —
+  // BEFORE the heavy RubiksCubeExperience chunk has even downloaded. The store
+  // flag is enforced by SmoothScroll (the early-mounting Lenis owner), so the
+  // very first action is the Enter/Space/tap gesture and no scroll leaks
+  // through in the meantime. For lite heroes (no dive) we instead RELEASE the
+  // pre-hydration inline lock set in page.tsx (reduced-motion was never locked
+  // there). Leaving the home route unlocks via cleanup.
+  useEffect(() => {
+    if (!cap.ready) return;
+    if (cap.liteExperience) {
+      document.documentElement.style.overflow = '';
+      return;
+    }
+    lockIntroScroll();
+    return () => unlockIntroScroll();
+  }, [cap.ready, cap.liteExperience, lockIntroScroll, unlockIntroScroll]);
 
   // Warm the Spline runtime chunk + scene file the moment a capable
   // fine-pointer device is confirmed — in PARALLEL with the hero chunk

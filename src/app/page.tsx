@@ -33,6 +33,23 @@ export default function HomePage() {
         type="image/webp"
         fetchPriority="high"
       />
+      {/* Lock scroll at the very first paint — BEFORE hydration — so the intro
+          can never be scrolled past before the Enter/Space/tap gesture. Without
+          this there's a pre-hydration window (no Lenis, no effects yet) where
+          native wheel/touch scrolls the page. React (SmoothScroll, driven by the
+          loader store) then takes ownership: it KEEPS the lock for the full 3D
+          hero until the begin gesture, and RELEASES it immediately for
+          lite/reduced-motion heroes (which have no dive). Reduced-motion users
+          are skipped here entirely (no dive → free scroll). If JS is disabled the
+          script never runs, so no-JS users are never trapped. scrollbar-gutter:
+          stable (globals.css) keeps this overflow toggle shift-free. */}
+      <script
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{
+          __html:
+            "try{if(!matchMedia('(prefers-reduced-motion:reduce)').matches)document.documentElement.style.overflow='hidden'}catch(e){}",
+        }}
+      />
       <CountdownLoader />
       <RubiksHero />
       <BrandPromise />

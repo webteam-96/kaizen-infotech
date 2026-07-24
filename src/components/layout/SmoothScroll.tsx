@@ -12,6 +12,7 @@ import Lenis from 'lenis';
 import { usePathname } from 'next/navigation';
 import { gsap, ScrollTrigger, registerGSAPPlugins } from '@/lib/animations/gsap-setup';
 import { useScrollStore } from '@/lib/store/scroll-store';
+import { useLoaderStore } from '@/store/loaderStore';
 
 // Centralized plugin registration (idempotent guard inside).
 registerGSAPPlugins();
@@ -44,6 +45,10 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
   const pathname = usePathname();
 
   const setScrollState = useScrollStore((s) => s.setScrollState);
+  // Home intro gate — see the loader store. RubiksHero sets this the instant the
+  // full 3D hero is chosen (before its heavy chunk loads); SmoothScroll, as the
+  // early-mounting Lenis owner, is the single enforcer of the freeze.
+  const introScrollLocked = useLoaderStore((s) => s.introScrollLocked);
 
   // Initialize Lenis
   useEffect(() => {
@@ -153,6 +158,16 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       if (lastMs === 0) lastMs = ms;
       virtualMs += Math.min(50, ms - lastMs);
       lastMs = ms;
+      // Home intro gate: while locked, keep Lenis hard-stopped every frame — a
+      // late ScrollTrigger.refresh, a resize, or a remount can silently resume
+      // it otherwise. A stopped Lenis ignores wheel/touch and never writes
+      // scroll, so it stays pinned at the top. Crucially we STILL feed it raf
+      // (below) so its internal clock keeps ticking — otherwise the dive's
+      // scrollTo would stall for however long the freeze lasted before it began
+      // to move. instance.raf on a stopped Lenis is a safe no-op for scroll.
+      if (useLoaderStore.getState().introScrollLocked && !instance.isStopped) {
+        instance.stop();
+      }
       instance.raf(virtualMs);
       if (lastScrollMs >= 0 && performance.now() - lastScrollMs > 150) {
         lastScrollMs = -1;
@@ -222,6 +237,63 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       if (refreshTimer) clearTimeout(refreshTimer);
     };
   }, [setScrollState]);
+
+  // ── Enforce the home intro freeze ─────────────────────────────────────────
+  // While locked: hard-stop Lenis, reset to the very top (correct any pre-lock
+  // native drift), block native scroll (overflow:hidden — the scrollbar-gutter
+  // rule keeps this shift-free), and swallow wheel / touch-move / scroll-key
+  // gestures so nothing moves the page. Enter/Space still reach the hero's
+  // begin-gesture handler (preventDefault stops their native scroll but does not
+  // stop propagation). The ticker also re-stops Lenis every frame; this effect
+  // handles the DOM-level blocking and the unlock restore.
+  //
+  // NOTE: the home route sets overflow:hidden via a pre-hydration inline script
+  // (page.tsx). To hand that off WITHOUT a one-frame flash, only CLEAR overflow
+  // on a genuine lock→unlock transition (lockedByUsRef) — never on this effect's
+  // initial `false` run, which would briefly undo the inline lock before the
+  // store resolves to locked for the full 3D hero.
+  const lockedByUsRef = useRef(false);
+  useEffect(() => {
+    const html = document.documentElement;
+    if (!introScrollLocked) {
+      if (lockedByUsRef.current) {
+        lockedByUsRef.current = false;
+        html.style.overflow = '';
+        html.style.overscrollBehavior = '';
+      }
+      lenisRef.current?.start();
+      return;
+    }
+    lockedByUsRef.current = true;
+    html.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    const lenis = lenisRef.current;
+    if (lenis) {
+      lenis.stop();
+      lenis.scrollTo(0, { immediate: true, force: true });
+    } else {
+      window.scrollTo(0, 0);
+    }
+    const blockWheel = (e: WheelEvent) => e.preventDefault();
+    const blockTouch = (e: TouchEvent) => e.preventDefault();
+    const blockKeys = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // Space is both a scroll key AND the begin gesture — preventDefault its
+      // native scroll but let it propagate to the hero handler.
+      if (['PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('wheel', blockWheel, { passive: false });
+    window.addEventListener('touchmove', blockTouch, { passive: false });
+    window.addEventListener('keydown', blockKeys);
+    return () => {
+      window.removeEventListener('wheel', blockWheel);
+      window.removeEventListener('touchmove', blockTouch);
+      window.removeEventListener('keydown', blockKeys);
+    };
+  }, [introScrollLocked]);
 
   // Scroll restoration on route change. Reset to top immediately, but DEFER the
   // ScrollTrigger.refresh() out of the React commit (a synchronous refresh there
